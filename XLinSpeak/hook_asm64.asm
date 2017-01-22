@@ -3,19 +3,16 @@ BITS 64
 
 section .data
         global trampoline1
-        global trampoline2
 align 4096
 trampoline1:
-        times 64 db 0
-trampoline2:
         times 64 db 0
 
 
 section .text
+        extern kuk
 
 %macro HOOK 1
         global hook%1
-        extern kuk%1
 
 hook%1:
         ;rax is saved as a part of function redirection
@@ -33,7 +30,8 @@ hook%1:
         push rsi
         ;first params are passed in registers,
         ;so no need to copy anything
-        call [rel kuk%1 wrt ..gotpc]
+        mov rax, qword [rel kuk wrt ..gotpc]
+        call [rax]
         ;restore the registers
         pop rsi
         pop rdi
@@ -50,5 +48,4 @@ hook%1:
 %endmacro
 
         HOOK 1
-        HOOK 2
 

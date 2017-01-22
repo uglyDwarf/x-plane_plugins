@@ -7,7 +7,7 @@
 #include "utils.h"
 
 extern uint8_t trampoline1;
-extern uint8_t trampoline2;
+
 
 const intptr_t mask = (intptr_t)~(4095L);
 
@@ -105,6 +105,14 @@ int hook_proc(void *proc_addr, int copy_bytes,
 #endif
 }
 
+void kuk0(void *this, char **str, int dummy1, int dummy2)
+{
+  (void) this;
+  (void) dummy1;
+  (void) dummy2;
+  //printf("Kecal: %s\n", *str);
+  speech_say(*str);
+}
 
 //mimicks XP10's soun_class::SPEECH_speakstring(std::string, speech_type, int)
 void kuk1(void *this, char **str, int type, int i)
@@ -165,25 +173,36 @@ int get_hook_space(void *ptr)
   return d;
 }
 
-
-
-
-void *hooks[2] = {&hook1, &hook2};
-uint8_t *trampolines[2] = {&trampoline1, &trampoline2};
+void *kuk = NULL;
 
 bool hook(void *proceduura, int n)
 {
+  switch(n){
+    case 0:
+      kuk = (void*)kuk1;
+      break;
+    case 1:
+      kuk = (void*)kuk2;
+      break;
+    case 2:
+      kuk = (void*)kuk0;
+      break;
+    default:
+      kuk = NULL;
+      break;
+  }
+
   int copy = get_hook_space(proceduura);
   if(copy <= 0){
     return false;
   }
 
-  if(!change_range_prot(trampolines[n], 128, true)){
+  if(!change_range_prot(&trampoline1, 128, true)){
     printf("Can't unprotect buffer!\n");
     return false;
   }
 
-  if(hook_proc(proceduura, copy, hooks[n], trampolines[n]) != 0){
+  if(hook_proc(proceduura, copy, &hook1, &trampoline1) != 0){
     return true;
   }
   return false;

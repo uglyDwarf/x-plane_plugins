@@ -13,7 +13,8 @@
 
 struct function_ptrs ptrs[] = {
   {.name = "_ZN10spch_class18SPEECH_speakstringENSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEE11speech_typei", .address = 0, .hook = 1},
-  {.name = "_ZN10soun_class18SPEECH_speakstringESs11speech_typei", .address = 0, .hook = 0}
+  {.name = "_ZN10soun_class18SPEECH_speakstringESs11speech_typei", .address = 0, .hook = 0},
+  {.name = "_ZN10soun_class18SPEECH_speakstringESsi", .address = 0, .hook = 2}
 };
 
 
