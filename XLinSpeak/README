@@ -1,0 +1,15 @@
+This version is now fully self supporting - no need for any extraction
+scripts, everything is extracted at the runtime from the executable.
+
+Building requires libspeechd-dev package and also nasm.
+
+By default both 32 and 64 bit plugins are built; it seems that the 
+libspeechd development package has a problem as installing the 32bit
+version of the package removes the 64bit one. To be able to build everything
+at once, I installed the 32bit dev. package, copied the 32bit libspeechd .so 
+files from /usr/lib/i386-linux-gnu (libspeechd.so, libspeechd.so.2, 
+libspeechd.so.2.6.0)...
+
+The plugin works in the current XP11 and also XP10 32 and 64 bits; XP9 will 
+follow soon.
+

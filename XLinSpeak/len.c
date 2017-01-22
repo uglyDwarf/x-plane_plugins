@@ -1,0 +1,771 @@
+/**************************************************************
+Read instruction (x86) to determine its length
+**************************************************************/
+
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+
+#define IS_PREFIX 0x01
+#define IS_OP_SIZE_OVERRIDE 0x02
+#define IS_ADDR_SIZE_OVERRIDE 0x04
+
+typedef struct{
+  uint8_t modrm_mask;
+  uint8_t modrm_val;
+  int imm[2];
+  int addr[2];
+} t_modrm_variants;
+
+typedef struct{
+  //bit field
+  int prefix;
+  bool last;
+  bool modrm;
+  t_modrm_variants *variants;
+} t_instr_info;
+
+t_modrm_variants no_modrm[] = {{0x00, 0x00, {0, 0}, {0, 0}}};
+t_modrm_variants just_modrm[] = {{0x00, 0x00, {0, 0}, {0, 0}}};
+t_modrm_variants modrm_byte[] = {{0x00, 0x00, {1, 1}, {0, 0}}};
+t_modrm_variants modrm_dword[] = {{0x00, 0x00, {4, 2}, {0, 0}}};
+t_modrm_variants no_modrm_byte[] = {{0x00, 0x00, {1, 1}, {0, 0}}};
+t_modrm_variants no_modrm_dword[] = {{0x00, 0x00, {4, 2}, {0, 0}}};
+t_modrm_variants nomodrm_always_dword[] = {{0x00, 0x00, {4, 4}, {0, 0}}};
+t_modrm_variants nomodrm_always_word[] = {{0x00, 0x00, {2, 2}, {0, 0}}};
+t_modrm_variants nomodrm_0x9a[] = {{0x00, 0x00, {6, 4}, {0, 0}}}; 
+t_modrm_variants nomodrm_0xc8[] = {{0x00, 0x00, {3, 3}, {0, 0}}}; 
+t_modrm_variants nomodrm_0xea[] = {{0x00, 0x00, {6, 6}, {0, 0}}}; 
+
+
+t_modrm_variants modrm_0xFF00[] = {
+  {0x38, 0x00, {0, 0}, {0, 0}},
+  {0x38, 0x08, {0, 0}, {0, 0}}
+};
+
+t_modrm_variants modrm_0xF6[] = {
+  {0x38, 0x10, {0, 0}, {0, 0}},
+  {0x38, 0x18, {0, 0}, {0, 0}},
+  {0x00, 0x00, {1, 1}, {0, 0}}
+};
+
+t_modrm_variants modrm_0xF7[] = {
+  {0x38, 0x00, {4, 2}, {0, 0}},
+  {0x38, 0x08, {4, 2}, {0, 0}},
+  {0x38, 0x10, {0, 0}, {0, 0}},
+  {0x38, 0x18, {0, 0}, {0, 0}},
+  {0x00, 0x00, {0, 0}, {0, 0}}
+};
+
+t_modrm_variants modrm_0xFE[] = {
+  {0x00, 0x00, {0, 0}, {0, 0}}
+};
+
+t_modrm_variants modrm_0xFF[] = {
+  {0x00, 0x00, {0, 0}, {0, 0}}
+};
+
+t_instr_info byte1[256] = {
+ {0x00, true, true, just_modrm}, //0x00
+ {0x00, true, true, just_modrm}, //0x01
+ {0x00, true, true, just_modrm}, //0x02
+ {0x00, true, true, just_modrm}, //0x03
+ {0x00, true, false, no_modrm_byte}, //0x04
+ {0x00, true, false, no_modrm_dword}, //0x05
+ {0x00, true, false, no_modrm}, //0x06
+ {0x00, true, false, no_modrm}, //0x07
+ {0x00, true, true, just_modrm}, //0x08
+ {0x00, true, true, just_modrm}, //0x09
+ {0x00, true, true, just_modrm}, //0x0A
+ {0x00, true, true, just_modrm}, //0x0B
+ {0x00, true, false, no_modrm_byte}, //0x0C
+ {0x00, true, false, no_modrm_dword}, //0x0D
+ {0x00, true, false, no_modrm}, //0x0E
+ {0x00, false, false, no_modrm}, //0x0F
+
+ {0x00, true, true, just_modrm}, //0x10
+ {0x00, true, true, just_modrm}, //0x11
+ {0x00, true, true, just_modrm}, //0x12
+ {0x00, true, true, just_modrm}, //0x13
+ {0x00, true, false, no_modrm_byte}, //0x14
+ {0x00, true, false, no_modrm_dword}, //0x15
+ {0x00, true, false, no_modrm}, //0x16
+ {0x00, true, false, no_modrm}, //0x17
+ {0x00, true, true, just_modrm}, //0x18
+ {0x00, true, true, just_modrm}, //0x19
+ {0x00, true, true, just_modrm}, //0x1A
+ {0x00, true, true, just_modrm}, //0x1B
+ {0x00, true, false, no_modrm_byte}, //0x1C
+ {0x00, true, false, no_modrm_dword}, //0x1D
+ {0x00, true, false, no_modrm}, //0x1E
+ {0x00, true, false, no_modrm}, //0x1F
+
+ {0x00, true, true, just_modrm}, //0x20
+ {0x00, true, true, just_modrm}, //0x21
+ {0x00, true, true, just_modrm}, //0x22
+ {0x00, true, true, just_modrm}, //0x23
+ {0x00, true, false, no_modrm_byte}, //0x24
+ {0x00, true, false, no_modrm_dword}, //0x25
+ {0x01, false, false, no_modrm}, //0x26
+ {0x00, true, false, no_modrm}, //0x27
+ {0x00, true, true, just_modrm}, //0x28
+ {0x00, true, true, just_modrm}, //0x29
+ {0x00, true, true, just_modrm}, //0x2A
+ {0x00, true, true, just_modrm}, //0x2B
+ {0x00, true, false, no_modrm_byte}, //0x2C
+ {0x00, true, false, no_modrm_dword}, //0x2D
+ {0x01, false, false, no_modrm}, //0x2E
+ {0x00, true, false, no_modrm}, //0x2F
+
+ {0x00, true, true, just_modrm}, //0x30
+ {0x00, true, true, just_modrm}, //0x31
+ {0x00, true, true, just_modrm}, //0x32
+ {0x00, true, true, just_modrm}, //0x33
+ {0x00, true, false, no_modrm_byte}, //0x34
+ {0x00, true, false, no_modrm_dword}, //0x35
+ {0x01, false, false, no_modrm}, //0x36
+ {0x00, true, false, no_modrm}, //0x37
+ {0x00, true, true, just_modrm}, //0x38
+ {0x00, true, true, just_modrm}, //0x39
+ {0x00, true, true, just_modrm}, //0x3A
+ {0x00, true, true, just_modrm}, //0x3B
+ {0x00, true, false, no_modrm_byte}, //0x3C
+ {0x00, true, false, no_modrm_dword}, //0x3D
+ {0x01, false, false, no_modrm}, //0x3E
+ {0x00, true, false, no_modrm}, //0x3F
+
+ {0x00, true, false, no_modrm}, //0x40
+ {0x00, true, false, no_modrm}, //0x41
+ {0x00, true, false, no_modrm}, //0x42
+ {0x00, true, false, no_modrm}, //0x43
+ {0x00, true, false, no_modrm}, //0x44
+ {0x00, true, false, no_modrm}, //0x45
+ {0x00, true, false, no_modrm}, //0x46
+ {0x00, true, false, no_modrm}, //0x47
+ {0x00, true, false, no_modrm}, //0x48
+ {0x00, true, false, no_modrm}, //0x49
+ {0x00, true, false, no_modrm}, //0x4A
+ {0x00, true, false, no_modrm}, //0x4B
+ {0x00, true, false, no_modrm}, //0x4C
+ {0x00, true, false, no_modrm}, //0x4D
+ {0x00, true, false, no_modrm}, //0x4E
+ {0x00, true, false, no_modrm}, //0x4F
+
+ {0x00, true, false, no_modrm}, //0x50
+ {0x00, true, false, no_modrm}, //0x51
+ {0x00, true, false, no_modrm}, //0x52
+ {0x00, true, false, no_modrm}, //0x53
+ {0x00, true, false, no_modrm}, //0x54
+ {0x00, true, false, no_modrm}, //0x55
+ {0x00, true, false, no_modrm}, //0x56
+ {0x00, true, false, no_modrm}, //0x57
+ {0x00, true, false, no_modrm}, //0x58
+ {0x00, true, false, no_modrm}, //0x59
+ {0x00, true, false, no_modrm}, //0x5A
+ {0x00, true, false, no_modrm}, //0x5B
+ {0x00, true, false, no_modrm}, //0x5C
+ {0x00, true, false, no_modrm}, //0x5D
+ {0x00, true, false, no_modrm}, //0x5E
+ {0x00, true, false, no_modrm}, //0x5F
+
+ {0x00, true, false, no_modrm}, //0x60
+ {0x00, true, false, no_modrm}, //0x61
+ {0x00, true, true, just_modrm}, //0x62
+ {0x00, true, true, just_modrm}, //0x63
+ {0x01, false, false, no_modrm}, //0x64
+ {0x01, false, false, no_modrm}, //0x65 GS prefix
+ {0x03, false, false, no_modrm}, //0x66 size override prefix
+ {0x05, false, false, no_modrm}, //0x67 addr override prefix 
+ {0x00, true, false, no_modrm_dword}, //0x68
+ {0x00, true, true, modrm_dword}, //0x69
+ {0x00, true, false, no_modrm_byte}, //0x6A
+ {0x00, true, true, modrm_byte}, //0x6B
+ {0x00, true, false, no_modrm}, //0x6C
+ {0x00, true, false, no_modrm}, //0x6D
+ {0x00, true, false, no_modrm}, //0x6E
+ {0x00, true, false, no_modrm}, //0x6F
+
+ {0x00, true, false, no_modrm_byte}, //0x70
+ {0x00, true, false, no_modrm_byte}, //0x71
+ {0x00, true, false, no_modrm_byte}, //0x72
+ {0x00, true, false, no_modrm_byte}, //0x73
+ {0x00, true, false, no_modrm_byte}, //0x74
+ {0x00, true, false, no_modrm_byte}, //0x75
+ {0x00, true, false, no_modrm_byte}, //0x76
+ {0x00, true, false, no_modrm_byte}, //0x77
+ {0x00, true, false, no_modrm_byte}, //0x78
+ {0x00, true, false, no_modrm_byte}, //0x79
+ {0x00, true, false, no_modrm_byte}, //0x7A
+ {0x00, true, false, no_modrm_byte}, //0x7B
+ {0x00, true, false, no_modrm_byte}, //0x7C
+ {0x00, true, false, no_modrm_byte}, //0x7D
+ {0x00, true, false, no_modrm_byte}, //0x7E
+ {0x00, true, false, no_modrm_byte}, //0x7F
+
+ {0x00, true, true, modrm_byte}, //0x80
+ {0x00, true, true, modrm_dword}, //0x81
+ {0x80, true, true, modrm_byte}, //0x82
+ {0x00, true, true, modrm_byte}, //0x83
+ {0x00, true, true, just_modrm}, //0x84
+ {0x00, true, true, just_modrm}, //0x85
+ {0x00, true, true, just_modrm}, //0x86
+ {0x00, true, true, just_modrm}, //0x87
+ {0x00, true, true, just_modrm}, //0x88
+ {0x00, true, true, just_modrm}, //0x89
+ {0x00, true, true, just_modrm}, //0x8A
+ {0x00, true, true, just_modrm}, //0x8B
+ {0x00, true, true, just_modrm}, //0x8C
+ {0x00, true, true, just_modrm}, //0x8D
+ {0x00, true, true, just_modrm}, //0x8E
+ {0x00, true, true, just_modrm}, //0x8F
+
+ {0x00, true, false, no_modrm}, //0x90
+ {0x00, true, false, no_modrm}, //0x91
+ {0x00, true, false, no_modrm}, //0x92
+ {0x00, true, false, no_modrm}, //0x93
+ {0x00, true, false, no_modrm}, //0x94
+ {0x00, true, false, no_modrm}, //0x95
+ {0x00, true, false, no_modrm}, //0x96
+ {0x00, true, false, no_modrm}, //0x97
+ {0x00, true, false, no_modrm}, //0x98
+ {0x00, true, false, no_modrm}, //0x99
+ {0x00, true, false, nomodrm_0x9a}, //0x9A
+ {0x01, false, false, no_modrm}, //0x9B
+ {0x00, true, false, no_modrm}, //0x9C
+ {0x00, true, false, no_modrm}, //0x9D
+ {0x00, true, false, no_modrm}, //0x9E
+ {0x00, true, false, no_modrm}, //0x9F
+
+ {0x00, true, false, nomodrm_always_dword}, //0xA0
+ {0x00, true, false, nomodrm_always_dword}, //0xA1
+ {0x00, true, false, nomodrm_always_dword}, //0xA2
+ {0x00, true, false, nomodrm_always_dword}, //0xA3
+ {0x00, true, false, no_modrm}, //0xA4
+ {0x00, true, false, no_modrm}, //0xA5
+ {0x00, true, false, no_modrm}, //0xA6
+ {0x00, true, false, no_modrm}, //0xA7
+ {0x00, true, false, no_modrm_byte}, //0xA8
+ {0x00, true, false, no_modrm_dword}, //0xA9
+ {0x00, true, false, no_modrm}, //0xAA
+ {0x00, true, false, no_modrm}, //0xAB
+ {0x00, true, false, no_modrm}, //0xAC
+ {0x00, true, false, no_modrm}, //0xAD
+ {0x00, true, false, no_modrm}, //0xAE
+ {0x00, true, false, no_modrm}, //0xAF
+
+ {0x00, true, false, no_modrm_byte}, //0xB0
+ {0x00, true, false, no_modrm_byte}, //0xB1
+ {0x00, true, false, no_modrm_byte}, //0xB2
+ {0x00, true, false, no_modrm_byte}, //0xB3
+ {0x00, true, false, no_modrm_byte}, //0xB4
+ {0x00, true, false, no_modrm_byte}, //0xB5
+ {0x00, true, false, no_modrm_byte}, //0xB6
+ {0x00, true, false, no_modrm_byte}, //0xB7
+ {0x00, true, false, no_modrm_dword}, //0xB8
+ {0x00, true, false, no_modrm_dword}, //0xB9
+ {0x00, true, false, no_modrm_dword}, //0xBA
+ {0x00, true, false, no_modrm_dword}, //0xBB
+ {0x00, true, false, no_modrm_dword}, //0xBC
+ {0x00, true, false, no_modrm_dword}, //0xBD
+ {0x00, true, false, no_modrm_dword}, //0xBE
+ {0x00, true, false, no_modrm_dword}, //0xBF
+
+ {0x00, true, true, modrm_byte}, //0xC0
+ {0x00, true, true, modrm_byte}, //0xC1
+ {0x00, true, false, nomodrm_always_word}, //0xC2
+ {0x00, true, false, no_modrm}, //0xC3
+ {0x00, true, true, just_modrm}, //0xC4
+ {0x00, true, true, just_modrm}, //0xC5
+ {0x00, true, true, modrm_byte}, //0xC6
+ {0x00, true, true, modrm_dword}, //0xC7
+ {0x00, true, false, nomodrm_0xc8}, //0xC8
+ {0x00, true, false, no_modrm}, //0xC9
+ {0x00, true, false, nomodrm_always_word}, //0xCA
+ {0x00, true, false, no_modrm}, //0xCB
+ {0x00, true, false, no_modrm}, //0xCC
+ {0x00, true, false, no_modrm_byte}, //0xCD
+ {0x00, true, false, no_modrm}, //0xCE
+ {0x00, true, false, no_modrm}, //0xCF
+
+ {0x00, true, true, just_modrm}, //0xD0
+ {0x00, true, true, just_modrm}, //0xD1
+ {0x00, true, true, just_modrm}, //0xD2
+ {0x00, true, true, just_modrm}, //0xD3
+ {0x00, true, false, no_modrm_byte}, //0xD4
+ {0x00, true, false, no_modrm_byte}, //0xD5
+ {0x00, true, false, no_modrm}, //0xD6
+ {0x00, true, false, no_modrm}, //0xD7
+ {0x00, true, true, just_modrm}, //0xD8
+ {0x00, true, true, just_modrm}, //0xD9
+ {0x00, true, true, just_modrm}, //0xDA
+ {0x00, true, true, just_modrm}, //0xDB
+ {0x00, true, true, just_modrm}, //0xDC
+ {0x00, true, true, just_modrm}, //0xDD
+ {0x00, true, true, just_modrm}, //0xDE
+ {0x00, true, true, just_modrm}, //0xDF
+
+ {0x00, true, false, no_modrm_byte}, //0xE0
+ {0x00, true, false, no_modrm_byte}, //0xE1
+ {0x00, true, false, no_modrm_byte}, //0xE2
+ {0x00, true, false, no_modrm_byte}, //0xE3
+ {0x00, true, false, no_modrm_byte}, //0xE4
+ {0x00, true, false, no_modrm_byte}, //0xE5
+ {0x00, true, false, no_modrm_byte}, //0xE6
+ {0x00, true, false, no_modrm_byte}, //0xE7
+ {0x00, true, false, nomodrm_always_dword}, //0xE8
+ {0x00, true, false, nomodrm_always_dword}, //0xE9
+ {0x00, true, false, nomodrm_0xea}, //0xEA
+ {0x00, true, false, no_modrm_byte}, //0xEB
+ {0x00, true, false, no_modrm}, //0xEC
+ {0x00, true, false, no_modrm}, //0xED
+ {0x00, true, false, no_modrm}, //0xEE
+ {0x00, true, false, no_modrm}, //0xEF
+
+ {0x01, false, false, no_modrm}, //0xF0
+ {0x00, true, false, no_modrm}, //0xF1
+ {0x01, false, false, no_modrm}, //0xF2
+ {0x01, false, false, no_modrm}, //0xF3
+ {0x00, true, false, no_modrm}, //0xF4
+ {0x00, true, false, no_modrm}, //0xF5
+ {0x80, true, true, modrm_0xF6}, //0xF6
+ {0x00, true, true, modrm_0xF7}, //0xF7
+ {0x00, true, false, no_modrm}, //0xF8
+ {0x00, true, false, no_modrm}, //0xF9
+ {0x00, true, false, no_modrm}, //0xFA
+ {0x00, true, false, no_modrm}, //0xFB
+ {0x00, true, false, no_modrm}, //0xFC
+ {0x00, true, false, no_modrm}, //0xFD
+ {0x00, true, true, modrm_0xFE}, //0xFE
+ {0x00, true, true, modrm_0xFF}  //0xFF
+};
+
+t_instr_info byte2[256] = {
+  {0x00, true, true, just_modrm}, //0x0F 0x00
+ {0x00, true, false, no_modrm}, //0x0F 0x01
+ {0x00, true, false, no_modrm}, //0x0F 0x02
+ {0x00, true, false, no_modrm}, //0x0F 0x03
+ {0x00, true, false, no_modrm}, //0x0F 0x04
+ {0x00, true, false, no_modrm}, //0x0F 0x05
+ {0x00, true, false, no_modrm}, //0x0F 0x06
+ {0x00, true, false, no_modrm}, //0x0F 0x07
+ {0x00, true, false, no_modrm}, //0x0F 0x08
+ {0x00, true, false, no_modrm}, //0x0F 0x09
+ {0x00, true, false, no_modrm}, //0x0F 0x0A
+ {0x00, true, false, no_modrm}, //0x0F 0x0B
+ {0x00, true, false, no_modrm}, //0x0F 0x0C
+ {0x00, true, false, no_modrm}, //0x0F 0x0D
+ {0x00, true, false, no_modrm}, //0x0F 0x0E
+ {0x00, true, false, no_modrm}, //0x0F 0x0F
+
+ {0x00, true, false, no_modrm}, //0x0F 0x10
+ {0x00, true, false, no_modrm}, //0x0F 0x11
+ {0x00, true, false, no_modrm}, //0x0F 0x12
+ {0x00, true, false, no_modrm}, //0x0F 0x13
+ {0x00, true, false, no_modrm}, //0x0F 0x14
+ {0x00, true, false, no_modrm}, //0x0F 0x15
+ {0x00, true, false, no_modrm}, //0x0F 0x16
+ {0x00, true, false, no_modrm}, //0x0F 0x17
+ {0x00, true, false, no_modrm}, //0x0F 0x18
+ {0x00, true, false, no_modrm}, //0x0F 0x19
+ {0x00, true, false, no_modrm}, //0x0F 0x1A
+ {0x00, true, false, no_modrm}, //0x0F 0x1B
+ {0x00, true, false, no_modrm}, //0x0F 0x1C
+ {0x00, true, false, no_modrm}, //0x0F 0x1D
+ {0x00, true, false, no_modrm}, //0x0F 0x1E
+ {0x00, true, false, no_modrm}, //0x0F 0x1F
+
+ {0x00, true, false, no_modrm}, //0x0F 0x20
+ {0x00, true, false, no_modrm}, //0x0F 0x21
+ {0x00, true, false, no_modrm}, //0x0F 0x22
+ {0x00, true, false, no_modrm}, //0x0F 0x23
+ {0x00, true, false, no_modrm}, //0x0F 0x24
+ {0x00, true, false, no_modrm}, //0x0F 0x25
+ {0x00, true, false, no_modrm}, //0x0F 0x26
+ {0x00, true, false, no_modrm}, //0x0F 0x27
+ {0x00, true, false, no_modrm}, //0x0F 0x28
+ {0x00, true, false, no_modrm}, //0x0F 0x29
+ {0x00, true, false, no_modrm}, //0x0F 0x2A
+ {0x00, true, false, no_modrm}, //0x0F 0x2B
+ {0x00, true, false, no_modrm}, //0x0F 0x2C
+ {0x00, true, false, no_modrm}, //0x0F 0x2D
+ {0x00, true, false, no_modrm}, //0x0F 0x2E
+ {0x00, true, false, no_modrm}, //0x0F 0x2F
+
+ {0x00, true, false, no_modrm}, //0x0F 0x30
+ {0x00, true, false, no_modrm}, //0x0F 0x31
+ {0x00, true, false, no_modrm}, //0x0F 0x32
+ {0x00, true, false, no_modrm}, //0x0F 0x33
+ {0x00, true, false, no_modrm}, //0x0F 0x34
+ {0x00, true, false, no_modrm}, //0x0F 0x35
+ {0x00, true, false, no_modrm}, //0x0F 0x36
+ {0x00, true, false, no_modrm}, //0x0F 0x37
+ {0x00, true, false, no_modrm}, //0x0F 0x38
+ {0x00, true, false, no_modrm}, //0x0F 0x39
+ {0x00, true, false, no_modrm}, //0x0F 0x3A
+ {0x00, true, false, no_modrm}, //0x0F 0x3B
+ {0x00, true, false, no_modrm}, //0x0F 0x3C
+ {0x00, true, false, no_modrm}, //0x0F 0x3D
+ {0x00, true, false, no_modrm}, //0x0F 0x3E
+ {0x00, true, false, no_modrm}, //0x0F 0x3F
+
+ {0x00, true, false, no_modrm}, //0x0F 0x40
+ {0x00, true, false, no_modrm}, //0x0F 0x41
+ {0x00, true, false, no_modrm}, //0x0F 0x42
+ {0x00, true, false, no_modrm}, //0x0F 0x43
+ {0x00, true, false, no_modrm}, //0x0F 0x44
+ {0x00, true, false, no_modrm}, //0x0F 0x45
+ {0x00, true, false, no_modrm}, //0x0F 0x46
+ {0x00, true, false, no_modrm}, //0x0F 0x47
+ {0x00, true, false, no_modrm}, //0x0F 0x48
+ {0x00, true, false, no_modrm}, //0x0F 0x49
+ {0x00, true, false, no_modrm}, //0x0F 0x4A
+ {0x00, true, false, no_modrm}, //0x0F 0x4B
+ {0x00, true, false, no_modrm}, //0x0F 0x4C
+ {0x00, true, false, no_modrm}, //0x0F 0x4D
+ {0x00, true, false, no_modrm}, //0x0F 0x4E
+ {0x00, true, false, no_modrm}, //0x0F 0x4F
+
+ {0x00, true, false, no_modrm}, //0x0F 0x50
+ {0x00, true, false, no_modrm}, //0x0F 0x51
+ {0x00, true, false, no_modrm}, //0x0F 0x52
+ {0x00, true, false, no_modrm}, //0x0F 0x53
+ {0x00, true, false, no_modrm}, //0x0F 0x54
+ {0x00, true, false, no_modrm}, //0x0F 0x55
+ {0x00, true, false, no_modrm}, //0x0F 0x56
+ {0x00, true, false, no_modrm}, //0x0F 0x57
+ {0x00, true, false, no_modrm}, //0x0F 0x58
+ {0x00, true, false, no_modrm}, //0x0F 0x59
+ {0x00, true, false, no_modrm}, //0x0F 0x5A
+ {0x00, true, false, no_modrm}, //0x0F 0x5B
+ {0x00, true, false, no_modrm}, //0x0F 0x5C
+ {0x00, true, false, no_modrm}, //0x0F 0x5D
+ {0x00, true, false, no_modrm}, //0x0F 0x5E
+ {0x00, true, false, no_modrm}, //0x0F 0x5F
+
+ {0x00, true, false, no_modrm}, //0x0F 0x60
+ {0x00, true, false, no_modrm}, //0x0F 0x61
+ {0x00, true, false, no_modrm}, //0x0F 0x62
+ {0x00, true, false, no_modrm}, //0x0F 0x63
+ {0x00, true, false, no_modrm}, //0x0F 0x64
+ {0x00, true, false, no_modrm}, //0x0F 0x65
+ {0x00, true, false, no_modrm}, //0x0F 0x66
+ {0x00, true, false, no_modrm}, //0x0F 0x67
+ {0x00, true, false, no_modrm}, //0x0F 0x68
+ {0x00, true, false, no_modrm}, //0x0F 0x69
+ {0x00, true, false, no_modrm}, //0x0F 0x6A
+ {0x00, true, false, no_modrm}, //0x0F 0x6B
+ {0x00, true, false, no_modrm}, //0x0F 0x6C
+ {0x00, true, false, no_modrm}, //0x0F 0x6D
+ {0x00, true, false, no_modrm}, //0x0F 0x6E
+ {0x00, true, false, no_modrm}, //0x0F 0x6F
+
+ {0x00, true, false, no_modrm}, //0x0F 0x70
+ {0x00, true, false, no_modrm}, //0x0F 0x71
+ {0x00, true, false, no_modrm}, //0x0F 0x72
+ {0x00, true, false, no_modrm}, //0x0F 0x73
+ {0x00, true, false, no_modrm}, //0x0F 0x74
+ {0x00, true, false, no_modrm}, //0x0F 0x75
+ {0x00, true, false, no_modrm}, //0x0F 0x76
+ {0x00, true, false, no_modrm}, //0x0F 0x77
+ {0x00, true, false, no_modrm}, //0x0F 0x78
+ {0x00, true, false, no_modrm}, //0x0F 0x79
+ {0x00, true, false, no_modrm}, //0x0F 0x7A
+ {0x00, true, false, no_modrm}, //0x0F 0x7B
+ {0x00, true, false, no_modrm}, //0x0F 0x7C
+ {0x00, true, false, no_modrm}, //0x0F 0x7D
+ {0x00, true, false, no_modrm}, //0x0F 0x7E
+ {0x00, true, false, no_modrm}, //0x0F 0x7F
+
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x80
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x81
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x82
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x83
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x84
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x85
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x86
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x87
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x88
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x89
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x8A
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x8B
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x8C
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x8D
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x8E
+  {0x00, true, false, no_modrm_dword}, //0x0F 0x8F
+
+  {0x00, true, true, just_modrm}, //0x0F 0x90
+  {0x00, true, true, just_modrm}, //0x0F 0x91
+  {0x00, true, true, just_modrm}, //0x0F 0x92
+  {0x00, true, true, just_modrm}, //0x0F 0x93
+  {0x00, true, true, just_modrm}, //0x0F 0x94
+  {0x00, true, true, just_modrm}, //0x0F 0x95
+  {0x00, true, true, just_modrm}, //0x0F 0x96
+  {0x00, true, true, just_modrm}, //0x0F 0x97
+  {0x00, true, true, just_modrm}, //0x0F 0x98
+  {0x00, true, true, just_modrm}, //0x0F 0x99
+  {0x00, true, true, just_modrm}, //0x0F 0x9A
+  {0x00, true, true, just_modrm}, //0x0F 0x9B
+  {0x00, true, true, just_modrm}, //0x0F 0x9C
+  {0x00, true, true, just_modrm}, //0x0F 0x9D
+  {0x00, true, true, just_modrm}, //0x0F 0x9E
+  {0x00, true, true, just_modrm}, //0x0F 0x9F
+
+  {0x00, true, false, no_modrm}, //0x0F 0xA0
+  {0x00, true, false, no_modrm}, //0x0F 0xA1
+  {0x00, true, false, no_modrm}, //0x0F 0xA2
+  {0x00, true, true, just_modrm}, //0x0F 0xA3
+  {0x00, true, true, modrm_byte}, //0x0F 0xA4
+  {0x00, true, true, just_modrm}, //0x0F 0xA5
+  {0x00, true, false, no_modrm}, //0x0F 0xA6
+  {0x00, true, false, no_modrm}, //0x0F 0xA7
+  {0x00, true, false, no_modrm}, //0x0F 0xA8
+  {0x00, true, false, no_modrm}, //0x0F 0xA9
+  {0x00, true, false, no_modrm}, //0x0F 0xAA
+ {0x00, true, true, just_modrm}, //0x0F 0xAB
+ {0x00, true, true, modrm_byte}, //0x0F 0xAC
+ {0x00, true, true, just_modrm}, //0x0F 0xAD
+ {0x00, true, false, no_modrm}, //0x0F 0xAE
+ {0x00, true, true, just_modrm}, //0x0F 0xAF
+
+ {0x00, true, false, no_modrm}, //0x0F 0xB0
+ {0x00, true, false, no_modrm}, //0x0F 0xB1
+ {0x00, true, false, no_modrm}, //0x0F 0xB2
+ {0x00, true, false, no_modrm}, //0x0F 0xB3
+ {0x00, true, false, no_modrm}, //0x0F 0xB4
+ {0x00, true, false, no_modrm}, //0x0F 0xB5
+ {0x00, true, false, no_modrm}, //0x0F 0xB6
+ {0x00, true, false, no_modrm}, //0x0F 0xB7
+ {0x00, true, false, no_modrm}, //0x0F 0xB8
+ {0x00, true, false, no_modrm}, //0x0F 0xB9
+ {0x00, true, false, no_modrm}, //0x0F 0xBA
+ {0x00, true, false, no_modrm}, //0x0F 0xBB
+ {0x00, true, false, no_modrm}, //0x0F 0xBC
+ {0x00, true, false, no_modrm}, //0x0F 0xBD
+ {0x00, true, false, no_modrm}, //0x0F 0xBE
+ {0x00, true, false, no_modrm}, //0x0F 0xBF
+
+ {0x00, true, false, no_modrm}, //0x0F 0xC0
+ {0x00, true, false, no_modrm}, //0x0F 0xC1
+ {0x00, true, false, no_modrm}, //0x0F 0xC2
+ {0x00, true, false, no_modrm}, //0x0F 0xC3
+ {0x00, true, false, no_modrm}, //0x0F 0xC4
+ {0x00, true, false, no_modrm}, //0x0F 0xC5
+ {0x00, true, false, no_modrm}, //0x0F 0xC6
+ {0x00, true, false, no_modrm}, //0x0F 0xC7
+ {0x00, true, false, no_modrm}, //0x0F 0xC8
+ {0x00, true, false, no_modrm}, //0x0F 0xC9
+ {0x00, true, false, no_modrm}, //0x0F 0xCA
+ {0x00, true, false, no_modrm}, //0x0F 0xCB
+ {0x00, true, false, no_modrm}, //0x0F 0xCC
+ {0x00, true, false, no_modrm}, //0x0F 0xCD
+ {0x00, true, false, no_modrm}, //0x0F 0xCE
+ {0x00, true, false, no_modrm}, //0x0F 0xCF
+
+ {0x00, true, false, no_modrm}, //0x0F 0xD0
+ {0x00, true, false, no_modrm}, //0x0F 0xD1
+ {0x00, true, false, no_modrm}, //0x0F 0xD2
+ {0x00, true, false, no_modrm}, //0x0F 0xD3
+ {0x00, true, false, no_modrm}, //0x0F 0xD4
+ {0x00, true, false, no_modrm}, //0x0F 0xD5
+ {0x00, true, false, no_modrm}, //0x0F 0xD6
+ {0x00, true, false, no_modrm}, //0x0F 0xD7
+ {0x00, true, false, no_modrm}, //0x0F 0xD8
+ {0x00, true, false, no_modrm}, //0x0F 0xD9
+ {0x00, true, false, no_modrm}, //0x0F 0xDA
+ {0x00, true, false, no_modrm}, //0x0F 0xDB
+ {0x00, true, false, no_modrm}, //0x0F 0xDC
+ {0x00, true, false, no_modrm}, //0x0F 0xDD
+ {0x00, true, false, no_modrm}, //0x0F 0xDE
+ {0x00, true, false, no_modrm}, //0x0F 0xDF
+
+ {0x00, true, false, no_modrm}, //0x0F 0xE0
+ {0x00, true, false, no_modrm}, //0x0F 0xE1
+ {0x00, true, false, no_modrm}, //0x0F 0xE2
+ {0x00, true, false, no_modrm}, //0x0F 0xE3
+ {0x00, true, false, no_modrm}, //0x0F 0xE4
+ {0x00, true, false, no_modrm}, //0x0F 0xE5
+ {0x00, true, false, no_modrm}, //0x0F 0xE6
+ {0x00, true, false, no_modrm}, //0x0F 0xE7
+ {0x00, true, false, no_modrm}, //0x0F 0xE8
+ {0x00, true, false, no_modrm}, //0x0F 0xE9
+ {0x00, true, false, no_modrm}, //0x0F 0xEA
+ {0x00, true, false, no_modrm}, //0x0F 0xEB
+ {0x00, true, false, no_modrm}, //0x0F 0xEC
+ {0x00, true, false, no_modrm}, //0x0F 0xED
+ {0x00, true, false, no_modrm}, //0x0F 0xEE
+ {0x00, true, false, no_modrm}, //0x0F 0xEF
+
+ {0x00, true, false, no_modrm}, //0x0F 0xF0
+ {0x00, true, false, no_modrm}, //0x0F 0xF1
+ {0x00, true, false, no_modrm}, //0x0F 0xF2
+ {0x00, true, false, no_modrm}, //0x0F 0xF3
+ {0x00, true, false, no_modrm}, //0x0F 0xF4
+ {0x00, true, false, no_modrm}, //0x0F 0xF5
+ {0x00, true, false, no_modrm}, //0x0F 0xF6
+ {0x00, true, false, no_modrm}, //0x0F 0xF7
+ {0x00, true, false, no_modrm}, //0x0F 0xF8
+ {0x00, true, false, no_modrm}, //0x0F 0xF9
+ {0x00, true, false, no_modrm}, //0x0F 0xFA
+ {0x00, true, false, no_modrm}, //0x0F 0xFB
+ {0x00, true, false, no_modrm}, //0x0F 0xFC
+ {0x00, true, false, no_modrm}, //0x0F 0xFD
+ {0x00, true, false, no_modrm}, //0x0F 0xFE
+ {0x00, true, false, no_modrm}, //0x0F 0xFF
+};
+
+
+t_instr_info *opcodes[] = {
+  byte1, byte2
+};
+
+
+
+FILE *f;
+
+bool get_byte(FILE *f, uint8_t *byte)
+{
+  return fread(byte, 1, 1, f) == 1;
+}
+
+/*
+Modes: 
+  -prefix
+  -opcode
+  -RM
+  -SIB
+  -displacement
+  -immediate
+*/
+
+int read_instruction32(uint8_t *ptr)
+{
+  uint8_t *cur = ptr;
+  bool op_size_override = false;
+  bool addr_size_override = false;
+  bool get_modrm = false;
+  bool get_sib = false;
+  int displacement = 0;
+  int imm = 0;
+  int addr = 0;
+  int mod = 0, rm = 0;
+  int opcode_byte = 0;
+  t_instr_info *info;
+  t_modrm_variants *var_info;
+
+  while(1){
+    info = &(opcodes[opcode_byte][*cur]);
+    ++cur;
+    if(!(info -> prefix & IS_PREFIX)){
+      opcode_byte += 1;
+    }else{
+      if(info->prefix & IS_ADDR_SIZE_OVERRIDE){
+        addr_size_override = true;
+      }else if(info->prefix & IS_OP_SIZE_OVERRIDE){
+        op_size_override = true;
+      }
+    }
+    if(info->last){
+      get_modrm = info->modrm;
+
+      var_info = info->variants;
+      if(get_modrm){
+        while((*cur & var_info->modrm_mask) != var_info->modrm_val){
+          ++var_info;
+        }
+      }
+
+      imm += op_size_override ? var_info->imm[1] : var_info->imm[0];
+      addr += addr_size_override ? var_info->addr[1] : var_info->addr[0];
+      break;
+    }
+  }
+
+  // mod reg  rm
+  //  xx xxx xxx
+  if(get_modrm){
+    //not interested in the reg operand
+    mod = *cur >> 6;
+    rm  = *cur & 0x07;
+    printf("    Modrm: %02X\n", *cur);
+    ++cur;
+    if(addr_size_override){
+      //16 bit ModR/M
+      if((mod == 0x00) && (rm == 0x06)){
+        displacement = 2;
+      }else if(mod == 0x01){
+        displacement = 1;
+      }else if(mod == 0x02){
+        displacement = 2;
+      }
+    }else{
+      //32 bit ModR/M
+      if((rm == 0x04) && (mod != 0x03)){
+        get_sib = true;
+      }
+      if((mod == 0) && (rm == 0x05)){
+        displacement = 4;
+      }
+      if(mod == 0x01){
+        displacement = 1;
+      }else if(mod == 0x02){
+        displacement = 4;
+      }
+    }
+  }
+  if(get_sib){
+    uint8_t sib = *cur;
+    ++cur;
+    if(((sib & 0x07) == 0x05) && (mod == 0x00)){
+      displacement += 4;
+    }
+  }
+  printf("    Extra: %d (displacement), %d (immediate)\n", displacement, imm);
+  cur += displacement + imm + addr;
+  return cur - ptr;
+}
+
+#ifdef TEST_LEN
+
+uint8_t buf[65536];
+
+int main(int argc, char *argv[])
+{
+  printf("  Hello World!\n");
+  if(argc != 2){
+    printf("Please provide file to check.\n");
+    return 1;
+  }
+  if((f = fopen(argv[1], "rb")) == NULL){
+    printf("Can't open input file.\n");
+    return 1;
+  }
+  
+  long len = fread(buf, 1, 65536, f);
+  if(len < 0){
+    perror("fread");
+    return 1;
+  }
+  printf("  Read %ld bytes.\n", len);
+  fclose(f);
+
+  int addr = 0;
+  int i, j;
+  while(addr < len){
+    i = read_instruction32(buf + addr);
+    if(i < 0){
+      break;
+    }
+    printf("%08X ", addr);
+    for(j = 0; j < i; ++j){
+      printf("%02X ", *(buf + addr + j));
+    }
+    printf("\n");
+    addr += i;
+  }
+
+  return 0;
+}
+
+#endif
+
