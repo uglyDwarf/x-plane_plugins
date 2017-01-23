@@ -145,7 +145,6 @@ void kuk2(void *this, char *str, int type, int i)
   speech_say(ptr);
 }
 
-
 int get_hook_space(void *ptr)
 {
   int safe;
@@ -157,13 +156,17 @@ int get_hook_space(void *ptr)
   uint8_t *current = (uint8_t *)ptr;
   int d = 0;
   int tmp;
+  int i;
   do{
     #if __x86_64__
     tmp = read_instruction64(current);
     #else
     tmp = read_instruction32(current);
     #endif
-    //xcDebug("XLinSpeak: %p: %d\n", (void*)current, tmp);
+    xcDebug("XLinSpeak: %p: %d\n", (void*)current, tmp);
+    for(i = 0; i < tmp; ++i){
+      xcDebug("XLinSpeak:   %02X\n", current[i]);
+    }
     if(tmp < 0){
       return -1;
     }
