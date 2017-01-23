@@ -2,6 +2,8 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
+#include "utils.h"
+
 #define XPLM200
 #define APL 0
 #define IBM 0
@@ -14,9 +16,9 @@ static SPDConnection *conn = NULL;
 
 bool speech_init(void)
 {
-  conn = spd_open("Kecal", "Main", "player", SPD_MODE_SINGLE);
+  conn = spd_open("XLinSpeak", "Main", "player", SPD_MODE_SINGLE);
   if(conn == NULL){
-    printf("Couldn't init speech!\n");
+    xcDebug("XLinSpeak: Couldn't init speech!\n");
     return false;
   }
   return true;
@@ -48,7 +50,7 @@ static void xcDebugInt(const char *format, va_list va)
     msg = (char *)malloc(msgSize);
   }
   if(msg == NULL){
-    XPLMDebugString("Kecal: Couldn't allocate buffer for messages!\n");
+    XPLMDebugString("XLinSpeak: Couldn't allocate buffer for messages!\n");
     return;
   }
   while(1){ /*looping once, in case of string too big*/
@@ -70,7 +72,7 @@ static void xcDebugInt(const char *format, va_list va)
     }
   }
   
-  XPLMDebugString("Kecal: Problem with debug message formatting!\n");
+  XPLMDebugString("XLinSpeak: Problem with debug message formatting!\n");
   msg = NULL;
   msgSize = 0;
   return;

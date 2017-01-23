@@ -34,15 +34,17 @@ typedef struct{
 t_modrm_variants no_modrm[] = {{0x00, 0x00, {0, 0}, {0, 0}}};
 t_modrm_variants modrm[] = {{0x00, 0x00, {0, 0}, {0, 0}}};
 t_modrm_variants modrm_byte[] = {{0x00, 0x00, {1, 1}, {0, 0}}};
+t_modrm_variants no_modrm_imm8[] = {{0x00, 0x00, {1, 1}, {0, 0}}};
+t_modrm_variants no_modrm_imm16_32[] = {{0x00, 0x00, {4, 2}, {0, 0}}};
 
 
 t_instr_info byte1[256] = {
-  {WRONG, true, false, no_modrm}, //0x00
-  {WRONG, true, false, no_modrm}, //0x01
-  {WRONG, true, false, no_modrm}, //0x02
-  {WRONG, true, false, no_modrm}, //0x03
-  {WRONG, true, false, no_modrm}, //0x04
-  {WRONG, true, false, no_modrm}, //0x05
+ {0x00, true, true, modrm}, //0x00
+ {0x00, true, true, modrm}, //0x01
+ {0x00, true, true, modrm}, //0x02
+ {0x00, true, true, modrm}, //0x03
+ {0x00, true, false, no_modrm_imm8}, //0x04
+ {0x00, true, false, no_modrm_imm16_32}, //0x05
   {WRONG, true, false, no_modrm}, //0x06
   {WRONG, true, false, no_modrm}, //0x07
   {WRONG, true, false, no_modrm}, //0x08
@@ -150,8 +152,8 @@ t_instr_info byte1[256] = {
   {WRONG, true, false, no_modrm}, //0x63
   {WRONG, true, false, no_modrm}, //0x64
   {WRONG, true, false, no_modrm}, //0x65
-  {WRONG, true, false, no_modrm}, //0x66
-  {WRONG, true, false, no_modrm}, //0x67
+  {X66, false, false, no_modrm}, //0x66
+  {X67, false, false, no_modrm}, //0x67
   {WRONG, true, false, no_modrm}, //0x68
   {WRONG, true, false, no_modrm}, //0x69
   {WRONG, true, false, no_modrm}, //0x6A
@@ -354,15 +356,14 @@ int read_instruction64(uint8_t *ptr)
     if(!(info -> prefix & IS_PREFIX)){
       opcode_byte += 1;
     }else{
-      if(info->prefix & X67){
+      if((info->prefix & ~IS_PREFIX) & X67){
         addr_size_override = true;
-      }else if(info->prefix & X66){
+      }else if((info->prefix & ~IS_PREFIX) & X66){
         op_size_override = true;
       }
     }
     if(info->last){
       get_modrm = info->modrm;
-
       var_info = info->variants;
       if(get_modrm){
         while((*cur & var_info->modrm_mask) != var_info->modrm_val){
@@ -375,14 +376,13 @@ int read_instruction64(uint8_t *ptr)
       break;
     }
   }
-
   // mod reg  rm
   //  xx xxx xxx
   if(get_modrm){
     //not interested in the reg operand
     mod = *cur >> 6;
     rm  = *cur & 0x07;
-    printf("    Modrm: %02X\n", *cur);
+    //printf("    Modrm: %02X\n", *cur);
     ++cur;
     if(addr_size_override){
       //16 bit ModR/M
@@ -415,44 +415,53 @@ int read_instruction64(uint8_t *ptr)
       displacement += 4;
     }
   }
-  printf("    Extra: %d (displacement), %d (immediate)\n", displacement, imm);
+  //printf("    Extra: %d (displacement), %d (immediate)\n", displacement, imm);
   cur += displacement + imm + addr;
   return cur - ptr;
 }
 
-/*
+#ifdef TEST_LEN
+
+uint8_t buf[65536];
+FILE *f;
+
 int main(int argc, char *argv[])
 {
-  printf("Hello World!\n");
-  uint8_t pokus[] = {0x55, 
-                     0x89, 0xd5,
-                     0x53,
-                     0x48, 0x89, 0xfb,
-                     0x48, 0x8d, 0x7f, 0x38,
-                     0x48, 0x83, 0xec, 0x08,
+  printf("  Hello World!\n");
+  if(argc != 2){
+    printf("Please provide file to check.\n");
+    return 1;
+  }
+  if((f = fopen(argv[1], "rb")) == NULL){
+    printf("Can't open input file.\n");
+    return 1;
+  }
+  
+  long len = fread(buf, 1, 65536, f);
+  if(len < 0){
+    perror("fread");
+    return 1;
+  }
+  printf("  Read %ld bytes.\n", len);
+  fclose(f);
 
-                     0x55,
-                     0x41, 0x56,
-                     0x53,
-                     0x41, 0x89, 0xd6,
-                     0x48, 0x89, 0xfb,
-                     0x48, 0x8d, 0x6b, 0x10,
-                     0x90, 0x90, 0x90, 0x90};
-                     
-  uint8_t *ptr = pokus;
-  int tmp;
-  while(ptr < pokus + sizeof(pokus)){
-    tmp = read_instruction64(ptr);
-    if(tmp < 0){
-      printf("Problem!\n");
-      return 1;
+  int addr = 0;
+  int i, j;
+  while(addr < len){
+    i = read_instruction64(buf + addr);
+    if(i < 0){
+      break;
     }
-    printf("%llX -> %d\n", (intptr_t)ptr, tmp);
-    ptr += tmp;
-  } 
+    printf("%08X ", addr);
+    for(j = 0; j < i; ++j){
+      printf("%02X ", *(buf + addr + j));
+    }
+    printf("\n");
+    addr += i;
+  }
+
   return 0;
 }
-*/
 
-
+#endif
 

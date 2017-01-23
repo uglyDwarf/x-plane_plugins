@@ -23,39 +23,39 @@ PLUGIN_API int XPluginStart(
 						char *		outSig,
 						char *		outDesc)
 {
-  strcpy(outName, "Kecal");
-  strcpy(outSig, "kec03");
+  strcpy(outName, "XLinSpeak");
+  strcpy(outSig, "XLinSpeak v04");
   strcpy(outDesc, "Speak up now");
 
-  xcDebug("Kecal: going to init tables...\n");
+  xcDebug("XLinSpeak going to init tables...\n");
   if(!locate_tables()){
     xcDebug("Couldn't init tables!\n");
     return 1;
   }
-  xcDebug("Kecal: going to search for functions...\n");
+  xcDebug("XLinSpeak going to search for functions...\n");
   if(!find_functions(ptrs, sizeof(ptrs) / sizeof(ptrs[0]))){
-    xcDebug("Search for functions unsuccessful!\n");
+    xcDebug("XLinSpeak Search for functions unsuccessful!\n");
   }
 
-  printf("Addr: %p\n", (void *)(intptr_t)ptrs[1].address);
+  xcDebug("XLinSpeak Addr: %p\n", (void *)(intptr_t)ptrs[1].address);
 
-  xcDebug("Kecal: Going to init speech.\n");
+  xcDebug("XLinSpeak Going to init speech.\n");
   if(!speech_init()){
-    xcDebug("Kecal: Speech not ready!\n");
+    xcDebug("XLinSpeak Speech not ready!\n");
     //speech_test();
     return 1;
   }
-  xcDebug("Kecal: Speech OK, now hooks.\n");
+  xcDebug("XLinSpeak Speech OK, now hooks.\n");
   unsigned int i;
   for(i = 0; i < sizeof(ptrs)/sizeof(ptrs[0]); ++i){
     if(ptrs[i].address == 0){
       continue;
     }
-    xcDebug("Kecal: Hook%ud: Addr 0x%llX Hook proc %d.\n", i, ptrs[i].address, ptrs[i].hook);
+    xcDebug("XLinSpeak Hook%ud: Addr 0x%llX Hook proc %d.\n", i, ptrs[i].address, ptrs[i].hook);
     if(hook((void *)((intptr_t)ptrs[i].address), ptrs[i].hook)){
-      xcDebug("Kecal: Hook %d initialized.\n", i);
+      xcDebug("XLinSpeak Hook %d initialized.\n", i);
     }else{
-      xcDebug("Kecal: Hook %d unsuccessful.\n", i);
+      xcDebug("XLinSpeak Hook %d unsuccessful.\n", i);
     }
   }  
 

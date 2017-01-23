@@ -11,6 +11,7 @@ Searches current executable for given functions
 #include <string.h>
 
 #include "sec.h"
+#include "utils.h"
 
 struct commonELF_header{
   uint32_t magic; //0x464C457F ("\07fELF")
@@ -119,16 +120,16 @@ static uint8_t *read_section(FILE *f, size_t offset, size_t size)
 {
   uint8_t *ptr = (uint8_t *)malloc(size);
   if(ptr == NULL){
-    printf("Couldn't malloc %lud bytes.\n", (long unsigned int)size);
+    xcDebug("XLinSpeak: Couldn't malloc %lud bytes.\n", (long unsigned int)size);
     return NULL;
   }
   if(fseek(f, offset, SEEK_SET) != 0){
-    printf("Problem seeking to the section pos (%luX\n)\n", (long unsigned int)offset);
+    xcDebug("XLinSpeak: Problem seeking to the section pos (%luX\n)\n", (long unsigned int)offset);
     free(ptr);
     return NULL;
   }
   if(fread(ptr, 1, size, f) != size){
-    printf("Couldn't read the whole section(offset: %luX, length: %lud\n).\n", (long unsigned int)offset, (long unsigned int)size);
+    xcDebug("XLinSpeak: Couldn't read the whole section(offset: %luX, length: %lud\n).\n", (long unsigned int)offset, (long unsigned int)size);
     free(ptr);
     return NULL;
   }
@@ -146,29 +147,29 @@ static bool parse_elf(FILE *f)
   int i;
 
   if(fread(&eh, sizeof(eh), 1, f) != 1){
-    printf("Can't read common ELF header!\n");
+    xcDebug("XLinSpeak: Can't read common ELF header!\n");
     return false;
   }
 
   if(eh.bitness == 1){ //32 bit
     symbols_info.bits = 32;
     if(fread(&eh32, sizeof(eh32), 1, f) != 1){
-      printf("Can't read 32bit ELF header!\n");
+      xcDebug("XLinSpeak: Can't read 32bit ELF header!\n");
       return false;
     }
-    printf("Entry point: 0x%08X\n", eh32.entry_point);
-    printf("Flags: %08X\n", eh32.flags);
-    printf("Section headers entries: %d\n", eh32.sht_entries);
+    xcDebug("XLinSpeak: Entry point: 0x%08X\n", eh32.entry_point);
+    xcDebug("XLinSpeak: Flags: %08X\n", eh32.flags);
+    xcDebug("XLinSpeak: Section headers entries: %d\n", eh32.sht_entries);
 
     //skip over program header tables
     long anchor = eh32.section_header_table_pos;
     for(i = 0; i < eh32.sht_entries; ++i){
       fseek(f, anchor + i * eh32.sht_entry_size, SEEK_SET);
       if(fread(&sh32, sizeof(sh32), 1, f) != 1){
-        printf("Problem reading section header\n");
+        xcDebug("XLinSpeak: Problem reading section header\n");
         return false;
       }
-      //printf("Section offset: %08X\n", sh32.offset);
+      //xcDebug("XLinSpeak: Section offset: %08X\n", sh32.offset);
       switch(sh32.type){
         case SHT_SYMTAB:
           symbols_info.symbol_table = read_section(f, sh32.offset, sh32.size);
@@ -182,28 +183,28 @@ static bool parse_elf(FILE *f)
     }
   }else{ //64 bit
     if(fread(&eh64, sizeof(eh64), 1, f) != 1){
-      printf("Can't read 64bit ELF header!\n");
+      xcDebug("XLinSpeak: Can't read 64bit ELF header!\n");
       return false;
     }
     symbols_info.bits = 64;
-    printf("Entry point: 0x%08luX\n", (long unsigned int)eh64.entry_point);
-    printf("Flags: %08X\n", eh64.flags);
-    printf("Section headers entries: %d\n", eh64.sht_entries);
+    xcDebug("XLinSpeak: Entry point: 0x%08luX\n", (long unsigned int)eh64.entry_point);
+    xcDebug("XLinSpeak: Flags: %08X\n", eh64.flags);
+    xcDebug("XLinSpeak: Section headers entries: %d\n", eh64.sht_entries);
 
     //skip over program header tables
     long anchor = eh64.section_header_table_pos;
     for(i = 0; i < eh64.sht_entries; ++i){
       fseek(f, anchor + i * eh64.sht_entry_size, SEEK_SET);
       if(fread(&sh64, sizeof(sh64), 1, f) != 1){
-        printf("Problem reading section header\n");
+        xcDebug("XLinSpeak: Problem reading section header\n");
         return false;
       }
-      //printf("Section offset: %08lX\n", (long unsigned int)sh64.offset);
+      //xcDebug("XLinSpeak: Section offset: %08lX\n", (long unsigned int)sh64.offset);
       switch(sh64.type){
         case SHT_SYMTAB:
           symbols_info.symbol_table = read_section(f, sh64.offset, sh64.size);
           symbols_info.size = sh64.size;
-          printf("Symtab @ %lX\n", (long unsigned int)sh64.offset);
+          xcDebug("XLinSpeak: Symtab @ %lX\n", (long unsigned int)sh64.offset);
           break;
         case SHT_STRTAB:
           symbols_info.strings = (char *)read_section(f, sh64.offset, sh64.size);
@@ -226,11 +227,11 @@ bool locate_tables(void)
     return false;
   }
   if(!parse_elf(f)){
-    printf("Can't parse elf.\n");
+    xcDebug("XLinSpeak: Can't parse elf.\n");
     return false;
   }
   if((symbols_info.symbol_table== NULL) || (symbols_info.strings == NULL)){
-    printf("Problem loading tables.\n");
+    xcDebug("XLinSpeak: Problem loading tables.\n");
     return false;
   }
   return true;
@@ -258,9 +259,9 @@ struct symbol64{
 
 bool find_functions(struct function_ptrs *ptrs, int funcs)
 {
-  printf("%d functions to check.\n", funcs);
+  xcDebug("XLinSpeak: %d functions to check.\n", funcs);
   if((symbols_info.symbol_table == NULL) || (symbols_info.strings == NULL)){
-    printf("Load tables first.\n");
+    xcDebug("XLinSpeak: Load tables first.\n");
     return false;
   }
   long i;
@@ -268,14 +269,14 @@ bool find_functions(struct function_ptrs *ptrs, int funcs)
   if(symbols_info.bits == 32){
     struct symbol32 *sym_ptr = (struct symbol32 *) (symbols_info.symbol_table);
     long records = symbols_info.size / sizeof(struct symbol32);
-    //printf("Size: %lud, len: %lud, rec: %ld\n", (long unsigned int)symbols_info.size, (long unsigned int)sizeof(struct symbol32), records);
+    //xcDebug("XLinSpeak: Size: %lud, len: %lud, rec: %ld\n", (long unsigned int)symbols_info.size, (long unsigned int)sizeof(struct symbol32), records);
     for(i = 0; i < records; ++i){
       if((sym_ptr[i].name != 0) && ((sym_ptr[i].info & 0x0f) == ST_FUNC) && (sym_ptr[i].size > 0)){
         char *name = sym_ptr[i].name + symbols_info.strings;
         for(j = 0; j < funcs; ++j){
           if((ptrs[j].address == 0) && (strcmp(name, ptrs[j].name) == 0)){
             ptrs[j].address = (uint64_t)sym_ptr[i].value;
-            printf("Symbol %s -> %08X\n", name, sym_ptr[i].value);
+            xcDebug("XLinSpeak: Symbol %s -> %08X\n", name, sym_ptr[i].value);
           }
         }
       }
@@ -283,15 +284,15 @@ bool find_functions(struct function_ptrs *ptrs, int funcs)
   }else{
     struct symbol64 *sym_ptr = (struct symbol64 *) (symbols_info.symbol_table);
     long records = symbols_info.size / sizeof(struct symbol64);
-    //printf("Size: %lud, len: %lud, rec: %ld\n", (long unsigned int)symbols_info.size, (long unsigned int)sizeof(struct symbol64), records);
+    //xcDebug("XLinSpeak: Size: %lud, len: %lud, rec: %ld\n", (long unsigned int)symbols_info.size, (long unsigned int)sizeof(struct symbol64), records);
     for(i = 0; i < records; ++i){
-      //printf("addr: %lX, str: %X\n", sym_ptr[i].value, sym_ptr[i].name);
+      //xcDebug("XLinSpeak: addr: %lX, str: %X\n", sym_ptr[i].value, sym_ptr[i].name);
       if((sym_ptr[i].name != 0) && ((sym_ptr[i].info & 0x0f) == ST_FUNC) && (sym_ptr[i].size > 0)){
         char *name = sym_ptr[i].name + symbols_info.strings;
         for(j = 0; j < funcs; ++j){
           if((ptrs[j].address == 0) && (strcmp(name, ptrs[j].name) == 0)){
             ptrs[j].address = (uint64_t)sym_ptr[i].value;
-            printf("Symbol %s -> %lX\n", name, (long unsigned int)sym_ptr[i].value);
+            xcDebug("XLinSpeak: Symbol %s -> %lX\n", name, (long unsigned int)sym_ptr[i].value);
           }
         }
       }
@@ -303,16 +304,16 @@ bool find_functions(struct function_ptrs *ptrs, int funcs)
 /*
 int main(int argc, char *argv[])
 {
-  printf("Hello World!\n");
+  xcDebug("XLinSpeak: Hello World!\n");
 
   if(argc != 2){
-    printf("Provide a name of file to check.\n");
+    xcDebug("XLinSpeak: Provide a name of file to check.\n");
     return 0;
   }
   char *fname = argv[1];
-  printf("Opening '%s'.\n", fname);
+  xcDebug("XLinSpeak: Opening '%s'.\n", fname);
   if((f = fopen(fname, "rb")) == NULL){
-    printf("Can't open");
+    xcDebug("XLinSpeak: Can't open\n");
   }
   parse_elf();
   return 0;

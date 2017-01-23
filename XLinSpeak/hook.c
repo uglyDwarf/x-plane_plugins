@@ -31,7 +31,8 @@ bool change_range_prot(void *addr, size_t len, bool wr_prot)
     res |= mprotect((void *)end_page, 4096, prot);
   }
   if(res != 0){
-    perror("Mprotect");
+    //perror("Mprotect");
+    xcDebug("XLinSpeak: Mprotect problem %d.", errno);
   }
   return res == 0;
 }
@@ -56,7 +57,7 @@ int hook_proc(void *proc_addr, int copy_bytes,
 
   //Make code writeable
   if(!change_range_prot(proc_addr, copy_bytes, true)){
-    printf("Can't unprotect proc range.\n");
+    xcDebug("XLinSpeak: Can't unprotect proc range.\n");
     return -1;
   }
 #if __x86_64__
@@ -95,7 +96,7 @@ int hook_proc(void *proc_addr, int copy_bytes,
   *(uint32_t *)(&proc_start[1]) = (uint32_t)hook_addr - (uint32_t)proc_start - 5;
   //Make code read only again
   if(!change_range_prot(proc_addr, 5, false)){
-    printf("Can't reprotect proc range.\n");
+    xcDebug("XLinSpeak: Can't reprotect proc range.\n");
     return -1;
   }
 
@@ -110,7 +111,7 @@ void kuk0(void *this, char **str, int dummy1, int dummy2)
   (void) this;
   (void) dummy1;
   (void) dummy2;
-  //printf("Kecal: %s\n", *str);
+  //xcDebug("XLinSpeak: %s\n", *str);
   speech_say(*str);
 }
 
@@ -121,7 +122,7 @@ void kuk1(void *this, char **str, int type, int i)
   (void) str;
   (void) type;
   (void) i;
-  //printf("Kecal: %s\n", *str);
+  //xcDebug("XLinSpeak: %s\n", *str);
   speech_say(*str);
 }
 
@@ -140,7 +141,7 @@ void kuk2(void *this, char *str, int type, int i)
   }else{
     ptr = str + 1;
   }
-  //printf("Kecal: >>>%s<<<\n", ptr);
+  //xcDebug("XLinSpeak: >>>%s<<<\n", ptr);
   speech_say(ptr);
 }
 
@@ -162,14 +163,14 @@ int get_hook_space(void *ptr)
     #else
     tmp = read_instruction32(current);
     #endif
-    //printf("%p: %d\n", (void*)current, tmp);
+    //xcDebug("XLinSpeak: %p: %d\n", (void*)current, tmp);
     if(tmp < 0){
       return -1;
     }
     d += tmp;
     current += tmp;
   }while(d < safe);
-  //printf("Safe: %d\n", d);
+  //xcDebug("XLinSpeak: Safe: %d\n", d);
   return d;
 }
 
@@ -198,7 +199,7 @@ bool hook(void *proceduura, int n)
   }
 
   if(!change_range_prot(&trampoline1, 128, true)){
-    printf("Can't unprotect buffer!\n");
+    xcDebug("XLinSpeak: Can't unprotect buffer!\n");
     return false;
   }
 

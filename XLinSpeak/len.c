@@ -687,7 +687,7 @@ int read_instruction32(uint8_t *ptr)
     //not interested in the reg operand
     mod = *cur >> 6;
     rm  = *cur & 0x07;
-    printf("    Modrm: %02X\n", *cur);
+    //printf("    Modrm: %02X\n", *cur);
     ++cur;
     if(addr_size_override){
       //16 bit ModR/M
@@ -720,7 +720,7 @@ int read_instruction32(uint8_t *ptr)
       displacement += 4;
     }
   }
-  printf("    Extra: %d (displacement), %d (immediate)\n", displacement, imm);
+  //printf("    Extra: %d (displacement), %d (immediate)\n", displacement, imm);
   cur += displacement + imm + addr;
   return cur - ptr;
 }

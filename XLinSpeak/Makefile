@@ -1,4 +1,4 @@
-.PHONY : clean all test
+.PHONY : clean all test test32 test64
 
 all : lin32.xpl lin64.xpl
 
@@ -18,7 +18,24 @@ hook_asm32.o : hook_asm32.asm
 hook_asm64.o : hook_asm64.asm
 	nasm -f elf64 -o $@ $^
 
-test : asm32.ref len32
+test : test64 test32
+
+test64 : asm64.ref len64
+	./len64 asm64.bin > dis64.ref
+	sed '/^[[:blank:]]/d;s/[[:blank:]].*$$//' dis64.ref > dis64.addr
+	sed '/^[[:blank:]]/d;s/[[:blank:]].*$$//' asm64.ref > asm64.addr
+	diff dis64.addr asm64.addr
+
+asm64.bin : asm64.asm
+	nasm -f bin -o $@ $^
+
+asm64.ref : asm64.bin
+	ndisasm -b64 $^ > $@
+
+len64 : len64.c
+	gcc -g -Wall -Wextra -o $@ -DTEST_LEN $^
+
+test32 : asm32.ref len32
 	./len32 asm32.bin > dis32.ref
 	sed '/^[[:blank:]]/d;s/[[:blank:]].*$$//' dis32.ref > dis32.addr
 	sed '/^[[:blank:]]/d;s/[[:blank:]].*$$//' asm32.ref > asm32.addr
