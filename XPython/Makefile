@@ -24,12 +24,12 @@ all_cov : main plugin.so
 
 main : LDFLAGS+= -Wl,--export-dynamic -ldl -g
 main : CPPFLAGS+= ${XPLM_CPPFLAGS} -g
-main : main.cpp chkDisplay.cpp chkGraphics.cpp chk_helper.cpp chkDataAccess.cpp
+main : main.cpp chkDisplay.cpp chkGraphics.cpp chk_helper.cpp chkDataAccess.cpp chkUtilities.cpp
 
 plugin : CFLAGS+= ${PY_CFLAGS}
 plugin : CPPFLAGS+= ${XPLM_CPPFLAGS}
 plugin : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic
-plugin : plugin.c defs.c display.c utils.c graphics.c data_access.c
+plugin : plugin.c defs.c display.c utils.c graphics.c data_access.c utilities.c
 
 plugin.so : plugin
 	cp plugin plugin.so

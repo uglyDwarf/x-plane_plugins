@@ -10,6 +10,7 @@
 
 #include "chkDisplay.h"
 #include "chkGraphics.h"
+#include "chkUtilities.h"
 
 //extern int XPluginStart(char *outName,
 //                        char *outSig,
@@ -63,6 +64,8 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  initUtilitiesModule();
+
   int res = XPluginStart(outName, outSig, outDesc);
   std::cout << "Y-Plane loaded plugin " << outName << "(" << res << ")" << std::endl;
   std::cout << "  Signature: " << outSig << std::endl;
@@ -71,6 +74,7 @@ int main(int argc, char *argv[])
 
   checkDisplayModule();
   checkGraphicsModule();
+  checkUtilitiesModule();
 
   XPluginDisable();
   XPluginEnable();

@@ -56,9 +56,9 @@ class PythonInterface:
          self.errors += 1
 
    def XPluginStart(self):
-      self.Name = ""
-      self.Sig = ""
-      self.Desc = ""
+      self.Name = "DataAccess regression test"
+      self.Sig = "DataAccessRT"
+      self.Desc = "Regression test for XPLMDataAccess module"
 
       self.getInt = self.getDatai; self.getIntRefcon = 44444444; self.intVal = 234;
       self.setInt = self.setDatai; self.setIntRefcon = 55555555;

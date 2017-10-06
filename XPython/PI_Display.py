@@ -90,9 +90,9 @@ class PythonInterface:
          self.errors += 1
 
    def XPluginStart(self):
-      self.Name = "Hello World 1"
-      self.Sig = "Signatuura"
-      self.Desc = "Popiska"
+      self.Name = "Display regression test"
+      self.Sig = "DisplayRT"
+      self.Desc = "Regression test of the XPLMDisplay module"
 
       #register drawing callback and store values to check
       self.drawCallbackFun = self.drawCallback
