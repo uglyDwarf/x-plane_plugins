@@ -4,6 +4,8 @@
 #include <iostream>
 #include "chk_helper.h"
 #include <math.h>
+#include <XPLM/XPLMDefs.h>
+#include <XPLM/XPLMDataAccess.h>
 
 class val_c{
  public:
@@ -91,4 +93,89 @@ void add_double_value(std::string name, double val)
   double_val *tmp = new double_val(val);
   values.insert(std::pair<std::string, val_c*>(name, tmp));
 }
+
+
+/*
+static int readInt(void *inRefcon)
+{
+  return *(static_cast<int *>(inRefcon));
+}
+*/
+
+template <class T> static T readVal(void *inRefcon)
+{
+  return *(static_cast<T*>(inRefcon));
+}
+
+
+static int readData(void *inRefcon, void *outValue, int inOffset, int inLength)
+{
+  std::string &str = *(static_cast<std::string *>(inRefcon));
+  size_t len = str.size();
+  if(outValue == NULL){
+    return static_cast<int>(len);
+  }
+  char *tgt = static_cast<char *>(outValue);
+  const char *src = str.c_str();
+  int i;
+  for(i = 0; i < inLength; ++i){
+    if(inOffset + i >= len){
+      break;
+    }
+    tgt[i] = src[inOffset + i];
+  }
+  return i; 
+}
+
+
+void registerROAccessor(const char*name, int &val)
+{
+  XPLMRegisterDataAccessor(name, xplmType_Int, 0, 
+    readVal<int>, NULL, 
+    NULL, NULL, 
+    NULL, NULL, 
+    NULL, NULL, 
+    NULL, NULL,
+    NULL, NULL,
+    &val, NULL);
+}
+
+void registerROAccessor(const char*name, float &val)
+{
+  XPLMRegisterDataAccessor(name, xplmType_Float, 0, 
+    NULL, NULL, 
+    readVal<float>, NULL, 
+    NULL, NULL, 
+    NULL, NULL, 
+    NULL, NULL,
+    NULL, NULL,
+    &val, NULL);
+}
+
+void registerROAccessor(const char*name, double &val)
+{
+  XPLMRegisterDataAccessor(name, xplmType_Float, 0, 
+    NULL, NULL, 
+    NULL, NULL, 
+    readVal<double>, NULL, 
+    NULL, NULL, 
+    NULL, NULL,
+    NULL, NULL,
+    &val, NULL);
+}
+
+
+void registerROAccessor(const char*name, std::string &val)
+{
+  XPLMRegisterDataAccessor(name, xplmType_Data, 0, 
+    NULL, NULL, 
+    NULL, NULL, 
+    NULL, NULL, 
+    NULL, NULL, 
+    NULL, NULL,
+    readData, NULL,
+    &val, NULL);
+}
+
+
 

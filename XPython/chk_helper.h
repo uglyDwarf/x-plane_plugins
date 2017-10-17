@@ -13,8 +13,13 @@ extern "C" {
   void add_str_value(std::string name, char *str);
   void add_int_value(std::string name, int val);
   void add_double_value(std::string name, double val);
+} //extern "C"
 
-}
+  void registerROAccessor(const char*name, int &val);
+  void registerROAccessor(const char*name, float &val);
+  void registerROAccessor(const char*name, double &val);
+  void registerROAccessor(const char*name, std::string &val);
+
 #endif
 
 #endif

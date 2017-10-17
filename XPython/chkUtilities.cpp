@@ -14,56 +14,6 @@
 #include "chk_helper.h"
 
 
-static int readInt(void *inRefcon)
-{
-  return *(static_cast<int *>(inRefcon));
-}
-
-static int readData(void *inRefcon, void *outValue, int inOffset, int inLength)
-{
-  std::string &str = *(static_cast<std::string *>(inRefcon));
-  size_t len = str.size();
-  if(outValue == NULL){
-    return static_cast<int>(len);
-  }
-  char *tgt = static_cast<char *>(outValue);
-  const char *src = str.c_str();
-  int i;
-  for(i = 0; i < inLength; ++i){
-    if(inOffset + i >= len){
-      break;
-    }
-    tgt[i] = src[inOffset + i];
-  }
-  return i; 
-}
-
-
-static void registerROAccessor(const char*name, int &val)
-{
-  XPLMRegisterDataAccessor(name, xplmType_Int, 0, 
-    readInt, NULL, 
-    NULL, NULL, 
-    NULL, NULL, 
-    NULL, NULL, 
-    NULL, NULL,
-    NULL, NULL,
-    &val, NULL);
-}
-
-static void registerROAccessor(const char*name, std::string &val)
-{
-  XPLMRegisterDataAccessor(name, xplmType_Data, 0, 
-    NULL, NULL, 
-    NULL, NULL, 
-    NULL, NULL, 
-    NULL, NULL, 
-    NULL, NULL,
-    readData, NULL,
-    &val, NULL);
-}
-
-
 static int keyType;
 static int key;
 static std::string string;

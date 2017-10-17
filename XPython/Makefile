@@ -22,14 +22,14 @@ all_cov : main plugin.so
 	llvm-cov-3.8 show ./plugin.so -instr-profile=default.profdata | c++filt -n >> coverage.txt
 
 
-main : LDFLAGS+= -Wl,--export-dynamic -ldl -g
+main : LDFLAGS+= -Wl,--export-dynamic -g
 main : CPPFLAGS+= ${XPLM_CPPFLAGS} -g
-main : main.cpp chkDisplay.cpp chkGraphics.cpp chk_helper.cpp chkDataAccess.cpp chkUtilities.cpp
+main : main.cpp chkDisplay.cpp chkGraphics.cpp chk_helper.cpp chkDataAccess.cpp chkUtilities.cpp chkScenery.cpp -ldl
 
 plugin : CFLAGS+= ${PY_CFLAGS}
 plugin : CPPFLAGS+= ${XPLM_CPPFLAGS}
-plugin : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic
-plugin : plugin.c defs.c display.c utils.c graphics.c data_access.c utilities.c
+plugin : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic -ldl
+plugin : plugin.c defs.c display.c utils.c graphics.c data_access.c utilities.c scenery.c
 
 plugin.so : plugin
 	cp plugin plugin.so
