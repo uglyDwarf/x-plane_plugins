@@ -14,9 +14,9 @@ class PythonInterface:
    
    def check(self):
       if self.errors == 0:
-         print('Utilities module check OK.')
+         print('Scenery module check OK.')
       else:
-         print('Utilities module check: {0} errors found.'.format(self.errors))
+         print('Scenery module check: {0} errors found.'.format(self.errors))
 
    def checkVal(self, prompt, got, expected):
       #print("Going to check ", prompt)
