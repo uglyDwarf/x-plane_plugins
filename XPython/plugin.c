@@ -15,6 +15,7 @@ PyMODINIT_FUNC PyInit_XPLMDataAccess(void);
 PyMODINIT_FUNC PyInit_XPLMUtilities(void);
 PyMODINIT_FUNC PyInit_XPLMScenery(void);
 PyMODINIT_FUNC PyInit_XPLMMenus(void);
+PyMODINIT_FUNC PyInit_XPLMNavigation(void);
 
 
 static PyObject *XPLMCHKHelperCheckIntFun(PyObject *self, PyObject *args)
@@ -127,6 +128,7 @@ int initPython(const char *programName){
   PyImport_AppendInittab("XPLMUtilities", PyInit_XPLMUtilities);
   PyImport_AppendInittab("XPLMScenery", PyInit_XPLMScenery);
   PyImport_AppendInittab("XPLMMenus", PyInit_XPLMMenus);
+  PyImport_AppendInittab("XPLMNavigation", PyInit_XPLMNavigation);
 
   Py_Initialize();
   if(!Py_IsInitialized()){

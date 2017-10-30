@@ -18,11 +18,17 @@ class PythonInterface:
       else:
          print('Menus module check: {0} errors found.'.format(self.errors))
 
+   def floatEq(self, a, b):
+      #needed to be able to compare higher values...
+      if abs(1 - a / b) > 1e-6:
+         return True
+      return False
+
    def checkVal(self, prompt, got, expected):
       #print("Going to check ", prompt)
       if got != None:
          if isinstance(expected, float):
-            if abs(got - expected) > 4e-5:
+            if self.floatEq(got, expected):
                print(' ** ERROR ** {0}: got {1}, expected {2}'.format(prompt, got, expected))
                self.errors += 1
          elif isinstance(expected, list) or isinstance(expected, tuple):
@@ -31,7 +37,7 @@ class PythonInterface:
                self.errors += 1
                return
             for v1, v2 in zip(got, expected):
-               if abs(v1 - v2) > 4e-5:
+               if self.floatEq(v1, v2):
                   print(' ** ERROR ** {0}: got {1}, expected {2} (|{3} - {4}| = {5})'.format(prompt, got, expected,
                         v1, v2, abs(v1-v2)))
                   self.errors += 1
