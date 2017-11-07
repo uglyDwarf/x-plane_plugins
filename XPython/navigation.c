@@ -288,7 +288,7 @@ static PyMethodDef XPLMNavigationMethods[] = {
 
 static struct PyModuleDef XPLMNavigationModule = {
   PyModuleDef_HEAD_INIT,
-  "XPLMMenus",
+  "XPLMNavigation",
   NULL,
   -1,
   XPLMNavigationMethods,

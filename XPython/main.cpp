@@ -14,6 +14,8 @@
 #include "chkScenery.h"
 #include "chkMenus.h"
 #include "chkNavigation.h"
+#include "chkPlugin.h"
+
 
 //extern int XPluginStart(char *outName,
 //                        char *outSig,
@@ -45,6 +47,11 @@ void *loadFunction(void *libHandle, const char *funcName)
   return fun;
 }
 
+void sendMessage(XPLMPluginID inFromWho, long inMessage, void* inParam)
+{
+  XPluginReceiveMessage(inFromWho, inMessage, inParam);
+}
+
 int main(int argc, char *argv[])
 {
   (void) argc;
@@ -71,12 +78,13 @@ int main(int argc, char *argv[])
   initSceneryModule();
   initMenusModule();
   initNavigationModule();
+  initPluginModule();
 
   int res = XPluginStart(outName, outSig, outDesc);
   std::cout << "Y-Plane loaded plugin " << outName << "(" << res << ")" << std::endl;
   std::cout << "  Signature: " << outSig << std::endl;
   std::cout << "  Description:" << outDesc << std::endl;
-  XPluginReceiveMessage(5, 103, (void*)333);
+  //XPluginReceiveMessage(5, 103, (void*)333);
 
   checkDisplayModule();
   checkGraphicsModule();
@@ -84,6 +92,7 @@ int main(int argc, char *argv[])
 
   XPluginDisable();
   XPluginEnable();
+  std::cout << "===============================================" << std::endl;
   XPluginStop();
   dlclose(plugin);
   return 0;

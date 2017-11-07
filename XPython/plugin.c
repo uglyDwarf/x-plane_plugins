@@ -16,6 +16,7 @@ PyMODINIT_FUNC PyInit_XPLMUtilities(void);
 PyMODINIT_FUNC PyInit_XPLMScenery(void);
 PyMODINIT_FUNC PyInit_XPLMMenus(void);
 PyMODINIT_FUNC PyInit_XPLMNavigation(void);
+PyMODINIT_FUNC PyInit_XPLMPlugin(void);
 
 
 static PyObject *XPLMCHKHelperCheckIntFun(PyObject *self, PyObject *args)
@@ -129,6 +130,7 @@ int initPython(const char *programName){
   PyImport_AppendInittab("XPLMScenery", PyInit_XPLMScenery);
   PyImport_AppendInittab("XPLMMenus", PyInit_XPLMMenus);
   PyImport_AppendInittab("XPLMNavigation", PyInit_XPLMNavigation);
+  PyImport_AppendInittab("XPLMPlugin", PyInit_XPLMPlugin);
 
   Py_Initialize();
   if(!Py_IsInitialized()){
@@ -305,9 +307,12 @@ void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, void *inParam
 {
   PyObject *pKey, *pVal;
   Py_ssize_t pos = 0;
-
+  PyObject *param = Py_None;
+  if(inParam != NULL){
+    param = (PyObject *)inParam;
+  }
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
-    PyObject_CallMethod(pVal, "XPluginReceiveMessage", "ill", inFromWho, inMessage, inParam);
+    PyObject_CallMethod(pVal, "XPluginReceiveMessage", "ilO", inFromWho, inMessage, param);
     PyObject *err = PyErr_Occurred();
     if(err){
       printf("Error occured during the XPluginReceiveMessage call:\n");

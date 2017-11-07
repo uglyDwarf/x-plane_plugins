@@ -249,7 +249,7 @@ void XPLMDestroyWindow(XPLMWindowID inWindowID)
       windowInfo *ii = (i->second);
       windowInfoList.erase(i);
       delete ii;
-      std::cout << "XPLMDestroyWindow removed window ID " << inWindowID << std::endl;
+      //std::cout << "XPLMDestroyWindow removed window ID " << inWindowID << std::endl;
       return;
     }
   }

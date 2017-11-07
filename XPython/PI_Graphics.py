@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 #
-
 from XPLMCHKHelper import *
 
 from XPLMDefs import *
@@ -130,6 +129,6 @@ class PythonInterface:
    def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
       self.checkVal('XPluginReceiveMessage: Unexpected inFromWho', inFromWho, 5)
       self.checkVal('XPluginReceiveMessage: Unexpected inMessage', inMessage, 103)
-      self.checkVal('XPluginReceiveMessage: Unexpected inParam', inParam, 333)
+      self.checkVal('XPluginReceiveMessage: Unexpected inParam', inParam[0], 42)
    
 #

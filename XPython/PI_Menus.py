@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-from XPLMCHKHelper import *
+from check_helper import *
 
 from XPLMDefs import *
 from XPLMDataAccess import *
@@ -8,69 +8,10 @@ from XPLMMenus import *
 
 import random
 
-class PythonInterface:
+class PythonInterface(checkBase):
    def __init__(self):
-      self.errors = 0
+      checkBase.__init__(self, 'Menus');
    
-   def check(self):
-      if self.errors == 0:
-         print('Menus module check OK.')
-      else:
-         print('Menus module check: {0} errors found.'.format(self.errors))
-
-   def floatEq(self, a, b):
-      #needed to be able to compare higher values...
-      if abs(1 - a / b) > 1e-6:
-         return True
-      return False
-
-   def checkVal(self, prompt, got, expected):
-      #print("Going to check ", prompt)
-      if got != None:
-         if isinstance(expected, float):
-            if self.floatEq(got, expected):
-               print(' ** ERROR ** {0}: got {1}, expected {2}'.format(prompt, got, expected))
-               self.errors += 1
-         elif isinstance(expected, list) or isinstance(expected, tuple):
-            if len(got) != len(expected):
-               print(' ** ERROR ** {0}: got {1}, expected {2}(bad length)'.format(prompt, got, expected))
-               self.errors += 1
-               return
-            for v1, v2 in zip(got, expected):
-               if self.floatEq(v1, v2):
-                  print(' ** ERROR ** {0}: got {1}, expected {2} (|{3} - {4}| = {5})'.format(prompt, got, expected,
-                        v1, v2, abs(v1-v2)))
-                  self.errors += 1
-                  return
-                  
-         else:
-            if got != expected:
-               print(' ** ERROR ** {0}: got {1}, expected {2}'.format(prompt, got, expected))
-               self.errors += 1
-         return
-      else:
-         if got != expected:
-            print(' ** ERROR ** {0}: got {1}, expected {2}'.format(prompt, got, expected))
-            self.errors += 1
-         return
-         
-      valID = prompt      
-      if isinstance(expected, int):
-         if not XPLMCHKHelperCheckInt(valID, expected):
-            print(' ** ERROR ** {0} != {1}'.format(valID, expected))
-            self.errors += 1
-      elif isinstance(expected, float):
-         if not XPLMCHKHelperCheckDouble(valID, expected):
-            print(' ** ERROR ** {0} != {1}'.format(valID, expected))
-            self.errors += 1
-      elif isinstance(expected, str):
-         if not XPLMCHKHelperCheckStr(valID, expected):
-            print(' ** ERROR ** {0} != {1}'.format(valID, expected))
-            self.errors += 1
-      else:
-         print(' ** ERROR ** Unsupported type passed to checkVal')
-         self.errors += 1
-
    def XPluginStart(self):
       self.Name = "Menus regression test"
       self.Sig = "MenusRT"
@@ -147,14 +88,6 @@ class PythonInterface:
 
 
       return
-
-   def getString(self, dataref):
-      out = []
-      res = XPLMGetDatab(dataref, out, 0, 256)
-      outStr = ""
-      for x in out:
-         outStr += chr(x)
-      return outStr
 
    def menuHandler(self, inMenuRef, inItemRef):
       inMenuRef[0] += 1
