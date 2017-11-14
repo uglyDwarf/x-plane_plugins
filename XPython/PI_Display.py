@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 #
-from XPLMCHKHelper import *
+from check_helper import *
 
 from XPLMDefs import *
 from XPLMDisplay import *
 
-class PythonInterface:
+class PythonInterface(checkBase):
    def __init__(self):
+      checkBase.__init__(self, 'Display');
       self.drawCallbackCalled = 0
       self.keySnifferCallbackCalled = 0
       self.drawWindowCalled = 0
@@ -19,75 +20,31 @@ class PythonInterface:
       self.xpluginEnableCalled = 0
       self.xpluginDisableCalled = 0
       self.xpluginMessageReceived = 0
-      self.errors = 0
    
-   def check(self):
+   def checkPrivate(self):
       if not self.drawCallbackCalled:
-         print('Error: DrawCallback was not called!')
-         self.errors += 1
+         self.error('DrawCallback was not called!')
       if not self.keySnifferCallbackCalled:
-         print('Error: KeySnifferCallback was not called!')
-         self.errors += 1
+         error('KeySnifferCallback was not called!')
       if not self.drawWindowCalled:
-         print('Error: DrawWindow was not called!')
-         self.errors += 1
+         print('DrawWindow was not called!')
       if not self.handleMouseClickCalled:
-         print('Error: HandleMouseClick was not called!')
-         self.errors += 1
+         print('HandleMouseClick was not called!')
       if not self.handleKeyCalled:
-         print('Error: HandleKey was not called!')
-         self.errors += 1
+         print('HandleKey was not called!')
       if not self.handleCursorCalled:
-         print('Error: HandleCursor was not called!')
-         self.errors += 1
+         print('HandleCursor was not called!')
       if not self.handleMouseWheelCalled:
-         print('Error: HandleMouseWheel was not called!')
-         self.errors += 1
+         print('HandleMouseWheel was not called!')
       if not self.hotkeyCallbackCalled:
          print('Error: HotkeyCallback was not called!')
-         self.errors += 1
       if not self.xpluginEnableCalled:
          print('Error: pluginEnable was not called!')
-         self.errors += 1
       if not self.xpluginDisableCalled:
          print('Error: pluginDisable was not called!')
-         self.errors += 1
       if not self.xpluginMessageReceived:
          print('Error: xpluginReceiveMessage was not called!')
-         self.errors += 1
 
-      if self.errors == 0:
-         print('Display module check OK.')
-      else:
-         print('Display module check: {0} errors found.'.format(self.errors))
-
-   def checkVal(self, prompt, got, expected):
-      if got != None:
-         if isinstance(expected, float):
-            if abs(got - expected) > 1e-6:
-               print(' ** ERROR ** {0}: got {1}, expected {2}'.format(prompt, got, expected))
-               self.errors += 1
-         else:
-            if got != expected:
-               print(' ** ERROR ** {0}: got {1}, expected {2}'.format(prompt, got, expected))
-               self.errors += 1
-         return
-      valID = prompt      
-      if isinstance(expected, int):
-         if not XPLMCHKHelperCheckInt(valID, expected):
-            print(' ** ERROR ** {0} != {1}'.format(valID, expected))
-            self.errors += 1
-      elif isinstance(expected, float):
-         if not XPLMCHKHelperCheckDouble(valID, expected):
-            print(' ** ERROR ** {0} != {1}'.format(valID, expected))
-            self.errors += 1
-      elif isinstance(expected, str):
-         if not XPLMCHKHelperCheckStr(valID, expected):
-            print(' ** ERROR ** {0} != {1}'.format(valID, expected))
-            self.errors += 1
-      else:
-         print(' ** ERROR ** Unsupported type passed to checkVal')
-         self.errors += 1
 
    def XPluginStart(self):
       self.Name = "Display regression test"
@@ -162,7 +119,7 @@ class PythonInterface:
 
       #Keyboard focus grab check
       XPLMTakeKeyboardFocus(self.winID)
-      self.checkVal('XPLMTakeKeyboardFocus:inWindowID', None, self.winID)
+      #self.checkVal('XPLMTakeKeyboardFocus:inWindowID', None, self.winID)
 
       #is window in front
       self.checkVal('XPLMIsWindowInFront', XPLMIsWindowInFront(self.winIDEx), 0)
@@ -219,6 +176,7 @@ class PythonInterface:
       for hk in self.hotkeys:
         XPLMUnregisterHotKey(self, hk)
 
+      self.checkPrivate()
       self.check()
    
    def XPluginEnable(self):
@@ -254,8 +212,8 @@ class PythonInterface:
           ((inWindowID == self.winIDEx) and (inRefcon == self.winExRefcon))):
          return True
       else:
-         print(' ** Error ** {0} unexpected windowID and refcon combination: ' + 
-               'got ({0}, {1}), expected ({2}, {3}) or ({4}, {5})'.format(
+         print((' ** Error ** {0} unexpected windowID and refcon combination: ' + 
+               'got ({1}, {2}), expected ({3}, {4}) or ({5}, {6})').format(
                 prompt, inWindowID, inRefcon, self.winID, self.winRefcon, self.winIDEx, self.winExRefcon))
          self.errors += 1
          return False

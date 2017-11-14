@@ -18,29 +18,21 @@ static intptr_t sharedCntr;
 static PyObject *XPLMFindDataRefFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 's', "inDataRefName"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  const char *inDataRefName;
+  if(!PyArg_ParseTuple(args, "s", &inDataRefName)){
     return NULL;
   }
-  char *inDataRefName = PyUnicode_AsUTF8(PySequence_GetItem(args, 0));
-
   return PyLong_FromVoidPtr(XPLMFindDataRef(inDataRefName));
 }
 
 static PyObject *XPLMCanWriteDataRefFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inDataRef"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  PyObject *dataRef;
+  if(!PyArg_ParseTuple(args, "O", &dataRef)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
+  XPLMDataRef inDataRef = PyLong_AsVoidPtr(dataRef);
   if(XPLMCanWriteDataRef(inDataRef)){
     Py_RETURN_TRUE;
   }else{
@@ -52,14 +44,11 @@ static PyObject *XPLMCanWriteDataRefFun(PyObject *self, PyObject *args)
 static PyObject *XPLMIsDataRefGoodFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inDataRef"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  PyObject *dataRef;
+  if(!PyArg_ParseTuple(args, "O", &dataRef)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
+  XPLMDataRef inDataRef = PyLong_AsVoidPtr(dataRef);
   if(XPLMIsDataRefGood(inDataRef)){
     Py_RETURN_TRUE;
   }else{
@@ -71,44 +60,34 @@ static PyObject *XPLMIsDataRefGoodFun(PyObject *self, PyObject *args)
 static PyObject *XPLMGetDataRefTypesFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inDataRef"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  PyObject *dataRef;
+  if(!PyArg_ParseTuple(args, "O", &dataRef)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
+  XPLMDataRef inDataRef = PyLong_AsVoidPtr(dataRef);
   return PyLong_FromLong(XPLMGetDataRefTypes(inDataRef));
 }
 
 static PyObject *XPLMGetDataiFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inDataRef"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  PyObject *dataRef;
+  if(!PyArg_ParseTuple(args, "O", &dataRef)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
+  XPLMDataRef inDataRef = PyLong_AsVoidPtr(dataRef);
   return PyLong_FromLong(XPLMGetDatai(inDataRef));
 }
 
 static PyObject *XPLMSetDataiFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inDataRef"},
-    {1, 'i', "inValue"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 2, paramChecks)){
+  PyObject *dataRef;
+  int inValue;
+  if(!PyArg_ParseTuple(args, "Oi", &dataRef, &inValue)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
-  int inValue = PyLong_AsLong(PySequence_GetItem(args, 1));
+  XPLMDataRef inDataRef = PyLong_AsVoidPtr(dataRef);
   XPLMSetDatai(inDataRef, inValue);
   Py_RETURN_NONE;
 }
@@ -116,57 +95,49 @@ static PyObject *XPLMSetDataiFun(PyObject *self, PyObject *args)
 static PyObject *XPLMGetDatafFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inDataRef"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  PyObject *dataRef;
+  if(!PyArg_ParseTuple(args, "O", &dataRef)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
+  XPLMDataRef inDataRef = PyLong_AsVoidPtr(dataRef);
   return PyFloat_FromDouble(XPLMGetDataf(inDataRef));
 }
 
 static PyObject *XPLMSetDatafFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  PyObject *tmp;
+  PyObject *dataRef;
   float inValue;
-  if(PyArg_ParseTuple(args, "Of", &tmp, &inValue)){
-    XPLMDataRef inDataRef = (XPLMDataRef)PyLong_AsVoidPtr(PyNumber_Long(tmp));
-    XPLMSetDataf(inDataRef, inValue);
-    Py_RETURN_NONE;
-  }else{
+  if(!PyArg_ParseTuple(args, "Of", &dataRef, &inValue)){
     return NULL;
   }
+  XPLMDataRef inDataRef = PyLong_AsVoidPtr(dataRef);
+  XPLMSetDataf(inDataRef, inValue);
+  Py_RETURN_NONE;
 }
 
 static PyObject *XPLMGetDatadFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inDataRef"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  PyObject *dataRef;
+  if(!PyArg_ParseTuple(args, "O", &dataRef)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
+  XPLMDataRef inDataRef = PyLong_AsVoidPtr(dataRef);
   return PyFloat_FromDouble(XPLMGetDatad(inDataRef));
 }
 
 static PyObject *XPLMSetDatadFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  PyObject *tmp;
+  PyObject *dataRef;
   double inValue;
-  if(PyArg_ParseTuple(args, "Od", &tmp, &inValue)){
-    XPLMDataRef inDataRef = (XPLMDataRef)PyLong_AsVoidPtr(PyNumber_Long(tmp));
-    XPLMSetDatad(inDataRef, inValue);
-    Py_RETURN_NONE;
-  }else{
+  if(!PyArg_ParseTuple(args, "Od", &dataRef, &inValue)){
     return NULL;
   }
+  XPLMDataRef inDataRef = PyLong_AsVoidPtr(dataRef);
+  XPLMSetDatad(inDataRef, inValue);
+  Py_RETURN_NONE;
 }
 
 static PyObject *XPLMGetDataviFun(PyObject *self, PyObject *args)
@@ -703,13 +674,18 @@ static void setDatab(void *inRefcon, void *inValue, int inOffset, int inCount)
 static PyObject *XPLMRegisterDataAccessorFun(PyObject *self, PyObject *args)
 {
   (void)self;
+  PyObject *pluginSelf;
+  const char *inDataName;
+  int inDataType, inIsWritable;
+  PyObject *ri, *wi, *rf, *wf, *rd, *wd, *rai, *wai, *raf, *waf, *rab, *wab, *rRef, *wRef;
+  if(!PyArg_ParseTuple(args, "OsiiOOOOOOOOOOOOOO", &pluginSelf, &inDataName, &inDataType, &inIsWritable,
+                       &ri, &wi, &rf, &wf, &rd, &wd, &rai, &wai, &raf, &waf, &rab, &wab, &rRef, &wRef)){
+    return NULL;
+  }
+
   void *refcon = (void *)accessorCntr++;
   PyObject *refconObj = PyLong_FromVoidPtr(refcon);
 
-  
-  char *inDataName = PyUnicode_AsUTF8(PySequence_GetItem(args, 1));
-  int inDataType = PyLong_AsLong(PySequence_GetItem(args, 2));
-  int inIsWritable = PyLong_AsLong(PySequence_GetItem(args, 3));
   XPLMDataRef res = XPLMRegisterDataAccessor(
                                           inDataName,
                                           inDataType,
@@ -733,7 +709,11 @@ static PyObject *XPLMRegisterDataAccessorFun(PyObject *self, PyObject *args)
 static PyObject *XPLMUnregisterDataAccessorFun(PyObject *self, PyObject *args)
 {
   (void)self;
-  PyObject *drefObj = PySequence_GetItem(args, 1);
+  PyObject *pluginSelf;
+  PyObject *drefObj;
+  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &drefObj)){
+    return NULL;
+  }
   PyObject *refconObj = PyDict_GetItem(drefDict, drefObj);
   if(refconObj == NULL){
     printf("XPLMUnregisterDataref: No such dataref registered!\n");
@@ -777,8 +757,13 @@ static void dataChanged(void *inRefcon)
 static PyObject *XPLMShareDataFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  const char *inDataName = PyUnicode_AsUTF8(PySequence_GetItem(args, 1));
-  XPLMDataTypeID inDataType = PyLong_AsLong(PySequence_GetItem(args, 2));
+  PyObject *pluginSelf;
+  const char *inDataName;
+  XPLMDataTypeID inDataType;
+  PyObject *inNotificationFunc, *inNotificationRefcon;
+  if(!PyArg_ParseTuple(args, "OsiOO", &pluginSelf, &inDataName, &inDataType, &inNotificationFunc, &inNotificationRefcon)){
+    return NULL;
+  }
   void *refcon = (void *)sharedCntr++;
   int res = XPLMShareData(inDataName, inDataType, dataChanged, refcon);
   if(res != 1){
@@ -826,7 +811,7 @@ static PyObject *XPLMUnshareDataFun(PyObject *self, PyObject *args)
   printf("Couldn't find the right shared data...\n");
   return PyLong_FromLong(0);
 }
-//TODO: check every refcon - doesn't have to be integer!!!
+
 static PyMethodDef XPLMDataAccessMethods[] = {
   {"XPLMFindDataRef", XPLMFindDataRefFun, METH_VARARGS, "Find a dataref"},
   {"XPLMCanWriteDataRef", XPLMCanWriteDataRefFun, METH_VARARGS, "Check dataref writeability"},

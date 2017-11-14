@@ -18,7 +18,7 @@ PyMODINIT_FUNC PyInit_XPLMMenus(void);
 PyMODINIT_FUNC PyInit_XPLMNavigation(void);
 PyMODINIT_FUNC PyInit_XPLMPlugin(void);
 
-
+/*
 static PyObject *XPLMCHKHelperCheckIntFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -107,6 +107,7 @@ PyMODINIT_FUNC PyInit_XPLMCHKHelper(void)
 {
   return PyModule_Create(&XPLMCHKHelperModule);
 }
+*/
 
 //should be static, don't change after Py_SetProgramName is called 
 // should be freed by PyMem_RawFree()
@@ -121,7 +122,7 @@ int initPython(const char *programName){
     return -1;
   }
   Py_SetProgramName(program);
-  PyImport_AppendInittab("XPLMCHKHelper", PyInit_XPLMCHKHelper);
+  //PyImport_AppendInittab("XPLMCHKHelper", PyInit_XPLMCHKHelper);
   PyImport_AppendInittab("XPLMDefs", PyInit_XPLMDefs);
   PyImport_AppendInittab("XPLMDisplay", PyInit_XPLMDisplay);
   PyImport_AppendInittab("XPLMGraphics", PyInit_XPLMGraphics);

@@ -1,60 +1,14 @@
 #!/usr/bin/env python3
 #
-from XPLMCHKHelper import *
+from check_helper import *
 
 from XPLMDefs import *
 from XPLMDataAccess import *
 
-class PythonInterface:
+class PythonInterface(checkBase):
    def __init__(self):
-      self.errors = 0
+      checkBase.__init__(self, 'DataAccess');
    
-   def check(self):
-      if self.errors == 0:
-         print('DataAccess module check OK.')
-      else:
-         print('DataAccess module check: {0} errors found.'.format(self.errors))
-
-   def checkVal(self, prompt, got, expected):
-      if got != None:
-         if isinstance(expected, float):
-            if abs(got - expected) > 2e-6:
-               print(' ** ERROR ** {0}: got {1}, expected {2}'.format(prompt, got, expected))
-               self.errors += 1
-         elif isinstance(expected, list):
-            if len(got) != len(expected):
-               print(' ** ERROR ** {0}: got {1}, expected {2}(bad length)'.format(prompt, got, expected))
-               self.errors += 1
-               return
-            for v1, v2 in zip(got, expected):
-               if abs(v1 - v2) > 2e-6:
-                  print(' ** ERROR ** {0}: got {1}, expected {2} (|{3} - {4}| = {5})'.format(prompt, got, expected,
-                        v1, v2, abs(v1-v2)))
-                  self.errors += 1
-                  return
-                  
-         else:
-            if got != expected:
-               print(' ** ERROR ** {0}: got {1}, expected {2}'.format(prompt, got, expected))
-               self.errors += 1
-         return
-      valID = prompt      
-      if isinstance(expected, int):
-         if not XPLMCHKHelperCheckInt(valID, expected):
-            print(' ** ERROR ** {0} != {1}'.format(valID, expected))
-            self.errors += 1
-      elif isinstance(expected, float):
-         if not XPLMCHKHelperCheckDouble(valID, expected):
-            print(' ** ERROR ** {0} != {1}'.format(valID, expected))
-            self.errors += 1
-      elif isinstance(expected, str):
-         if not XPLMCHKHelperCheckStr(valID, expected):
-            print(' ** ERROR ** {0} != {1}'.format(valID, expected))
-            self.errors += 1
-      else:
-         print(' ** ERROR ** Unsupported type passed to checkVal')
-         self.errors += 1
-
    def XPluginStart(self):
       self.Name = "DataAccess regression test"
       self.Sig = "DataAccessRT"

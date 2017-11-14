@@ -11,30 +11,22 @@
 static PyObject *XPLMSetGraphicsStateFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inEnableFog"},
-    {1, 'i', "inNumberTexUnits"},
-    {2, 'i', "inEnableLighting"},
-    {3, 'i', "inEnableAlbhaTesting"},
-    {4, 'i', "inEnableAlphaBlending"},
-    {5, 'i', "inEnableDepthTesting"},
-    {6, 'i', "inEnableDepthWriting"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 7, paramChecks)){
+
+  int inEnableFog;
+  int inNumberTexUnits;
+  int inEnableLighting;
+  int inEnableAlphaTesting;
+  int inEnableAlphaBlending;
+  int inEnableDepthTesting;
+  int inEnableDepthWriting;
+
+  if(!PyArg_ParseTuple(args, "iiiiiii", &inEnableFog, &inNumberTexUnits, &inEnableLighting, &inEnableAlphaTesting,
+                                        &inEnableAlphaBlending, &inEnableDepthTesting, &inEnableDepthWriting)){
     return NULL;
   }
 
-  int inEnableFog = PyLong_AsLong(PySequence_GetItem(args, 0));
-  int inNumberTexUnits = PyLong_AsLong(PySequence_GetItem(args, 1));
-  int inEnableLighting = PyLong_AsLong(PySequence_GetItem(args, 2));
-  int inEnableAlbhaTesting = PyLong_AsLong(PySequence_GetItem(args, 3));
-  int inEnableAlphaBlending = PyLong_AsLong(PySequence_GetItem(args, 4));
-  int inEnableDepthTesting = PyLong_AsLong(PySequence_GetItem(args, 5));
-  int inEnableDepthWriting = PyLong_AsLong(PySequence_GetItem(args, 6));
-
   XPLMSetGraphicsState(inEnableFog, inNumberTexUnits, inEnableLighting,
-                       inEnableAlbhaTesting, inEnableAlphaBlending,
+                       inEnableAlphaTesting, inEnableAlphaBlending,
                        inEnableDepthTesting, inEnableDepthWriting);
   Py_RETURN_NONE;
 } 
@@ -42,17 +34,12 @@ static PyObject *XPLMSetGraphicsStateFun(PyObject *self, PyObject *args)
 static PyObject *XPLMBindTexture2dFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inTextureNum"},
-    {1, 'i', "inTextureUnit"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 2, paramChecks)){
+  int inTextureNum;
+  int inTextureUnit;
+
+  if(!PyArg_ParseTuple(args, "ii", &inTextureNum, &inTextureUnit)){
     return NULL;
   }
-
-  int inTextureNum = PyLong_AsLong(PySequence_GetItem(args, 0));
-  int inTextureUnit = PyLong_AsLong(PySequence_GetItem(args, 1));
 
   XPLMBindTexture2d(inTextureNum, inTextureUnit); 
   Py_RETURN_NONE;
@@ -61,17 +48,12 @@ static PyObject *XPLMBindTexture2dFun(PyObject *self, PyObject *args)
 static PyObject *XPLMGenerateTextureNumbersFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'l', "outTextureIDs"},
-    {1, 'i', "inCount"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 2, paramChecks)){
+  PyObject *outTextureIDs;
+  int inCount;
+
+  if(!PyArg_ParseTuple(args, "Oi", &outTextureIDs, &inCount)){
     return NULL;
   }
-
-  PyObject *outTextureIDs = PySequence_GetItem(args, 0);
-  int inCount = PyLong_AsLong(PySequence_GetItem(args, 1));
 
   int *array = (int *)malloc(sizeof(int) * inCount);
   if(!array){
@@ -99,15 +81,10 @@ static PyObject *XPLMGenerateTextureNumbersFun(PyObject *self, PyObject *args)
 static PyObject *XPLMGetTextureFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inTexture"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  int inTexture;
+  if(!PyArg_ParseTuple(args, "i", &inTexture)){
     return NULL;
   }
-
-  int inTexture = PyLong_AsLong(PySequence_GetItem(args, 0));
 
   int tex = XPLMGetTexture(inTexture);
   return PyLong_FromLong(tex);
@@ -116,19 +93,13 @@ static PyObject *XPLMGetTextureFun(PyObject *self, PyObject *args)
 static PyObject *XPLMWorldToLocalFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'd', "inLatitude"},
-    {1, 'd', "inLongitude"},
-    {2, 'd', "inAltitude"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 3, paramChecks)){
+  double inLatitude;
+  double inLongitude;
+  double inAltitude;
+  double outX, outY, outZ;
+  if(!PyArg_ParseTuple(args, "ddd", &inLatitude, &inLongitude, &inAltitude)){
     return NULL;
   }
-  double inLatitude = PyFloat_AsDouble(PySequence_GetItem(args, 0));
-  double inLongitude = PyFloat_AsDouble(PySequence_GetItem(args, 1));
-  double inAltitude = PyFloat_AsDouble(PySequence_GetItem(args, 2));
-  double outX, outY, outZ;
   XPLMWorldToLocal(inLatitude, inLongitude, inAltitude, &outX, &outY, &outZ);
   
   PyObject *res = PyTuple_New(3);
@@ -141,19 +112,13 @@ static PyObject *XPLMWorldToLocalFun(PyObject *self, PyObject *args)
 static PyObject *XPLMLocalToWorldFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'd', "inX"},
-    {1, 'd', "inY"},
-    {2, 'd', "inZ"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 3, paramChecks)){
+  double inX;
+  double inY;
+  double inZ;
+  double outLatitude, outLongitude, outAltitude;
+  if(!PyArg_ParseTuple(args, "ddd", &inX, &inY, &inZ)){
     return NULL;
   }
-  double inX = PyFloat_AsDouble(PySequence_GetItem(args, 0));
-  double inY = PyFloat_AsDouble(PySequence_GetItem(args, 1));
-  double inZ = PyFloat_AsDouble(PySequence_GetItem(args, 2));
-  double outLatitude, outLongitude, outAltitude;
   XPLMLocalToWorld(inX, inY, inZ, &outLatitude, &outLongitude, &outAltitude);
   
   PyObject *res = PyTuple_New(3);
@@ -166,21 +131,14 @@ static PyObject *XPLMLocalToWorldFun(PyObject *self, PyObject *args)
 static PyObject *XPLMDrawTranslucentDarkBoxFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inLeft"},
-    {1, 'i', "inTop"},
-    {2, 'i', "inRight"},
-    {2, 'i', "inBottom"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 4, paramChecks)){
+  int inLeft;
+  int inTop;
+  int inRight;
+  int inBottom;
+
+  if(!PyArg_ParseTuple(args, "iiii", &inLeft, &inTop, &inRight, &inBottom)){
     return NULL;
   }
-  double inLeft = PyLong_AsLong(PySequence_GetItem(args, 0));
-  double inTop = PyLong_AsLong(PySequence_GetItem(args, 1));
-  double inRight = PyLong_AsLong(PySequence_GetItem(args, 2));
-  double inBottom = PyLong_AsLong(PySequence_GetItem(args, 3));
-
   XPLMDrawTranslucentDarkBox(inLeft, inTop, inRight, inBottom);
   Py_RETURN_NONE;
 }
@@ -188,71 +146,61 @@ static PyObject *XPLMDrawTranslucentDarkBoxFun(PyObject *self, PyObject *args)
 static PyObject *XPLMDrawStringFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'q', "inColorRGB"},
-    {1, 'i', "inXOffset"},
-    {2, 'i', "inYOffset"},
-    {3, 's', "inChar"},
-    {4, 'i', "inWordWrapWidth"},
-    {5, 'i', "inFontID"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 6, paramChecks)){
+  PyObject *rgbList;
+  int inXOffset;
+  int inYOffset;
+  const char *inCharC;
+  char *inChar;
+  PyObject *wordWrapWidthObj;
+  int wordWrapWidth;
+  int *inWordWrapWidth;
+  int inFontID;
+
+  if(!PyArg_ParseTuple(args, "OiisOi", &rgbList, &inXOffset, &inYOffset, &inCharC, &wordWrapWidthObj, &inFontID)){
     return NULL;
   }
-  PyObject *rgbList = PySequence_GetItem(args, 0);
   if(PySequence_Size(rgbList) != 3){
     PyErr_SetString(PyExc_TypeError , "inColourRGB must have 3 items");
     return NULL;
   }
-  float inColorRGB[3] = {PyFloat_AsDouble(PySequence_GetItem(rgbList, 0)),
+  float inColorRGB[3] = {PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(rgbList, 0))),
                          PyFloat_AsDouble(PySequence_GetItem(rgbList, 1)),
                          PyFloat_AsDouble(PySequence_GetItem(rgbList, 2))};
-  
-  int inXOffset = PyLong_AsLong(PySequence_GetItem(args, 1));
-  int inYOffset = PyLong_AsLong(PySequence_GetItem(args, 2));
-  char *inChar = PyUnicode_AsUTF8(PySequence_GetItem(args, 3));
-  int inWordWrapWidth = PyLong_AsLong(PySequence_GetItem(args, 4));
-  int inFontID = PyLong_AsLong(PySequence_GetItem(args, 5));
-
-  XPLMDrawString(inColorRGB, inXOffset, inYOffset, inChar, &inWordWrapWidth, inFontID);
-
+  if(wordWrapWidthObj == Py_None){
+    inWordWrapWidth = NULL;
+  }else{
+    inWordWrapWidth = &wordWrapWidth;
+    wordWrapWidth = PyLong_AsLong(PyNumber_Long(wordWrapWidthObj));
+  }
+  inChar = strdup(inCharC);
+  XPLMDrawString(inColorRGB, inXOffset, inYOffset, inChar, inWordWrapWidth, inFontID);
+  free(inChar);
   Py_RETURN_NONE;
 }
 
 static PyObject *XPLMDrawNumberFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'q', "inColorRGB"},
-    {1, 'i', "inXOffset"},
-    {2, 'i', "inYOffset"},
-    {3, 'n', "inValue"},
-    {4, 'i', "inDigits"},
-    {5, 'i', "inDecimals"},
-    {6, 'i', "inShowSign"},
-    {7, 'i', "inFontID"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 8, paramChecks)){
+  PyObject *rgbList;
+  int inXOffset;
+  int inYOffset;
+  double inValue;
+  int inDigits;
+  int inDecimals;
+  int inShowSign;
+  int inFontID;
+
+  if(!PyArg_ParseTuple(args, "Oiidiiii", &rgbList, &inXOffset, &inYOffset, &inValue,
+                       &inDigits, &inDecimals, &inShowSign, &inFontID)){
     return NULL;
   }
-  PyObject *rgbList = PySequence_GetItem(args, 0);
   if(PySequence_Size(rgbList) != 3){
     PyErr_SetString(PyExc_TypeError , "inColourRGB must have 3 items");
     return NULL;
   }
-  float inColorRGB[3] = {PyFloat_AsDouble(PySequence_GetItem(rgbList, 0)),
+  float inColorRGB[3] = {PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(rgbList, 0))),
                          PyFloat_AsDouble(PySequence_GetItem(rgbList, 1)),
                          PyFloat_AsDouble(PySequence_GetItem(rgbList, 2))};
-  
-  int inXOffset = PyLong_AsLong(PySequence_GetItem(args, 1));
-  int inYOffset = PyLong_AsLong(PySequence_GetItem(args, 2));
-  double inValue = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(args, 3)));
-  int inDigits = PyLong_AsLong(PySequence_GetItem(args, 4));
-  int inDecimals = PyLong_AsLong(PySequence_GetItem(args, 5));
-  int inShowSign = PyLong_AsLong(PySequence_GetItem(args, 6));
-  int inFontID = PyLong_AsLong(PySequence_GetItem(args, 7));
 
   XPLMDrawNumber(inColorRGB, inXOffset, inYOffset, inValue, inDigits, inDecimals, inShowSign, inFontID);
 
@@ -262,24 +210,24 @@ static PyObject *XPLMDrawNumberFun(PyObject *self, PyObject *args)
 static PyObject *XPLMGetFontDimensionsFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inFontID"},
-    {1, 'l', "outCharWidth"},
-    {2, 'l', "outCharHeight"},
-    {3, 'l', "outDigitsOnly"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 4, paramChecks)){
+  int inFontID;
+  PyObject *charWidth, *charHeight, *digitsOnly;
+  if(!PyArg_ParseTuple(args, "iOOO", &inFontID, &charWidth, &charHeight, &digitsOnly)){
     return NULL;
   }
-  int inFontID = PyLong_AsLong(PySequence_GetItem(args, 0));
 
   int outCharWidth, outCharHeight, outDigitsOnly;
 
   XPLMGetFontDimensions(inFontID, &outCharWidth, &outCharHeight, &outDigitsOnly);
-  PyList_Insert(PySequence_GetItem(args, 1), 0, PyLong_FromLong(outCharWidth));
-  PyList_Insert(PySequence_GetItem(args, 2), 0, PyLong_FromLong(outCharHeight));
-  PyList_Insert(PySequence_GetItem(args, 3), 0, PyLong_FromLong(outDigitsOnly));
+  if(PyList_Check(charWidth)){
+    PyList_Append(charWidth, PyLong_FromLong(outCharWidth));
+  }
+  if(PyList_Check(charHeight)){
+    PyList_Append(charHeight, PyLong_FromLong(outCharHeight));
+  }
+  if(PyList_Check(digitsOnly)){
+    PyList_Append(digitsOnly, PyLong_FromLong(outDigitsOnly));
+  }
 
   Py_RETURN_NONE;
 }
@@ -287,18 +235,13 @@ static PyObject *XPLMGetFontDimensionsFun(PyObject *self, PyObject *args)
 static PyObject *XPLMMeasureStringFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inFontID"},
-    {1, 's', "inChar"},
-    {2, 'i', "inNumChars"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 3, paramChecks)){
+  int inFontID;
+  char *inChar;
+  int inNumChars;
+
+  if(!PyArg_ParseTuple(args, "isi", &inFontID, &inChar, &inNumChars)){
     return NULL;
   }
-  int inFontID = PyLong_AsLong(PySequence_GetItem(args, 0));
-  char *inChar = PyUnicode_AsUTF8(PySequence_GetItem(args, 1));
-  int inNumChars = PyLong_AsLong(PySequence_GetItem(args, 2));
   
   return PyFloat_FromDouble(XPLMMeasureString(inFontID, inChar, inNumChars));
 }

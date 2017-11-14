@@ -7,7 +7,7 @@
 #include <XPLM/XPLMDisplay.h>
 #include "utils.h"
 
-static PyObject *drawCallbackDict;
+static PyObject *drawCallbackDict, *drawCallbackIDDict;
 static intptr_t drawCallbackCntr;
 static PyObject *keySniffCallbackDict;
 static intptr_t keySniffCallbackCntr;
@@ -25,37 +25,25 @@ static PyObject *XPLMRegisterDrawCallbackFun(PyObject *self, PyObject *args)
 //PyObject *inCallback, PyObject *inPhase, PyObject *inWantsBefore, PyObject *inRefcon)
 {
   (void) self;
-
-  paramCheck_t paramChecks[] = {
-    {1, 'f', "inCallback"},
-    {2, 'i', "inPhase"},
-    {3, 'i', "inWantsBefore"},
-    {4, 'i', "inRefcon"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 5, paramChecks)){
+  PyObject *pluginSelf;
+  PyObject *callback;
+  int inPhase;
+  int inWantsBefore;
+  PyObject *refcon;
+  if(!PyArg_ParseTuple(args, "OOiiO", &pluginSelf, &callback, &inPhase, &inWantsBefore, &refcon)){
     return NULL;
   }
-
   PyObject *idx = PyLong_FromLong(++drawCallbackCntr);
   if(!idx){
     PyErr_SetString(PyExc_RuntimeError ,"Couldn't create long.\n");
     return NULL;
   }
-  PyObject *pSelf = PyTuple_GetItem(args, 0);
-  PyObject *pCallback = PyTuple_GetItem(args, 1);
-  PyObject *pPhase = PyTuple_GetItem(args, 2);
-  PyObject *pWantsBefore = PyTuple_GetItem(args, 3);
-  PyObject *pRefCon = PyTuple_GetItem(args, 4);
 
-  PyObject *cbkArgs = Py_BuildValue("(OOOOO)", pSelf, pCallback, pPhase, pWantsBefore, pRefCon);
+  PyDict_SetItem(drawCallbackDict, idx, args);
+  PyDict_SetItem(drawCallbackIDDict, refcon, idx);
 
-  PyDict_SetItem(drawCallbackDict, idx, cbkArgs);
   Py_DECREF(idx);
-  Py_DECREF(cbkArgs);
-  long wantsBefore = PyLong_AsLong(pWantsBefore);
-  long phase = PyLong_AsLong(pPhase);
-  int res = XPLMRegisterDrawCallback(XPLMDrawCallback, phase, wantsBefore, (void *)drawCallbackCntr);
+  int res = XPLMRegisterDrawCallback(XPLMDrawCallback, inPhase, inWantsBefore, (void *)drawCallbackCntr);
   if(!res){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMRegisterDrawCallback failed.\n");
     return NULL;
@@ -67,13 +55,9 @@ static PyObject *XPLMRegisterKeySnifferFun(PyObject *self, PyObject *args)
 //PyObject *inCallback, PyObject *inBeforeWindows, PyObject *inRefcon)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {1, 'f', "inCallback"},
-    {2, 'i', "inBeforeWindows"},
-    {3, 'i', "inRefcon"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 4, paramChecks)){
+  PyObject *pluginSelf, *callback, *refcon;
+  int inBeforeWindows;
+  if(!PyArg_ParseTuple(args, "OOiO", &pluginSelf, &callback, &inBeforeWindows, &refcon)){
     return NULL;
   }
 
@@ -82,18 +66,10 @@ static PyObject *XPLMRegisterKeySnifferFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_RuntimeError ,"Couldn't create long.\n");
     return NULL;
   }
-  PyObject *pSelf = PyTuple_GetItem(args, 0);
-  PyObject *pCallback = PyTuple_GetItem(args, 1);
-  PyObject *pBeforeWindows = PyTuple_GetItem(args, 2);
-  PyObject *pRefCon = PyTuple_GetItem(args, 3);
 
-  PyObject *cbkArgs = Py_BuildValue("(OOOO)", pSelf, pCallback, pBeforeWindows, pRefCon);
-
-  PyDict_SetItem(keySniffCallbackDict, idx, cbkArgs);
+  PyDict_SetItem(keySniffCallbackDict, idx, args);
   Py_DECREF(idx);
-  Py_DECREF(cbkArgs);
-  long beforeWindows = PyLong_AsLong(pBeforeWindows);
-  int res = XPLMRegisterKeySniffer(XPLMKeySnifferCallback, beforeWindows, (void *)keySniffCallbackCntr);
+  int res = XPLMRegisterKeySniffer(XPLMKeySnifferCallback, inBeforeWindows, (void *)keySniffCallbackCntr);
   if(!res){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMRegisterKeySnifferCallback failed.\n");
     return NULL;
@@ -105,75 +81,45 @@ static PyObject *XPLMRegisterKeySnifferFun(PyObject *self, PyObject *args)
 static PyObject *XPLMUnregisterDrawCallbackFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {1, 'f', "inCallback"},
-    {2, 'i', "inPhase"},
-    {3, 'i', "inWantsBefore"},
-    {4, 'i', "inRefcon"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 5, paramChecks)){
+  PyObject *pluginSelf, *callback, *refcon;
+  int inPhase, inWantsBefore;
+  if(!PyArg_ParseTuple(args, "OOiiO", &pluginSelf, &callback, &inPhase, &inWantsBefore, &refcon)){
     return NULL;
   }
-
-  PyObject *pSelf = PyTuple_GetItem(args, 0);
-  PyObject *pCallback = PyTuple_GetItem(args, 1);
-  PyObject *pPhase = PyTuple_GetItem(args, 2);
-  PyObject *pWantsBefore = PyTuple_GetItem(args, 3);
-  PyObject *pRefCon = PyTuple_GetItem(args, 4);
-  PyObject *cmpTgt = Py_BuildValue("(OOOOO)", pSelf, pCallback, pPhase, pWantsBefore, pRefCon);
-  long res = 0;// returning 0 means problem
-
-  PyObject *pKey = NULL, *pVal = NULL;
-  Py_ssize_t pos = 0;
-
-  while(PyDict_Next(drawCallbackDict, &pos, &pKey, &pVal)){
-    if(PyObject_RichCompareBool(cmpTgt, pKey, Py_EQ)){
-      if(PyDict_DelItem(drawCallbackDict, cmpTgt) == 0){
-        res = XPLMUnregisterDrawCallback(XPLMDrawCallback, PyLong_AsLong(pPhase),
-                                         PyLong_AsLong(pWantsBefore), PyLong_AsVoidPtr(pKey));
-      }
-      break;
-    }
+  PyObject *pID = PyDict_GetItem(drawCallbackIDDict, refcon);
+  if(pID == NULL){
+    PyErr_SetString(PyExc_RuntimeError ,"XPLMUnregisterDrawCallback failed to find the callback.\n");
+    return NULL;
   }
+  PyDict_DelItem(drawCallbackIDDict, refcon);
+  PyDict_DelItem(drawCallbackDict, pID);
 
+  int res = XPLMUnregisterDrawCallback(XPLMDrawCallback, inPhase,
+                                       inWantsBefore, PyLong_AsVoidPtr(pID));
   PyObject *err = PyErr_Occurred();
   if(err){
     printf("Error occured during the XPLMUnregisterDrawCallback call:\n");
     PyErr_Print();
   }
-  Py_DECREF(cmpTgt);
   return PyLong_FromLong(res);
 }
 
 static PyObject *XPLMUnregisterKeySnifferFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {1, 'f', "inCallback"},
-    {2, 'i', "inBeforeWindows"},
-    {3, 'i', "inRefcon"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 4, paramChecks)){
+  PyObject *pluginSelf, *callback, *refcon;
+  int inBeforeWindows;
+  if(!PyArg_ParseTuple(args, "OOiO", &pluginSelf, &callback, &inBeforeWindows, &refcon)){
     return NULL;
   }
-
-  PyObject *pSelf = PyTuple_GetItem(args, 0);
-  PyObject *pCallback = PyTuple_GetItem(args, 1);
-  PyObject *pBeforeWindows = PyTuple_GetItem(args, 2);
-  PyObject *pRefCon = PyTuple_GetItem(args, 3);
-  PyObject *cmpTgt = Py_BuildValue("(OOOO)", pSelf, pCallback, pBeforeWindows, pRefCon);
-  long res = 0;// returning 0 means problem
-
   PyObject *pKey = NULL, *pVal = NULL;
   Py_ssize_t pos = 0;
-
+  int res = 0;
   while(PyDict_Next(keySniffCallbackDict, &pos, &pKey, &pVal)){
-    if(PyObject_RichCompareBool(cmpTgt, pKey, Py_EQ)){
-      if(PyDict_DelItem(keySniffCallbackDict, cmpTgt) == 0){
+    if(PyObject_RichCompareBool(pVal, args, Py_EQ)){
+      if(PyDict_DelItem(keySniffCallbackDict, pKey) == 0){
         res = XPLMUnregisterKeySniffer(XPLMKeySnifferCallback, 
-                                         PyLong_AsLong(pBeforeWindows), PyLong_AsVoidPtr(pKey));
+                                         inBeforeWindows, PyLong_AsVoidPtr(pKey));
       }
       break;
     }
@@ -184,7 +130,6 @@ static PyObject *XPLMUnregisterKeySnifferFun(PyObject *self, PyObject *args)
     printf("Error occured during the XPLMUnregisterKeySnifferCallback call:\n");
     PyErr_Print();
   }
-  Py_DECREF(cmpTgt);
   return PyLong_FromLong(res);
 }
 
@@ -198,7 +143,7 @@ static void drawWindow(XPLMWindowID  inWindowID,
     printf("Unknown window passed to drawWindow (%p).\n", inWindowID);
     return;
   }
-  PyObject_CallFunction(PySequence_GetItem(pCbks, 0), "(Oi)", pID, (intptr_t)inRefcon);
+  PyObject_CallFunction(PySequence_GetItem(pCbks, 0), "(OO)", pID, inRefcon);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
@@ -219,8 +164,8 @@ static void handleKey(XPLMWindowID  inWindowID,
     printf("Unknown window passed to handleKey (%p).\n", inWindowID);
     return;
   }
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 1), "(Oiiiii)",
-                        pID, (int)inKey, inFlags, (unsigned int)inVirtualKey, (intptr_t)inRefcon, losingFocus);
+  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 1), "(OiiiOi)",
+                        pID, (int)inKey, inFlags, (unsigned int)inVirtualKey, inRefcon, losingFocus);
   Py_DECREF(oRes);
   PyObject *err = PyErr_Occurred();
   if(err){
@@ -241,7 +186,7 @@ static int handleMouseClick(XPLMWindowID     inWindowID,
     printf("Unknown window passed to handleMouseClick (%p).\n", inWindowID);
     return 1;
   }
-  PyObject *pRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 2), "(Oiiii)", pID, x, y, inMouse, (intptr_t)inRefcon);
+  PyObject *pRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 2), "(OiiiO)", pID, x, y, inMouse, inRefcon);
   PyObject *err = PyErr_Occurred();
   Py_DECREF(pID);
   if(err){
@@ -268,7 +213,7 @@ static XPLMCursorStatus handleCursor(XPLMWindowID  inWindowID,
   if((cbk == NULL) || (cbk == Py_None)){
     return 0;
   }
-  PyObject *pRes = PyObject_CallFunction(cbk, "(Oiii)", pID, x, y, (intptr_t)inRefcon);
+  PyObject *pRes = PyObject_CallFunction(cbk, "(OiiO)", pID, x, y, inRefcon);
   PyObject *err = PyErr_Occurred();
   Py_DECREF(pID);
   if(err){
@@ -298,8 +243,8 @@ static int handleMouseWheel(XPLMWindowID  inWindowID,
   if((cbk == NULL) || (cbk == Py_None)){
     return 1;
   }
-  PyObject *pRes = PyObject_CallFunction(cbk, "(Oiiiii)", 
-                                         pID, x, y, wheel, clicks, (intptr_t)inRefcon);
+  PyObject *pRes = PyObject_CallFunction(cbk, "(OiiiiO)", 
+                                         pID, x, y, wheel, clicks, inRefcon);
   PyObject *err = PyErr_Occurred();
   Py_DECREF(pID);
   if(err){
@@ -316,48 +261,30 @@ static int handleMouseWheel(XPLMWindowID  inWindowID,
 static PyObject *XPLMCreateWindowExFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  if(PyTuple_Size(args) != 2){
-    PyErr_SetString(PyExc_SyntaxError, "XPLMCreateWindowEx takes two arguments.");
+  PyObject *pluginSelf, *paramsObj;
+  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &paramsObj)){
     return NULL;
   }
-  PyObject *pParams = PySequence_GetItem(args, 1);
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "left"},
-    {1, 'i', "top"},
-    {2, 'i', "right"},
-    {3, 'i', "bottom"},
-    {4, 'i', "visible"},
-    {5, 'f', "drawWindowFunc"},
-    {6, 'f', "handleKeyFunc"}, //!!! different from XP SDK!!!
-    {7, 'f', "handleMouseClickFunc"},
-    {8, 'f', "handleCursorFunc"},
-    {9, 'f', "handleMouseWheelFunc"},
-    {10, 'i', "refcon"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(pParams, 11, paramChecks)){
-    return NULL;
-  }
-
-  PyObject *cbkTuple = PySequence_GetSlice(pParams, 5, 10);
-  if(!cbkTuple){
-    PyErr_SetString(PyExc_RuntimeError ,"XPLMCreateWindowEx couldn't create a sequence slice.\n");
-    return NULL;
-  }
-
+  
   XPLMCreateWindow_t params;
   params.structSize = sizeof(params);
-  params.left = PyLong_AsLong(PySequence_GetItem(pParams, 0));
-  params.top = PyLong_AsLong(PySequence_GetItem(pParams, 1));
-  params.right = PyLong_AsLong(PySequence_GetItem(pParams, 2));
-  params.bottom = PyLong_AsLong(PySequence_GetItem(pParams, 3));
-  params.visible = PyLong_AsLong(PySequence_GetItem(pParams, 4));
+  params.left = PyLong_AsLong(PyNumber_Long(PySequence_GetItem(paramsObj, 0)));
+  params.top = PyLong_AsLong(PyNumber_Long(PySequence_GetItem(paramsObj, 1)));
+  params.right = PyLong_AsLong(PyNumber_Long(PySequence_GetItem(paramsObj, 2)));
+  params.bottom = PyLong_AsLong(PyNumber_Long(PySequence_GetItem(paramsObj, 3)));
+  params.visible = PyLong_AsLong(PyNumber_Long(PySequence_GetItem(paramsObj, 4)));
   params.drawWindowFunc = drawWindow;
   params.handleKeyFunc = handleKey;
   params.handleMouseClickFunc = handleMouseClick;
   params.handleCursorFunc = handleCursor;
   params.handleMouseWheelFunc = handleMouseWheel;
-  params.refcon = PyLong_AsVoidPtr(PySequence_GetItem(pParams, 10));
+  params.refcon = PySequence_GetItem(paramsObj, 10);
+
+  PyObject *cbkTuple = PySequence_GetSlice(paramsObj, 5, 10);
+  if(!cbkTuple){
+    PyErr_SetString(PyExc_RuntimeError ,"XPLMCreateWindowEx couldn't create a sequence slice.\n");
+    return NULL;
+  }
 
   XPLMWindowID id = XPLMCreateWindowEx(&params);
 
@@ -370,42 +297,20 @@ static PyObject *XPLMCreateWindowExFun(PyObject *self, PyObject *args)
 static PyObject *XPLMCreateWindowFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {1, 'i', "left"},
-    {2, 'i', "top"},
-    {3, 'i', "right"},
-    {4, 'i', "bottom"},
-    {5, 'i', "visible"},
-    {6, 'f', "inDrawCallback"},
-    {7, 'f', "inKeyCallback"},
-    {8, 'f', "inMouseCallback"},
-    {9, 'i', "refcon"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 10, paramChecks)){
+  PyObject *pluginSelf, *drawCallback, *keyCallback, *mouseCallback, *refcon;
+  int left, top, right, bottom, visible;
+  if(!PyArg_ParseTuple(args, "OiiiiiOOOO", &pluginSelf, &left, &top, &right, &bottom, &visible, 
+                       &drawCallback, &keyCallback, &mouseCallback, &refcon)){
     return NULL;
   }
 
-  PyObject *cbkTuple = Py_BuildValue("OOOss", PySequence_GetItem(args, 6), PySequence_GetItem(args, 7),
-                                              PySequence_GetItem(args, 8), NULL, NULL);
+  PyObject *cbkTuple = Py_BuildValue("OOOOO", drawCallback, keyCallback, mouseCallback, Py_None, Py_None);
   if(!cbkTuple){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMCreateWindow couldn't create a tuple.\n");
     return NULL;
   }
 
-  XPLMCreateWindow_t p;
-  p.left = PyLong_AsLong(PySequence_GetItem(args, 1));
-  p.top = PyLong_AsLong(PySequence_GetItem(args, 2));
-  p.right = PyLong_AsLong(PySequence_GetItem(args, 3));
-  p.bottom = PyLong_AsLong(PySequence_GetItem(args, 4));
-  p.visible = PyLong_AsLong(PySequence_GetItem(args, 5));
-  p.drawWindowFunc = drawWindow;
-  p.handleKeyFunc = handleKey;
-  p.handleMouseClickFunc = handleMouseClick;
-  p.refcon = PyLong_AsVoidPtr(PySequence_GetItem(args, 9));
-
-  XPLMWindowID id = XPLMCreateWindow(p.left, p.top, p.right, p.bottom, p.visible, 
-                                     p.drawWindowFunc, p.handleKeyFunc, p.handleMouseClickFunc, p.refcon);
+  XPLMWindowID id = XPLMCreateWindow(left, top, right, bottom, visible, drawWindow, handleKey, handleMouseClick, refcon);
 
   PyObject *pID = PyLong_FromVoidPtr(id);
   PyDict_SetItem(windowDict, pID, cbkTuple);
@@ -416,14 +321,10 @@ static PyObject *XPLMCreateWindowFun(PyObject *self, PyObject *args)
 static PyObject *XPLMDestroyWindowFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {1, 'i', "WindowID"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 2, paramChecks)){
+  PyObject *pID, *pluginSelf;
+  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &pID)){
     return NULL;
   }
-  PyObject *pID = PySequence_GetItem(args, 1);
   int res = PyDict_DelItem(windowDict, pID);
   
   if(res == 0){
@@ -435,18 +336,17 @@ static PyObject *XPLMDestroyWindowFun(PyObject *self, PyObject *args)
 static PyObject *XPLMGetScreenSizeFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  if(PySequence_Size(args) != 2){
-    PyErr_SetString(PyExc_TypeError , "XPLMGetScreenSize expects two arguments.");
+  PyObject *wObj, *hObj;
+  if(!PyArg_ParseTuple(args, "OO", &wObj, &hObj)){
+    return NULL;
   }
   int w, h;
   XPLMGetScreenSize(&w, &h);
-  PyObject *p = PySequence_GetItem(args, 0);
-  if(PyList_Check(p)){
-    PyList_Insert(p, 0, PyLong_FromLong(w));
+  if(PyList_Check(wObj)){
+    PyList_Insert(wObj, 0, PyLong_FromLong(w));
   }
-  p = PySequence_GetItem(args, 1);
-  if(PyList_Check(p)){
-    PyList_Insert(p, 0, PyLong_FromLong(h));
+  if(PyList_Check(hObj)){
+    PyList_Insert(hObj, 0, PyLong_FromLong(h));
   }
   Py_RETURN_NONE;
 }
@@ -454,18 +354,17 @@ static PyObject *XPLMGetScreenSizeFun(PyObject *self, PyObject *args)
 static PyObject *XPLMGetMouseLocationFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  if(PySequence_Size(args) != 2){
-    PyErr_SetString(PyExc_TypeError , "XPLMGetMouseLocation expects two arguments.");
+  PyObject *xObj, *yObj;
+  if(!PyArg_ParseTuple(args, "OO", &xObj, &yObj)){
+    return NULL;
   }
   int x, y;
   XPLMGetMouseLocation(&x, &y);
-  PyObject *p = PySequence_GetItem(args, 0);
-  if(PyList_Check(p)){
-    PyList_Insert(p, 0, PyLong_FromLong(x));
+  if(PyList_Check(xObj)){
+    PyList_Insert(xObj, 0, PyLong_FromLong(x));
   }
-  p = PySequence_GetItem(args, 1);
-  if(PyList_Check(p)){
-    PyList_Insert(p, 0, PyLong_FromLong(y));
+  if(PyList_Check(yObj)){
+    PyList_Insert(yObj, 0, PyLong_FromLong(y));
   }
   Py_RETURN_NONE;
 }
@@ -473,26 +372,23 @@ static PyObject *XPLMGetMouseLocationFun(PyObject *self, PyObject *args)
 static PyObject *XPLMGetWindowGeometryFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  if(PySequence_Size(args) != 5){
-    PyErr_SetString(PyExc_TypeError , "XPLMGetWindowGeometry expects five arguments.");
+  PyObject *win, *leftObj, *topObj, *rightObj, *bottomObj;
+  if(!PyArg_ParseTuple(args, "OOOOO", &win, &leftObj, &topObj, &rightObj, &bottomObj)){
+    return NULL;
   }
   int left, top, right, bottom;
-  XPLMGetWindowGeometry(PyLong_AsVoidPtr(PySequence_GetItem(args, 0)), &left, &top, &right, &bottom);
-  PyObject *p = PySequence_GetItem(args, 1);
-  if(PyList_Check(p)){
-    PyList_Insert(p, 0, PyLong_FromLong(left));
+  XPLMGetWindowGeometry(PyLong_AsVoidPtr(win), &left, &top, &right, &bottom);
+  if(PyList_Check(leftObj)){
+    PyList_Insert(leftObj, 0, PyLong_FromLong(left));
   }
-  p = PySequence_GetItem(args, 2);
-  if(PyList_Check(p)){
-    PyList_Insert(p, 0, PyLong_FromLong(top));
+  if(PyList_Check(topObj)){
+    PyList_Insert(topObj, 0, PyLong_FromLong(top));
   }
-  p = PySequence_GetItem(args, 3);
-  if(PyList_Check(p)){
-    PyList_Insert(p, 0, PyLong_FromLong(right));
+  if(PyList_Check(rightObj)){
+    PyList_Insert(rightObj, 0, PyLong_FromLong(right));
   }
-  p = PySequence_GetItem(args, 4);
-  if(PyList_Check(p)){
-    PyList_Insert(p, 0, PyLong_FromLong(bottom));
+  if(PyList_Check(bottomObj)){
+    PyList_Insert(bottomObj, 0, PyLong_FromLong(bottom));
   }
   Py_RETURN_NONE;
 }
@@ -500,22 +396,12 @@ static PyObject *XPLMGetWindowGeometryFun(PyObject *self, PyObject *args)
 static PyObject *XPLMSetWindowGeometryFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inWindowID"},
-    {1, 'i', "inLeft"},
-    {2, 'i', "inTop"},
-    {3, 'i', "inRight"},
-    {4, 'i', "inBottom"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 5, paramChecks)){
+  PyObject *win;
+  int inLeft, inTop, inRight, inBottom;
+  if(!PyArg_ParseTuple(args, "Oiiii", &win, &inLeft, &inTop, &inRight, &inBottom)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
-  int inLeft = PyLong_AsLong(PySequence_GetItem(args, 1));
-  int inTop = PyLong_AsLong(PySequence_GetItem(args, 2));
-  int inRight = PyLong_AsLong(PySequence_GetItem(args, 3));
-  int inBottom = PyLong_AsLong(PySequence_GetItem(args, 4));
+  void *inWindowID = PyLong_AsVoidPtr(win);
   XPLMSetWindowGeometry(inWindowID, inLeft, inTop, inRight, inBottom);
   Py_RETURN_NONE;
 }
@@ -523,30 +409,23 @@ static PyObject *XPLMSetWindowGeometryFun(PyObject *self, PyObject *args)
 static PyObject *XPLMGetWindowIsVisibleFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inWindowID"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  PyObject *win;
+  if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
+  void *inWindowID = PyLong_AsVoidPtr(win);
   return PyLong_FromLong(XPLMGetWindowIsVisible(inWindowID));
 }
 
 static PyObject *XPLMSetWindowIsVisibleFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inWindowID"},
-    {1, 'i', "inIsVisible"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 2, paramChecks)){
+  PyObject *win;
+  int inIsVisible;
+  if(!PyArg_ParseTuple(args, "Oi", &win, &inIsVisible)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
-  int inIsVisible = PyLong_AsLong(PySequence_GetItem(args, 1));
+  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
   XPLMSetWindowIsVisible(inWindowID, inIsVisible);
   Py_RETURN_NONE;
 }
@@ -554,30 +433,22 @@ static PyObject *XPLMSetWindowIsVisibleFun(PyObject *self, PyObject *args)
 static PyObject *XPLMGetWindowRefConFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inWindowID"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  PyObject *win;
+  if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
-  return PyLong_FromVoidPtr(XPLMGetWindowRefCon(inWindowID));
+  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  return XPLMGetWindowRefCon(inWindowID);
 }
 
 static PyObject *XPLMSetWindowRefConFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inWindowID"},
-    {1, 'i', "inRefcon"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 2, paramChecks)){
+  PyObject *win, *inRefcon;
+  if(!PyArg_ParseTuple(args, "OO", &win, &inRefcon)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
-  void *inRefcon = PyLong_AsVoidPtr(PySequence_GetItem(args, 1));
+  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
   XPLMSetWindowRefCon(inWindowID, inRefcon);
   Py_RETURN_NONE;
 }
@@ -585,14 +456,11 @@ static PyObject *XPLMSetWindowRefConFun(PyObject *self, PyObject *args)
 static PyObject *XPLMTakeKeyboardFocusFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inWindowID"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  PyObject *win;
+  if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
+  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
   XPLMTakeKeyboardFocus(inWindowID);
   Py_RETURN_NONE;
 }
@@ -600,14 +468,11 @@ static PyObject *XPLMTakeKeyboardFocusFun(PyObject *self, PyObject *args)
 static PyObject *XPLMBringWindowToFrontFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inWindowID"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  PyObject *win;
+  if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
+  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
   XPLMBringWindowToFront(inWindowID);
   Py_RETURN_NONE;
 }
@@ -615,14 +480,11 @@ static PyObject *XPLMBringWindowToFrontFun(PyObject *self, PyObject *args)
 static PyObject *XPLMIsWindowInFrontFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inWindowID"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  PyObject *win;
+  if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
+  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
   return PyLong_FromLong(XPLMIsWindowInFront(inWindowID));
 }
 
@@ -630,9 +492,9 @@ void hotkeyCallback(void *inRefcon)
 {
   PyObject *pRefcon = PyLong_FromVoidPtr(inRefcon);
   PyObject *pCbk = PyDict_GetItem(hotkeyDict, pRefcon);
+  Py_DECREF(pRefcon);
   if(pCbk == NULL){
     printf("Unknown refcon passed to hotkeyCallback (%p).\n", inRefcon);
-    Py_DECREF(pRefcon);
     return;
   }
   PyObject_CallFunction(PySequence_GetItem(pCbk, 0), "(O)", PySequence_GetItem(pCbk, 1));
@@ -640,39 +502,29 @@ void hotkeyCallback(void *inRefcon)
   if(err){
     PyErr_Print();
   }
-  Py_DECREF(pRefcon);
 }
 
 static PyObject *XPLMRegisterHotKeyFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {1, 'i', "inVirtualKey"},
-    {2, 'i', "inFlags"},
-    {3, 's', "inDescription"},
-    {4, 'f', "inCallback"},
-    {5, 'i', "inRefcon"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 6, paramChecks)){
+  PyObject *pluginSelf, *inCallback, *refcon;
+  int inVirtualKey, inFlags;
+  const char *inDescription;
+  if(!PyArg_ParseTuple(args, "OiisOO", &pluginSelf, &inVirtualKey, &inFlags, &inDescription, &inCallback, &refcon)){
     return NULL;
   }
-  char inVirtualKey = PyLong_AsLong(PySequence_GetItem(args, 1));
-  int inFlags = PyLong_AsLong(PySequence_GetItem(args, 2));
-  char *inDescription = PyUnicode_AsUTF8(PySequence_GetItem(args, 3));
-
   PyObject *hkTuple = PySequence_GetSlice(args, 4, 6);
   if(!hkTuple){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMRegisterHotKey couldn't create a sequence slice.\n");
     return NULL;
   }
 
-  void *refcon = (void *)++hotkeyCntr;
-  PyObject *pRefcon = PyLong_FromVoidPtr(refcon);
+  void *inRefcon = (void *)++hotkeyCntr;
+  PyObject *pRefcon = PyLong_FromVoidPtr(inRefcon);
   //Store the callback and original refcon
   PyDict_SetItem(hotkeyDict, pRefcon, hkTuple);
 
-  XPLMHotKeyID id = XPLMRegisterHotKey(inVirtualKey, inFlags, inDescription, hotkeyCallback, refcon);
+  XPLMHotKeyID id = XPLMRegisterHotKey(inVirtualKey, inFlags, inDescription, hotkeyCallback, inRefcon);
   PyObject *pId = PyLong_FromVoidPtr(id);
   //Allows me to identify my unique refcon based on hotkey id 
   PyDict_SetItem(hotkeyIDDict, pId, pRefcon);
@@ -682,32 +534,25 @@ static PyObject *XPLMRegisterHotKeyFun(PyObject *self, PyObject *args)
 static PyObject *XPLMUnregisterHotKeyFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {1, 'i', "inHotKey"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 2, paramChecks)){
+  PyObject *pluginSelf, *hotKey;
+  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &hotKey)){
     return NULL;
   }
-  PyObject *pId = PySequence_GetItem(args, 1);
-  PyObject *pRefcon = PyDict_GetItem(hotkeyIDDict, pId);
+  PyObject *pRefcon = PyDict_GetItem(hotkeyIDDict, hotKey);
   if(pRefcon == NULL){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMUnregisterHotKey couldn't find hotkey ID.\n");
-    Py_DECREF(pId);
     Py_RETURN_NONE;
   }
   PyObject *pCbk = PyDict_GetItem(hotkeyDict, pRefcon);
   if(pCbk == NULL){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMUnregisterHotKey couldn't find refcon.\n");
-    Py_DECREF(pId);
     Py_DECREF(pRefcon);
     Py_RETURN_NONE;
   }
 
-  XPLMUnregisterHotKey(PyLong_AsVoidPtr(pId));
+  XPLMUnregisterHotKey(PyLong_AsVoidPtr(hotKey));
   PyDict_DelItem(hotkeyDict, pRefcon);
-  PyDict_DelItem(hotkeyIDDict, pId);
-  Py_DECREF(pId);
+  PyDict_DelItem(hotkeyIDDict, hotKey);
   Py_DECREF(pRefcon);
   Py_RETURN_NONE;
 } 
@@ -722,55 +567,43 @@ static PyObject *XPLMCountHotKeysFun(PyObject *self, PyObject *args)
 static PyObject *XPLMGetNthHotKeyFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inIndex"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 1, paramChecks)){
+  int inIndex;
+  if(!PyArg_ParseTuple(args, "i", &inIndex)){
     return NULL;
   }
-  int inIndex = (int)PyLong_AsLong(PySequence_GetItem(args, 0));
   return PyLong_FromVoidPtr(XPLMGetNthHotKey(inIndex));
 } 
 
 static PyObject *XPLMGetHotKeyInfoFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inHotKey"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 5, paramChecks)){
+  PyObject *hotKey, *virtualKey, *flags, *description, *plugin;
+  if(!PyArg_ParseTuple(args, "OOOOO", &hotKey, &virtualKey, &flags, &description, &plugin)){
     return NULL;
   }
-
-  XPLMHotKeyID inHotKey = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
+  XPLMHotKeyID inHotKey = PyLong_AsVoidPtr(hotKey);
   char outVirtualKey;
   XPLMKeyFlags outFlags;
   char outDescription[1024];
   XPLMPluginID outPlugin;
   XPLMGetHotKeyInfo(inHotKey, &outVirtualKey, &outFlags, outDescription, &outPlugin);
-  PyObject *p = PySequence_GetItem(args, 1);
-  if(PyList_Check(p)){
-    PyList_Insert(p, 0, PyLong_FromLong((unsigned int)outVirtualKey));
+  if(PyList_Check(virtualKey)){
+    PyList_Insert(virtualKey, 0, PyLong_FromLong((unsigned int)outVirtualKey));
   }
 
-  p = PySequence_GetItem(args, 2);
-  if(PyList_Check(p)){
-    PyList_Insert(p, 0, PyLong_FromLong(outFlags));
+  if(PyList_Check(flags)){
+    PyList_Insert(flags, 0, PyLong_FromLong(outFlags));
   }
 
-  PyObject *description = PyUnicode_DecodeUTF8(outDescription, strlen(outDescription), NULL);
-  if(description){
-    p = PySequence_GetItem(args, 3);
-    if(PyList_Check(p)){
-      PyList_Insert(p, 0, description);
+  PyObject *descStr = PyUnicode_DecodeUTF8(outDescription, strlen(outDescription), NULL);
+  if(descStr){
+    if(PyList_Check(description)){
+      PyList_Insert(description, 0, descStr);
     }
   }
   
-  p = PySequence_GetItem(args, 4);
-  if(PyList_Check(p)){
-    PyList_Insert(p, 0, PyLong_FromLong(outPlugin));
+  if(PyList_Check(plugin)){
+    PyList_Insert(plugin, 0, PyLong_FromLong(outPlugin));
   }
 
   Py_RETURN_NONE;
@@ -779,19 +612,14 @@ static PyObject *XPLMGetHotKeyInfoFun(PyObject *self, PyObject *args)
 static PyObject *XPLMSetHotKeyCombinationFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 'i', "inHotKey"},
-    {1, 'i', "inVirtualKey"},
-    {2, 'i', "inFlags"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 3, paramChecks)){
+  PyObject *hotKey;
+  int inVirtualKey;
+  int inFlags;
+  if(!PyArg_ParseTuple(args, "Oii", &hotKey, &inVirtualKey, &inFlags)){
     return NULL;
   }
-  void *inHotkey = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
-  char inVirtualKey = PyLong_AsLong(PySequence_GetItem(args, 1));
-  int inFlags = PyLong_AsLong(PySequence_GetItem(args, 2));
-  XPLMSetHotKeyCombination(inHotkey, inVirtualKey, inFlags);
+  void *inHotkey = PyLong_AsVoidPtr(hotKey);
+  XPLMSetHotKeyCombination(inHotkey, (char)inVirtualKey, inFlags);
   Py_RETURN_NONE;
 } 
 
@@ -841,6 +669,9 @@ PyMODINIT_FUNC
 PyInit_XPLMDisplay(void)
 {
   if(!(drawCallbackDict = PyDict_New())){
+    return NULL;
+  }
+  if(!(drawCallbackIDDict = PyDict_New())){
     return NULL;
   }
   if(!(keySniffCallbackDict = PyDict_New())){
@@ -907,7 +738,6 @@ int XPLMDrawCallback(XPLMDrawingPhase inPhase, int inIsBefore, void *inRefcon)
 {
   PyObject *pl = NULL, *fun = NULL, *refcon = NULL, *pRes = NULL, *err = NULL;
   int res = 1;
-
   pl = PyLong_FromVoidPtr(inRefcon);
   if(pl == NULL){
     printf("Can't create PyLong.");

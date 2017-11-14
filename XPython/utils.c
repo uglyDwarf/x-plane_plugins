@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "utils.h"
 
-
+/*
 bool checkParams(PyObject *args, Py_ssize_t len, paramCheck_t *checks){
   bool paramsOK = true;
   paramCheck_t *check = checks;
@@ -82,5 +82,5 @@ bool checkParams(PyObject *args, Py_ssize_t len, paramCheck_t *checks){
   }
   return paramsOK;
 }
-
+*/
 

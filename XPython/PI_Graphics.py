@@ -1,42 +1,20 @@
 #!/usr/bin/env python3
 #
-from XPLMCHKHelper import *
+#from XPLMCHKHelper import *
+from check_helper import *
 
 from XPLMDefs import *
 from XPLMGraphics import *
 
-class PythonInterface:
+class PythonInterface(checkBase):
    def __init__(self):
-      self.errors = 0
+      checkBase.__init__(self, 'Graphics');
       return
    def check(self):
       if self.errors == 0:
          print('Graphics module check OK.')
       else:
          print('Graphics module check: {0} errors found.'.format(self.errors))
-
-   def checkVal(self, prompt, got, expected):
-      if got != None:
-         if abs(got - expected) > 1e-6:
-            print(' ** ERROR ** {0}: got {1}, expected {2}'.format(prompt, got, expected))
-            self.errors += 1
-         return
-      valID = prompt      
-      if isinstance(expected, int):
-         if not XPLMCHKHelperCheckInt(valID, expected):
-            print(' ** ERROR ** {0} != {1}'.format(valID, expected))
-            self.errors += 1
-      elif isinstance(expected, float):
-         if not XPLMCHKHelperCheckDouble(valID, expected):
-            print(' ** ERROR ** {0} != {1}'.format(valID, expected))
-            self.errors += 1
-      elif isinstance(expected, str):
-         if not XPLMCHKHelperCheckStr(valID, expected):
-            print(' ** ERROR ** {0} != {1}'.format(valID, expected))
-            self.errors += 1
-      else:
-         print(' ** ERROR ** Unsupported type passed to checkVal')
-         self.errors += 1
 
    def XPluginStart(self):
       self.Name = "XPLMGraphics module test"
