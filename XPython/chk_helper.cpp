@@ -154,7 +154,7 @@ void registerROAccessor(const char*name, float &val)
 
 void registerROAccessor(const char*name, double &val)
 {
-  XPLMRegisterDataAccessor(name, xplmType_Float, 0, 
+  XPLMRegisterDataAccessor(name, xplmType_Double, 0, 
     NULL, NULL, 
     NULL, NULL, 
     readVal<double>, NULL, 

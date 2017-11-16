@@ -10,89 +10,12 @@ class PythonInterface(checkBase):
    def __init__(self):
       checkBase.__init__(self, 'Graphics');
       return
-   def check(self):
-      if self.errors == 0:
-         print('Graphics module check OK.')
-      else:
-         print('Graphics module check: {0} errors found.'.format(self.errors))
 
    def XPluginStart(self):
       self.Name = "XPLMGraphics module test"
       self.Sig = "Graph.Sig"
       self.Desc = "Module testing the XPLMGraphics interface."
       
-      XPLMSetGraphicsState(1, 2, 3, 4, 5, 6, 7)
-      self.checkVal('XPLMSetGraphicsState:inEnableFog', None, 1)
-      self.checkVal('XPLMSetGraphicsState:inNumberTexUnits', None, 2)
-      self.checkVal('XPLMSetGraphicsState:inEnableLighting', None, 3)
-      self.checkVal('XPLMSetGraphicsState:inEnableAlphaTesting', None, 4)
-      self.checkVal('XPLMSetGraphicsState:inEnableAlphaBlending', None, 5)
-      self.checkVal('XPLMSetGraphicsState:inEnableDepthTesting', None, 6)
-      self.checkVal('XPLMSetGraphicsState:inEnableDepthWriting', None, 7)
-
-      XPLMBindTexture2d(8, 9)
-      self.checkVal('XPLMBindTexture2d:inTextureNum', None, 8)
-      self.checkVal('XPLMBindTexture2d:inTextureUnit', None, 9)
-
-      self.textures = []
-      XPLMGenerateTextureNumbers(self.textures, 10)
-      for i, tex in enumerate(self.textures):
-         #print('{0}, {1}'.format(i, tex))
-         self.checkVal('XPLMGenerateTextureNumbers', tex, i + 42)
-            
-
-      newTex = XPLMGetTexture(11)
-      self.checkVal('XPLMGetTexture: ', newTex, 53)
-
-      x, y, z = XPLMWorldToLocal(123, 456, 789)
-      self.checkVal('XPLMWorldToLocal.X: ', x, 124.23)
-      self.checkVal('XPLMWorldToLocal.Y: ', y, 458.34)
-      self.checkVal('XPLMWorldToLocal.Z: ', z, 792.45)
-     
-      lat, lon, alt = XPLMLocalToWorld(123, 456, 789)
-      self.checkVal('XPLMLocalToWorld.lat: ', lat, 127.56)
-      self.checkVal('XPLMLocalToWorld.lon: ', lon, 461.67)
-      self.checkVal('XPLMLocalToWorld.alt: ', alt, 795.78)
-
-      XPLMDrawTranslucentDarkBox(111, 222, 333, 444)
-      self.checkVal('XPLMDrawTranslucentDarkBox:inLeft', None, 111)
-      self.checkVal('XPLMDrawTranslucentDarkBox:inTop', None, 222)
-      self.checkVal('XPLMDrawTranslucentDarkBox:inRight', None, 333)
-      self.checkVal('XPLMDrawTranslucentDarkBox:inBottom', None, 444)
-
-
-      color = 0.4, 0.5, 0.6
-      XPLMDrawString(color, 555, 666, 'XPLMDrawString', 14, xplmFont_PanelEFIS)
-      self.checkVal('XPLMDrawString:inColorRGB[0]', None, 0.4)
-      self.checkVal('XPLMDrawString:inColorRGB[1]', None, 0.5)
-      self.checkVal('XPLMDrawString:inColorRGB[2]', None, 0.6)
-      self.checkVal('XPLMDrawString:inXOffset', None, 555)
-      self.checkVal('XPLMDrawString:inYOffset', None, 666)
-      self.checkVal('XPLMDrawString:inChar', None, 'XPLMDrawString')
-      self.checkVal('XPLMDrawString:inWordWrapWidth', None, 14)
-      self.checkVal('XPLMDrawString:inFontID', None, xplmFont_PanelEFIS)
-      
-      XPLMDrawNumber(color, 777, 888, 3.141592654, 10, 4, 5, xplmFont_PanelGPS)
-      self.checkVal('XPLMDrawNumber:inColorRGB[0]', None, 0.4)
-      self.checkVal('XPLMDrawNumber:inColorRGB[1]', None, 0.5)
-      self.checkVal('XPLMDrawNumber:inColorRGB[2]', None, 0.6)
-      self.checkVal('XPLMDrawNumber:inXOffset', None, 777)
-      self.checkVal('XPLMDrawNumber:inYOffset', None, 888)
-      self.checkVal('XPLMDrawNumber:inValue', None, 3.141592654)
-      self.checkVal('XPLMDrawNumber:inDigits', None, 10)
-      self.checkVal('XPLMDrawNumber:inDecimals', None, 4)
-      self.checkVal('XPLMDrawNumber:inShowSign', None, 5)
-      self.checkVal('XPLMDrawNumber:inFontID', None, xplmFont_PanelGPS)
- 
-      w = []; h = []; d = []
-      XPLMGetFontDimensions(xplmFont_PanelEFIS, w, h, d)
-      self.checkVal('XPLMGetFontDimensions.w: ',  w[0], 339)
-      self.checkVal('XPLMGetFontDimensions.h: ',  h[0], 450)
-      self.checkVal('XPLMGetFontDimensions.d: ',  d[0], 561)
-
-      ms = XPLMMeasureString(xplmFont_PanelGPS, "abc", 16)
-      self.checkVal('XPLMMeasureString: ', ms, 29.14)
-
       return self.Name, self.Sig, self.Desc
    
    def XPluginStop(self):
@@ -109,4 +32,126 @@ class PythonInterface(checkBase):
       self.checkVal('XPluginReceiveMessage: Unexpected inMessage', inMessage, 103)
       self.checkVal('XPluginReceiveMessage: Unexpected inParam', inParam[0], 42)
    
+      enableFogDref = XPLMFindDataRef("enableFog")
+      numTexUnitsDref = XPLMFindDataRef("numTexUnits")
+      enableLightingDref = XPLMFindDataRef("enableLighting")
+      enableAlphaTestDref = XPLMFindDataRef("enableAlphaTest")
+      enableAlphaBlendDref = XPLMFindDataRef("enableAlphaBlend")
+      enableDepthTestDref = XPLMFindDataRef("enableDepthTest")
+      enableDepthWriteDref = XPLMFindDataRef("enableDepthWrite")
+      texNumDref = XPLMFindDataRef("texNum")
+      texUnitNumDref = XPLMFindDataRef("texUnitNum")
+      int0Dref = XPLMFindDataRef("int0")
+      int1Dref = XPLMFindDataRef("int1")
+      int2Dref = XPLMFindDataRef("int2")
+      int3Dref = XPLMFindDataRef("int3")
+      int4Dref = XPLMFindDataRef("int4")
+      int5Dref = XPLMFindDataRef("int5")
+      float0Dref = XPLMFindDataRef("float0")
+      float1Dref = XPLMFindDataRef("float1")
+      float2Dref = XPLMFindDataRef("float2")
+      str0Dref = XPLMFindDataRef("str0")
+      double0Dref = XPLMFindDataRef("double0")
+
+      fog = 1
+      texUnits = 2
+      enaLight = 3
+      enaAlphaTest = 4
+      enaAlphaBlend = 5
+      enaDepthTest = 6
+      enaDepthWrite = 7
+      XPLMSetGraphicsState(fog, texUnits, enaLight, enaAlphaTest, enaAlphaBlend, enaDepthTest, enaDepthWrite)
+      self.checkVal('XPLMSetGraphicsState:inEnableFog', XPLMGetDatai(enableFogDref), fog)
+      self.checkVal('XPLMSetGraphicsState:inNumberTexUnits', XPLMGetDatai(numTexUnitsDref), texUnits)
+      self.checkVal('XPLMSetGraphicsState:inEnableLighting', XPLMGetDatai(enableLightingDref), enaLight)
+      self.checkVal('XPLMSetGraphicsState:inEnableAlphaTesting', XPLMGetDatai(enableAlphaTestDref), enaAlphaTest)
+      self.checkVal('XPLMSetGraphicsState:inEnableAlphaBlending', XPLMGetDatai(enableAlphaBlendDref), enaAlphaBlend)
+      self.checkVal('XPLMSetGraphicsState:inEnableDepthTesting', XPLMGetDatai(enableDepthTestDref), enaDepthTest)
+      self.checkVal('XPLMSetGraphicsState:inEnableDepthWriting', XPLMGetDatai(enableDepthWriteDref), enaDepthWrite)
+
+      texNum = 8
+      texUnit = 9
+      XPLMBindTexture2d(texNum, texUnit)
+      self.checkVal('XPLMBindTexture2d:inTextureNum', XPLMGetDatai(texNumDref), texNum)
+      self.checkVal('XPLMBindTexture2d:inTextureUnit', XPLMGetDatai(texUnitNumDref), texUnit)
+
+      self.textures = []
+      XPLMGenerateTextureNumbers(self.textures, 10)
+      for i, tex in enumerate(self.textures):
+         self.checkVal('XPLMGenerateTextureNumbers', tex, i + 42)
+            
+      texNum = 11
+      newTex = XPLMGetTexture(texNum)
+      self.checkVal('XPLMGetTexture: ', newTex, texNum + 43)
+
+      lat, lon, alt = 123, 456, 789
+      x, y, z = XPLMWorldToLocal(lat, lon, alt)
+      self.checkVal('XPLMWorldToLocal.X: ', x, lat + 1.23)
+      self.checkVal('XPLMWorldToLocal.Y: ', y, lon + 2.34)
+      self.checkVal('XPLMWorldToLocal.Z: ', z, alt + 3.45)
+      x, y, z = 123, 456, 789
+      lat, lon, alt = XPLMLocalToWorld(x, y, z)
+      self.checkVal('XPLMLocalToWorld.lat: ', lat, x + 4.56)
+      self.checkVal('XPLMLocalToWorld.lon: ', lon, y + 5.67)
+      self.checkVal('XPLMLocalToWorld.alt: ', alt, z + 6.78)
+
+      left, top, right, bottom =  12, 13, 14, 15
+      XPLMDrawTranslucentDarkBox(left, top, right, bottom)
+      self.checkVal('XPLMDrawTranslucentDarkBox:inLeft', XPLMGetDatai(int0Dref), left)
+      self.checkVal('XPLMDrawTranslucentDarkBox:inTop', XPLMGetDatai(int1Dref), top)
+      self.checkVal('XPLMDrawTranslucentDarkBox:inRight', XPLMGetDatai(int2Dref), right)
+      self.checkVal('XPLMDrawTranslucentDarkBox:inBottom', XPLMGetDatai(int3Dref), bottom)
+
+
+      color = 0.4, 0.5, 0.6
+      xOffset = 555
+      yOffset = 666
+      string = 'XPLMDrawString'
+      wrap = 14
+      font = xplmFont_PanelEFIS
+      XPLMDrawString(color, xOffset, yOffset, string, wrap, font)
+      self.checkVal('XPLMDrawString:inColorRGB[0]', XPLMGetDataf(float0Dref), color[0])
+      self.checkVal('XPLMDrawString:inColorRGB[1]', XPLMGetDataf(float1Dref), color[1])
+      self.checkVal('XPLMDrawString:inColorRGB[2]', XPLMGetDataf(float2Dref), color[2])
+      self.checkVal('XPLMDrawString:inXOffset', XPLMGetDatai(int0Dref), xOffset)
+      self.checkVal('XPLMDrawString:inYOffset', XPLMGetDatai(int1Dref), yOffset)
+      self.checkVal('XPLMDrawString:inChar', self.getString(str0Dref), string)
+      self.checkVal('XPLMDrawString:inWordWrapWidth', XPLMGetDatai(int2Dref), wrap)
+      self.checkVal('XPLMDrawString:inFontID', XPLMGetDatai(int3Dref), font)
+      
+      color = 0.4, 0.5, 0.6
+      xOffset = 555
+      yOffset = 666
+      val = 3.1415926
+      digits = 15
+      decimals = 16
+      sign = 18
+      font = xplmFont_PanelGPS
+      XPLMDrawNumber(color, xOffset, yOffset, val, digits, decimals, sign, font)
+      self.checkVal('XPLMDrawNumber:inColorRGB[0]', XPLMGetDataf(float0Dref), color[0])
+      self.checkVal('XPLMDrawNumber:inColorRGB[1]', XPLMGetDataf(float1Dref), color[1])
+      self.checkVal('XPLMDrawNumber:inColorRGB[2]', XPLMGetDataf(float2Dref), color[2])
+      self.checkVal('XPLMDrawNumber:inXOffset', XPLMGetDatai(int0Dref), xOffset)
+      self.checkVal('XPLMDrawNumber:inYOffset', XPLMGetDatai(int1Dref), yOffset)
+      self.checkVal('XPLMDrawNumber:inValue', XPLMGetDatad(double0Dref), val)
+      self.checkVal('XPLMDrawNumber:inDigits', XPLMGetDatai(int2Dref), digits)
+      self.checkVal('XPLMDrawNumber:inDecimals', XPLMGetDatai(int3Dref), decimals)
+      self.checkVal('XPLMDrawNumber:inShowSign', XPLMGetDatai(int4Dref), sign)
+      self.checkVal('XPLMDrawNumber:inFontID', XPLMGetDatai(int5Dref), font)
+ 
+      w = []; h = []; d = []
+      font = xplmFont_PanelEFIS
+      XPLMGetFontDimensions(font, w, h, d)
+      self.checkVal('XPLMGetFontDimensions.w: ',  w[0], font + 333)
+      self.checkVal('XPLMGetFontDimensions.h: ',  h[0], font + 444)
+      self.checkVal('XPLMGetFontDimensions.d: ',  d[0], font + 555)
+
+      font = xplmFont_PanelGPS
+      string = "supercalifragilistic"
+      chars = len(string)
+      ms = XPLMMeasureString(font, string, chars)
+      self.checkVal('XPLMMeasureString:retval/font', ms, font + 3.14)
+      self.checkVal('XPLMMeasureString:inChar', self.getString(str0Dref), string)
+      self.checkVal('XPLMMeasureString:retval/font', XPLMGetDatai(int0Dref), chars)
+
 #

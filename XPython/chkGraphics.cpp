@@ -6,34 +6,82 @@
 #define XPLM200
 #define XPLM210
 #include <XPLM/XPLMDefs.h>
+#include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMGraphics.h>
 
 #include "chkGraphics.h"
+
 #include "chk_helper.h"
 
+
+static int enableFog;
+static int numTexUnits;
+static int enableLighting;
+static int enableAlphaTest;
+static int enableAlphaBlend;
+static int enableDepthTest;
+static int enableDepthWrite;
+static int texNum;
+static int texUnitNum;
+
+static int int0;
+static int int1;
+static int int2;
+static int int3;
+static int int4;
+static int int5;
+
+static float float0;
+static float float1;
+static float float2;
+
+static double double0;
+
+static std::string str0;
+
+void initGraphicsModule(void)
+{
+  registerROAccessor("enableFog", enableFog);
+  registerROAccessor("numTexUnits", numTexUnits);
+  registerROAccessor("enableLighting", enableLighting);
+  registerROAccessor("enableAlphaTest", enableAlphaTest);
+  registerROAccessor("enableAlphaBlend", enableAlphaBlend);
+  registerROAccessor("enableDepthTest", enableDepthTest);
+  registerROAccessor("enableDepthWrite", enableDepthWrite);
+  registerROAccessor("texNum", texNum);
+  registerROAccessor("texUnitNum", texUnitNum);
+  registerROAccessor("int0", int0);
+  registerROAccessor("int1", int1);
+  registerROAccessor("int2", int2);
+  registerROAccessor("int3", int3);
+  registerROAccessor("int4", int4);
+  registerROAccessor("int5", int5);
+  registerROAccessor("float0", float0);
+  registerROAccessor("float1", float1);
+  registerROAccessor("float2", float2);
+  registerROAccessor("str0", str0);
+  registerROAccessor("double0", double0);
+
+}
 
 void XPLMSetGraphicsState(int inEnableFog, int inNumberTexUnits, int inEnableLighting,
                        int inEnableAlphaTesting, int inEnableAlphaBlending,
                        int inEnableDepthTesting, int inEnableDepthWriting)
 {
-  /*std::cout << inEnableFog << ", " << inNumberTexUnits << ", " << inEnableLighting <<
-            ", " << inEnableAlphaTesting << ", " << inEnableAlphaBlending << ", " <<
-            inEnableDepthTesting << ", " << inEnableDepthWriting << std::endl;
-  */
-  add_int_value(std::string("XPLMSetGraphicsState:inEnableFog"), inEnableFog);
-  add_int_value(std::string("XPLMSetGraphicsState:inNumberTexUnits"), inNumberTexUnits);
-  add_int_value(std::string("XPLMSetGraphicsState:inEnableLighting"), inEnableLighting);
-  add_int_value(std::string("XPLMSetGraphicsState:inEnableAlphaTesting"), inEnableAlphaTesting);
-  add_int_value(std::string("XPLMSetGraphicsState:inEnableAlphaBlending"), inEnableAlphaBlending);
-  add_int_value(std::string("XPLMSetGraphicsState:inEnableDepthTesting"), inEnableDepthTesting);
-  add_int_value(std::string("XPLMSetGraphicsState:inEnableDepthWriting"), inEnableDepthWriting);
+  enableFog = inEnableFog;
+  numTexUnits = inNumberTexUnits;
+  enableLighting = inEnableLighting;
+  enableAlphaTest = inEnableAlphaTesting;
+  enableAlphaBlend = inEnableAlphaBlending;
+  enableDepthTest = inEnableDepthTesting;
+  enableDepthWrite = inEnableDepthWriting;
 }
 
 void XPLMBindTexture2d(int inTextureNum, int inTextureUnit)
 {
   //std::cout << inTextureNum << ", " << inTextureUnit << std::endl;
-  add_int_value(std::string("XPLMBindTexture2d:inTextureNum"), inTextureNum);
-  add_int_value(std::string("XPLMBindTexture2d:inTextureUnit"), inTextureUnit);
+  texNum = inTextureNum;
+  texUnitNum = inTextureUnit;
 }
 
 void XPLMGenerateTextureNumbers(int *outTextureIDs, int inCount)
@@ -45,7 +93,7 @@ void XPLMGenerateTextureNumbers(int *outTextureIDs, int inCount)
 
 int XPLMGetTexture(XPLMTextureID inTexture)
 {
-  return inTexture + 42;
+  return inTexture + 43;
 }
 
 void XPLMWorldToLocal(double inLatitude, double inLongitude, double inAltitude,
@@ -66,49 +114,43 @@ void XPLMLocalToWorld(double inX, double inY, double inZ,
 
 void XPLMDrawTranslucentDarkBox(int inLeft, int inTop, int inRight, int inBottom)
 {
-  //std::cout << inLeft << ", " << inTop << ", " << inRight << ", " << inBottom << std::endl;
-  add_int_value(std::string("XPLMDrawTranslucentDarkBox:inLeft"), inLeft);
-  add_int_value(std::string("XPLMDrawTranslucentDarkBox:inTop"), inTop);
-  add_int_value(std::string("XPLMDrawTranslucentDarkBox:inRight"), inRight);
-  add_int_value(std::string("XPLMDrawTranslucentDarkBox:inBottom"), inBottom);
+  int0 = inLeft;
+  int1 = inTop;
+  int2 = inRight;
+  int3 = inBottom;
 }
 
 void XPLMDrawString(float *inColorRGB, int inXOffset, int inYOffset, char *inChar,
                     int *inWordWrapWidth, XPLMFontID inFontID)
 {
-  /*std::cout << "Draw '" << inChar << "' at (" << inXOffset << ", " << inYOffset << ")" << std::endl;
-  std::cout << "  FontID " << inFontID << " Color (" << inColorRGB[0] << ", " << inColorRGB[1] << ", " <<
-               inColorRGB[2] << ") WordWrapWidth " << *inWordWrapWidth << std::endl;
-  */
-  add_double_value(std::string("XPLMDrawString:inColorRGB[0]"), inColorRGB[0]);
-  add_double_value(std::string("XPLMDrawString:inColorRGB[1]"), inColorRGB[1]);
-  add_double_value(std::string("XPLMDrawString:inColorRGB[2]"), inColorRGB[2]);
-  add_int_value(std::string("XPLMDrawString:inXOffset"), inXOffset);
-  add_int_value(std::string("XPLMDrawString:inYOffset"), inYOffset);
-  add_str_value(std::string("XPLMDrawString:inChar"), inChar);
-  add_int_value(std::string("XPLMDrawString:inWordWrapWidth"), *inWordWrapWidth);
-  add_int_value(std::string("XPLMDrawString:inFontID"), inFontID);
+  float0 = inColorRGB[0];
+  float1 = inColorRGB[1];
+  float2 = inColorRGB[2];
+  int0 = inXOffset;
+  int1 = inYOffset;
+  str0 = inChar;
+  if(inWordWrapWidth != NULL){
+    int2 = *inWordWrapWidth;
+  }else{
+    int2 = -1;
+  }
+  int3 = inFontID;
 }
 
 void XPLMDrawNumber(float *inColorRGB, int inXOffset, int inYOffset, double inValue, int inDigits,
                     int inDecimals, int inShowSign, XPLMFontID inFontID)
 {
-  /*std::cout << "Draw '" << inValue << "' at (" << inXOffset << ", " << inYOffset << ")" << std::endl;
-  std::cout << "  FontID " << inFontID << " Color (" << inColorRGB[0] << ", " << inColorRGB[1] << ", " <<
-               inColorRGB[2] << ") Decimals" << inDecimals << " Digits " << inDigits << 
-               " ShowSign " << inShowSign << std::endl;
-  */
-  add_double_value(std::string("XPLMDrawNumber:inColorRGB[0]"), inColorRGB[0]);
-  add_double_value(std::string("XPLMDrawNumber:inColorRGB[1]"), inColorRGB[1]);
-  add_double_value(std::string("XPLMDrawNumber:inColorRGB[2]"), inColorRGB[2]);
-  add_int_value(std::string("XPLMDrawNumber:inXOffset"), inXOffset);
-  add_int_value(std::string("XPLMDrawNumber:inYOffset"), inYOffset);
-  add_double_value(std::string("XPLMDrawNumber:inValue"), inValue);
-  add_int_value(std::string("XPLMDrawNumber:inDigits"), inDigits);
-  add_int_value(std::string("XPLMDrawNumber:inDecimals"), inDecimals);
-  add_int_value(std::string("XPLMDrawNumber:inShowSign"), inShowSign);
-  add_int_value(std::string("XPLMDrawNumber:inFontID"), inFontID);
- }
+  float0 = inColorRGB[0];
+  float1 = inColorRGB[1];
+  float2 = inColorRGB[2];
+  int0 = inXOffset;
+  int1 = inYOffset;
+  double0 = inValue;
+  int2 = inDigits;
+  int3 = inDecimals;
+  int4 = inShowSign;
+  int5 = inFontID;
+}
 
 void XPLMGetFontDimensions(XPLMFontID inFontID, int *outCharWidth, int *outCharHeight, int *outDigitsOnly)
 {
@@ -119,9 +161,8 @@ void XPLMGetFontDimensions(XPLMFontID inFontID, int *outCharWidth, int *outCharH
 
 float XPLMMeasureString(XPLMFontID inFontID, const char *inChar, int inNumChars)
 {
-  return inFontID + strlen(inChar) + inNumChars + 3.14;
+  str0 = inChar;
+  int0 = inNumChars;
+  return inFontID + 3.14;
 }
 
-void checkGraphicsModule()
-{
-}

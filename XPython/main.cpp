@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
   initMenusModule();
   initNavigationModule();
   initPluginModule();
+  initGraphicsModule();
 
   int res = XPluginStart(outName, outSig, outDesc);
   std::cout << "Y-Plane loaded plugin " << outName << "(" << res << ")" << std::endl;
@@ -87,7 +88,6 @@ int main(int argc, char *argv[])
   //XPluginReceiveMessage(5, 103, (void*)333);
 
   checkDisplayModule();
-  checkGraphicsModule();
   checkUtilitiesModule();
 
   XPluginDisable();

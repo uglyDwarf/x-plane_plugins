@@ -15,6 +15,8 @@ class checkBase(object):
          print('{0} module check: {1} errors found.'.format(self._modName, self._errors))
 
    def floatEq(self, a, b):
+      if (a == None) or (b == None):
+         return False
       #needed to be able to compare higher values...
       if abs(1 - float(a) / float(b)) < 1e-5:
          return True
