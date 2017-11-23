@@ -17,97 +17,8 @@ PyMODINIT_FUNC PyInit_XPLMScenery(void);
 PyMODINIT_FUNC PyInit_XPLMMenus(void);
 PyMODINIT_FUNC PyInit_XPLMNavigation(void);
 PyMODINIT_FUNC PyInit_XPLMPlugin(void);
+PyMODINIT_FUNC PyInit_XPLMPlanes(void);
 
-/*
-static PyObject *XPLMCHKHelperCheckIntFun(PyObject *self, PyObject *args)
-{
-  (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 's', "id"},
-    {1, 'i', "expected"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 2, paramChecks)){
-    return NULL;
-  }
-  char *id = PyUnicode_AsUTF8(PySequence_GetItem(args, 0));
-  int expected = PyLong_AsLong(PySequence_GetItem(args, 1));
-  if(compare_int_value(id, expected)){
-    Py_RETURN_TRUE;
-  }else{
-    Py_RETURN_FALSE;
-  }
-}
-
-
-
-static PyObject *XPLMCHKHelperCheckDoubleFun(PyObject *self, PyObject *args)
-{
-  (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 's', "id"},
-    {1, 'n', "expected"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 2, paramChecks)){
-    return NULL;
-  }
-  char *id = PyUnicode_AsUTF8(PySequence_GetItem(args, 0));
-  double expected = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(args, 1)));
-  if(compare_double_value(id, expected)){
-    Py_RETURN_TRUE;
-  }else{
-    Py_RETURN_FALSE;
-  }
-}
-
-
-
-static PyObject *XPLMCHKHelperCheckStrFun(PyObject *self, PyObject *args)
-{
-  (void) self;
-  paramCheck_t paramChecks[] = {
-    {0, 's', "id"},
-    {1, 's', "expected"},
-    {-1, '\0', NULL}
-  };
-  if(!checkParams(args, 2, paramChecks)){
-    return NULL;
-  }
-  char *id = PyUnicode_AsUTF8(PySequence_GetItem(args, 0));
-  char *expected = PyUnicode_AsUTF8(PySequence_GetItem(args, 1));
-  if(compare_str_value(id, expected)){
-    Py_RETURN_TRUE;
-  }else{
-    Py_RETURN_FALSE;
-  }
-}
-
-
-static PyMethodDef XPLMCHKHelperMethods[] = {
-  {"XPLMCHKHelperCheckInt", XPLMCHKHelperCheckIntFun, METH_VARARGS, ""},
-  {"XPLMCHKHelperCheckDouble", XPLMCHKHelperCheckDoubleFun, METH_VARARGS, ""},
-  {"XPLMCHKHelperCheckStr", XPLMCHKHelperCheckStrFun, METH_VARARGS, ""},
-  {NULL, NULL, 0, NULL}
-};
-
-static struct PyModuleDef XPLMCHKHelperModule = {
-  PyModuleDef_HEAD_INIT,
-  "XPLMCHKHelper",
-  NULL,
-  -1,
-  XPLMCHKHelperMethods,
-  NULL,
-  NULL,
-  NULL,
-  NULL
-};
-
-PyMODINIT_FUNC PyInit_XPLMCHKHelper(void)
-{
-  return PyModule_Create(&XPLMCHKHelperModule);
-}
-*/
 
 //should be static, don't change after Py_SetProgramName is called 
 // should be freed by PyMem_RawFree()
@@ -132,6 +43,7 @@ int initPython(const char *programName){
   PyImport_AppendInittab("XPLMMenus", PyInit_XPLMMenus);
   PyImport_AppendInittab("XPLMNavigation", PyInit_XPLMNavigation);
   PyImport_AppendInittab("XPLMPlugin", PyInit_XPLMPlugin);
+  PyImport_AppendInittab("XPLMPlanes", PyInit_XPLMPlanes);
 
   Py_Initialize();
   if(!Py_IsInitialized()){

@@ -15,6 +15,7 @@
 #include "chkMenus.h"
 #include "chkNavigation.h"
 #include "chkPlugin.h"
+#include "chkPlanes.h"
 
 
 //extern int XPluginStart(char *outName,
@@ -80,6 +81,7 @@ int main(int argc, char *argv[])
   initNavigationModule();
   initPluginModule();
   initGraphicsModule();
+  initPlanesModule();
 
   int res = XPluginStart(outName, outSig, outDesc);
   std::cout << "Y-Plane loaded plugin " << outName << "(" << res << ")" << std::endl;

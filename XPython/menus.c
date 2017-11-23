@@ -19,6 +19,7 @@ static void menuHandler(void * inMenuRef, void * inItemRef)
   Py_XDECREF(pID);
   if(menuCallbackInfo == NULL){
     printf("Unknown callback requested in menuHandler(%p).\n", inMenuRef);
+    return;
   }
   PyObject *res = PyObject_CallFunction(PySequence_GetItem(menuCallbackInfo, 4), "(OO)",
                                         PySequence_GetItem(menuCallbackInfo, 5), (PyObject*)inItemRef);
