@@ -18,6 +18,7 @@ PyMODINIT_FUNC PyInit_XPLMMenus(void);
 PyMODINIT_FUNC PyInit_XPLMNavigation(void);
 PyMODINIT_FUNC PyInit_XPLMPlugin(void);
 PyMODINIT_FUNC PyInit_XPLMPlanes(void);
+PyMODINIT_FUNC PyInit_XPLMProcessing(void);
 
 
 //should be static, don't change after Py_SetProgramName is called 
@@ -44,6 +45,7 @@ int initPython(const char *programName){
   PyImport_AppendInittab("XPLMNavigation", PyInit_XPLMNavigation);
   PyImport_AppendInittab("XPLMPlugin", PyInit_XPLMPlugin);
   PyImport_AppendInittab("XPLMPlanes", PyInit_XPLMPlanes);
+  PyImport_AppendInittab("XPLMProcessing", PyInit_XPLMProcessing);
 
   Py_Initialize();
   if(!Py_IsInitialized()){

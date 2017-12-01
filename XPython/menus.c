@@ -23,6 +23,11 @@ static void menuHandler(void * inMenuRef, void * inItemRef)
   }
   PyObject *res = PyObject_CallFunction(PySequence_GetItem(menuCallbackInfo, 4), "(OO)",
                                         PySequence_GetItem(menuCallbackInfo, 5), (PyObject*)inItemRef);
+  PyObject *err = PyErr_Occurred();
+  if(err){
+    printf("Error occured during the menuHandler callback(inMenuRef = %p):\n", inMenuRef);
+    PyErr_Print();
+  }
   Py_XDECREF(res);
 }
 

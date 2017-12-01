@@ -69,6 +69,11 @@ void planesAvailable(void *inRefcon)
   }
   PyObject *res = PyObject_CallFunction(PySequence_GetItem(callback, 2), "(O)",
                                         PySequence_GetItem(callback, 3));
+  PyObject *err = PyErr_Occurred();
+  if(err){
+    printf("Error occured during the planesAvailable callback(inRefcon = %p):\n", inRefcon);
+    PyErr_Print();
+  }
   Py_XDECREF(res);
 }
 

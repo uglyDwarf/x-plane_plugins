@@ -89,6 +89,11 @@ static void objectLoaded(XPLMObjectRef inObject, void *inRefcon)
   }
   PyObject *res = PyObject_CallFunction(PySequence_GetItem(loaderCallbackInfo, 2), "(OO)",
                                            object, PySequence_GetItem(loaderCallbackInfo, 3));
+  PyObject *err = PyErr_Occurred();
+  if(err){
+    printf("Error occured during the flightLoop callback(inRefcon = %p):\n", inRefcon);
+    PyErr_Print();
+  }
   PyDict_DelItem(loaderDict, pID);
   Py_XDECREF(res);
   Py_XDECREF(object);

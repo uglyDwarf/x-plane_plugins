@@ -3,6 +3,7 @@
 #include <vector>
 #include <string.h>
 #include <stdint.h>
+#include <cassert>
 #define XPLM200
 #define XPLM210
 #include <XPLM/XPLMDefs.h>
@@ -246,6 +247,7 @@ XPLMDataRef XPLMRegisterDataAccessor(const char *    inDataName,
 void XPLMUnregisterDataAccessor(XPLMDataRef inDataRef)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   std::string name;
   da->getName(name);
   daMap_t::iterator i = dataAccessors.find(name);
@@ -268,54 +270,63 @@ XPLMDataRef XPLMFindDataRef(const char *inDataRefName)
 int XPLMCanWriteDataRef(XPLMDataRef inDataRef)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   return da->is_writable();
 }
 
 int XPLMIsDataRefGood(XPLMDataRef inDataRef)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   return da->is_good();
 }
 
 XPLMDataTypeID XPLMGetDataRefTypes(XPLMDataRef inDataRef)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   return da->get_data_type();
 }
 
 int XPLMGetDatai(XPLMDataRef inDataRef)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   return da->get_int();
 }
 
 void XPLMSetDatai(XPLMDataRef inDataRef, int inValue)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   da->set_int(inValue);
 }
 
 float XPLMGetDataf(XPLMDataRef inDataRef)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   return da->get_float();
 }
 
 void XPLMSetDataf(XPLMDataRef inDataRef, float inValue)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   da->set_float(inValue);
 }
 
 double XPLMGetDatad(XPLMDataRef inDataRef)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   return da->get_double();
 }
 
 void XPLMSetDatad(XPLMDataRef inDataRef, double inValue)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   da->set_double(inValue);
 }
 
@@ -323,6 +334,7 @@ int XPLMGetDatavi(XPLMDataRef inDataRef, int *outValues, int inOffset,
                   int inMax)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   return da->get_int_array(outValues, inOffset, inMax);
 }
 
@@ -330,6 +342,7 @@ void XPLMSetDatavi(XPLMDataRef inDataRef, int *inValues, int inOffset,
                   int inCount)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   da->set_int_array(inValues, inOffset, inCount);
 }
 
@@ -337,6 +350,7 @@ int XPLMGetDatavf(XPLMDataRef inDataRef, float *outValues, int inOffset,
                   int inMax)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   return da->get_float_array(outValues, inOffset, inMax);
 }
 
@@ -344,6 +358,7 @@ void XPLMSetDatavf(XPLMDataRef inDataRef, float *inValues, int inOffset,
                   int inCount)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   da->set_float_array(inValues, inOffset, inCount);
 }
 
@@ -351,6 +366,7 @@ int XPLMGetDatab(XPLMDataRef inDataRef, void *outValue, int inOffset,
                   int inMaxBytes)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   return da->get_data((uint8_t *)outValue, inOffset, inMaxBytes);
 }
 
@@ -358,6 +374,7 @@ void XPLMSetDatab(XPLMDataRef inDataRef, void *inValue, int inOffset,
                   int inLength)
 {
   dataAccessor *da = (dataAccessor *)inDataRef;
+  assert(da != NULL);
   return da->set_data((uint8_t *)inValue, inOffset, inLength);
 }
 

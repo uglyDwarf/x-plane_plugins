@@ -181,6 +181,11 @@ static void featureEnumerator(const char *inFeature, void *inRef)
   }
   PyObject *res = PyObject_CallFunction(PySequence_GetItem(callbackInfo, 1), "(sO)",
                                         inFeature, PySequence_GetItem(callbackInfo, 2));
+  PyObject *err = PyErr_Occurred();
+  if(err){
+    printf("Error occured during the feature enumeration callback(inFeature = '%s' inRef = %p):\n", inFeature, inRef);
+    PyErr_Print();
+  }
   Py_XDECREF(res);
 }
 
