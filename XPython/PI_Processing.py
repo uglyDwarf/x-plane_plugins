@@ -96,7 +96,6 @@ class PythonInterface(checkBase):
       return 1.0
 
    def flightLoop2(self, inElapsedSinceLastCall, inElapsedTimeSinceLastFlightLoop, inCounter, inRefcon):
-      print('flightLoop2 called!')
       self.checkVal('FlightLoopCallback2 inElapsedSinceLastCall passed incorrectly', inElapsedSinceLastCall,
                     XPLMGetDataf(self.flt0Dref) * 1000)
       self.checkVal('FlightLoopCallback2 inElapsedTimeSinceLastFlightLoop passed incorrectly',
