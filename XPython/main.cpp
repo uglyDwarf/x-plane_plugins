@@ -85,15 +85,13 @@ int main(int argc, char *argv[])
   initPlanesModule();
   initProcessingModule();
   initCameraModule();
+  initDisplayModule();
 
   int res = XPluginStart(outName, outSig, outDesc);
   std::cout << "Y-Plane loaded plugin " << outName << "(" << res << ")" << std::endl;
   std::cout << "  Signature: " << outSig << std::endl;
   std::cout << "  Description:" << outDesc << std::endl;
   //XPluginReceiveMessage(5, 103, (void*)333);
-
-  checkDisplayModule();
-  checkUtilitiesModule();
 
   XPluginDisable();
   XPluginEnable();

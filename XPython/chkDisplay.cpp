@@ -9,6 +9,17 @@
 #include <XPLM/XPLMDisplay.h>
 
 #include "chk_helper.h"
+
+static int int0, int1, int2, int3; 
+
+void initDisplayModule(void)
+{
+  registerROAccessor("display/int0", int0);
+  registerROAccessor("display/int1", int1);
+  registerROAccessor("display/int2", int2);
+  registerROAccessor("display/int3", int3);
+}
+
 class drawCallback{
   XPLMDrawCallback_f callback;
   XPLMDrawingPhase   phase;
@@ -87,8 +98,9 @@ int XPLMRegisterDrawCallback(XPLMDrawCallback_f   inCallback,
                              int                  inWantsBefore,
                              void *               inRefcon)
 {
-  drawCallbacks.push_back(new drawCallback(inCallback, inPhase, inWantsBefore, inRefcon));
-  return 1;
+  drawCallback *cbk = new drawCallback(inCallback, inPhase, inWantsBefore, inRefcon);
+  drawCallbacks.push_back(cbk);
+  return cbk->call();
 }
 
 
@@ -96,8 +108,10 @@ int XPLMRegisterKeySniffer(XPLMKeySniffer_f inCallback,
                            int              inBeforeWindows,
                            void            *inRefcon)
 {
-  keySniffCallbacks.push_back(new keySniffCallback(inCallback, inBeforeWindows, inRefcon));
-  return 1;
+  
+  keySniffCallback *cbk = new keySniffCallback(inCallback, inBeforeWindows, inRefcon);
+  keySniffCallbacks.push_back(cbk);
+  return cbk->call('Q', xplm_ShiftFlag | xplm_DownFlag, XPLM_VK_Q );
 }
 
 int XPLMUnregisterDrawCallback(XPLMDrawCallback_f   inCallback,
@@ -248,6 +262,13 @@ void XPLMDestroyWindow(XPLMWindowID inWindowID)
     if((i->second)->getID() == inWindowID){
       windowInfo *ii = (i->second);
       windowInfoList.erase(i);
+      ii->draw();
+      ii->handleKey('P', xplm_ControlFlag | xplm_UpFlag, XPLM_VK_P, 1);
+      int0 = ii->handleMouseClick(222, 333, xplm_MouseUp);
+      if(ii->isEx()){
+        int1 = ii->handleCursor(444, 555);
+        int2 = ii->handleMouseWheel(666, 777, 8, 42);
+      }
       delete ii;
       //std::cout << "XPLMDestroyWindow removed window ID " << inWindowID << std::endl;
       return;
@@ -325,6 +346,13 @@ void XPLMSetWindowGeometry(XPLMWindowID inWindowID,
   wi->setTop(inTop);
   wi->setRight(inRight);
   wi->setBottom(inBottom);
+  wi->draw();
+  wi->handleKey('P', xplm_ControlFlag | xplm_UpFlag, XPLM_VK_P, 1);
+  int0 = wi->handleMouseClick(222, 333, xplm_MouseUp);
+  if(wi->isEx()){
+    int1 = wi->handleCursor(444, 555);
+    int2 = wi->handleMouseWheel(666, 777, 8, 42);
+  }
 }
 
 int XPLMGetWindowIsVisible(XPLMWindowID inWindowID)
@@ -352,7 +380,8 @@ void *XPLMGetWindowRefCon(XPLMWindowID inWindowID)
   if(!(wi = findWinInfo(inWindowID))){
     return 0;
   }
-  return wi->getRefcon();
+  void *res = wi->getRefcon();
+  return res;
 }
 
 void XPLMSetWindowRefCon(XPLMWindowID inWindowID,
@@ -372,8 +401,7 @@ void XPLMTakeKeyboardFocus(XPLMWindowID inWindowID)
     return;
   }
   winInFocus = inWindowID;
-  std::cout << "Focus set to window " << inWindowID << std::endl;
-  add_int_value("XPLMTakeKeyboardFocus:inWindowID", (intptr_t)inWindowID);
+  int3 = (intptr_t)winInFocus;
 }
 
 void XPLMBringWindowToFront(XPLMWindowID inWindowID)
@@ -489,6 +517,7 @@ XPLMHotKeyID XPLMGetNthHotKey(int inIndex)
     return NULL;
   }
   //std::cout << "Hotkey index " << inIndex << " requested" << std::endl;
+  hotkeyVector[inIndex].press();
   return hotkeyVector[inIndex].getID();
 }
 
@@ -518,34 +547,6 @@ void XPLMSetHotKeyCombination(XPLMHotKeyID inHotKey,
     }
   }
   std::cout << "XPLMSetHotKeyCombination Error: couldn't find hotkey ID " << inHotKey << std::endl;
-}
-
-void checkDisplayModule()
-{
-  std::vector<drawCallback*>::iterator i;
-  for(i = drawCallbacks.begin(); i != drawCallbacks.end(); ++i){
-    (*i)->call();
-  }
-
-  std::vector<keySniffCallback*>::iterator j;
-  for(j = keySniffCallbacks.begin(); j != keySniffCallbacks.end(); ++j){
-    (*j)->call('Q', xplm_ShiftFlag | xplm_DownFlag, XPLM_VK_Q );
-  }
-
-  std::map<void *, windowInfo*>::iterator k;
-  for(k = windowInfoList.begin(); k != windowInfoList.end(); ++k){
-    (k->second)->draw();
-    (k->second)->handleKey('P', xplm_ControlFlag | xplm_UpFlag, XPLM_VK_P, 1);
-    std::cout << "handleMouseClick returned " << (k->second)->handleMouseClick(222, 333, xplm_MouseUp) << std::endl;
-    if((k->second)->isEx()){
-      std::cout << "handleCursor returned " << (k->second)->handleCursor(444, 555) << std::endl;
-      std::cout << "handleMouseWheel returned " << (k->second)->handleMouseWheel(666, 777, 8, 42) << std::endl;
-    }
-  }
-  std::vector<hotkey>::iterator l;
-  for(l = hotkeyVector.begin(); l != hotkeyVector.end(); ++l){
-    l->press();
-  }
 }
 
 

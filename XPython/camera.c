@@ -11,16 +11,6 @@ static intptr_t camCntr;
 static PyObject *camDict;
 
 
-void dbg(const char *msg){
-  printf("Going to check %s\n", msg);
-  PyObject *err = PyErr_Occurred();
-  if(err){
-    printf("Error occured during the %s call:\n", msg);
-    PyErr_Print();
-  }
-}
-
-
 static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosingControl, void *inRefcon)
 {
   PyObject *ref = PyLong_FromVoidPtr(inRefcon);
@@ -63,7 +53,6 @@ static PyObject *XPLMControlCameraFun(PyObject *self, PyObject *args)
   PyObject *refconObj = PyLong_FromVoidPtr(inRefcon);
   PyDict_SetItem(camDict, refconObj, args);
   XPLMControlCamera(inHowLong, cameraControl, inRefcon);
-  dbg("Here too!\n");
   Py_XDECREF(refconObj);
   Py_RETURN_NONE;
 }

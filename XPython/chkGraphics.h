@@ -2,7 +2,6 @@
 #define CHK_GRAPHICS__H
 
 void initGraphicsModule();
-void checkGraphicsgModule();
 
 #endif
 

@@ -2,7 +2,6 @@
 #define CHK_MENUS__H
 
 void initMenusModule();
-//void checkMenusModule();
 
 #endif
 

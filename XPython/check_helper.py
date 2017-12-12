@@ -4,13 +4,19 @@
 from XPLMDataAccess import *
 
 class checkBase(object):
-   def __init__(self, moduleName):
+   def __init__(self, moduleName, expectedChecks = None):
       self._modName = moduleName
       self._errors = 0
+      self._checks = 0
+      self._expected = expectedChecks;
 
    def check(self):
       if self._errors == 0:
-         print('{0} module check OK.'.format(self._modName))
+         if(self._expected == None) or (self._checks == self._expected):
+            print('{0} module check OK ({1} checks passed).'.format(self._modName, self._checks))
+         else:
+            print('{0} module check found no errors, but only {1} of {2} checks were executed.'.format(
+               self._modName, self._checks, self._expected))
       else:
          print('{0} module check: {1} errors found.'.format(self._modName, self._errors))
 
@@ -43,6 +49,7 @@ class checkBase(object):
          return v1 == v2
 
    def checkVal(self, prompt, got, expected):
+      self._checks += 1
       if not self.compare(got, expected):
          self.error('{0}: got {1}, expected {2}'.format(prompt, got, expected))
 

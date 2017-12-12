@@ -40,7 +40,7 @@ static PyObject *XPLMRegisterDrawCallbackFun(PyObject *self, PyObject *args)
   }
 
   PyDict_SetItem(drawCallbackDict, idx, args);
-  PyDict_SetItem(drawCallbackIDDict, refcon, idx);
+  PyDict_SetItem(drawCallbackIDDict, PyLong_FromVoidPtr(refcon), idx);
 
   Py_DECREF(idx);
   int res = XPLMRegisterDrawCallback(XPLMDrawCallback, inPhase, inWantsBefore, (void *)drawCallbackCntr);
@@ -86,13 +86,16 @@ static PyObject *XPLMUnregisterDrawCallbackFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OOiiO", &pluginSelf, &callback, &inPhase, &inWantsBefore, &refcon)){
     return NULL;
   }
-  PyObject *pID = PyDict_GetItem(drawCallbackIDDict, refcon);
+  PyObject *pyRefcon = PyLong_FromVoidPtr(refcon);
+  PyObject *pID = PyDict_GetItem(drawCallbackIDDict, pyRefcon);
   if(pID == NULL){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMUnregisterDrawCallback failed to find the callback.\n");
+    Py_XDECREF(pyRefcon);
     return NULL;
   }
-  PyDict_DelItem(drawCallbackIDDict, refcon);
+  PyDict_DelItem(drawCallbackIDDict, pyRefcon);
   PyDict_DelItem(drawCallbackDict, pID);
+  Py_XDECREF(pyRefcon);
 
   int res = XPLMUnregisterDrawCallback(XPLMDrawCallback, inPhase,
                                        inWantsBefore, PyLong_AsVoidPtr(pID));
@@ -166,7 +169,7 @@ static void handleKey(XPLMWindowID  inWindowID,
   }
   PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 1), "(OiiiOi)",
                         pID, (int)inKey, inFlags, (unsigned int)inVirtualKey, inRefcon, losingFocus);
-  Py_DECREF(oRes);
+  Py_XDECREF(oRes);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
@@ -287,7 +290,6 @@ static PyObject *XPLMCreateWindowExFun(PyObject *self, PyObject *args)
   }
 
   XPLMWindowID id = XPLMCreateWindowEx(&params);
-
   PyObject *pID = PyLong_FromVoidPtr(id); 
   PyDict_SetItem(windowDict, pID, cbkTuple);
   Py_DECREF(cbkTuple);
@@ -303,7 +305,7 @@ static PyObject *XPLMCreateWindowFun(PyObject *self, PyObject *args)
                        &drawCallback, &keyCallback, &mouseCallback, &refcon)){
     return NULL;
   }
-
+  Py_INCREF(refcon);
   PyObject *cbkTuple = Py_BuildValue("OOOOO", drawCallback, keyCallback, mouseCallback, Py_None, Py_None);
   if(!cbkTuple){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMCreateWindow couldn't create a tuple.\n");
@@ -325,12 +327,17 @@ static PyObject *XPLMDestroyWindowFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &pID)){
     return NULL;
   }
-  int res = PyDict_DelItem(windowDict, pID);
-  
-  if(res == 0){
-    XPLMDestroyWindow(PyLong_AsVoidPtr(pID));
+  if(PyDict_Contains(windowDict, pID)){
+    XPLMWindowID winID = PyLong_AsVoidPtr(pID);
+    PyObject *tmp = XPLMGetWindowRefCon(winID);
+    Py_DECREF(tmp);
+    XPLMDestroyWindow(winID);
+    PyDict_DelItem(windowDict, pID);
+  }else{
+    PyErr_SetString(PyExc_RuntimeError ,"XPLMDestroyWindow couldn't find the window to destroy.\n");
+    return NULL;
   }
-  return PyLong_FromLong(res);
+  Py_RETURN_NONE;
 }
 
 static PyObject *XPLMGetScreenSizeFun(PyObject *self, PyObject *args)
@@ -438,7 +445,12 @@ static PyObject *XPLMGetWindowRefConFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
-  return XPLMGetWindowRefCon(inWindowID);
+  PyObject *res = XPLMGetWindowRefCon(inWindowID);
+  // Needs to be done, because python decrefs it when the function
+  //   that called us returns; otherwise all hell breaks loose!!!
+  // TODO: Check no other instance of such a problem lingers in the interface!!!
+  Py_INCREF(res);
+  return res;
 }
 
 static PyObject *XPLMSetWindowRefConFun(PyObject *self, PyObject *args)
@@ -449,6 +461,11 @@ static PyObject *XPLMSetWindowRefConFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  // Decref the old refcon
+  PyObject *tmp = XPLMGetWindowRefCon(inWindowID);
+  Py_DECREF(tmp);
+  // Make sure it stays with us
+  Py_INCREF(inRefcon);
   XPLMSetWindowRefCon(inWindowID, inRefcon);
   Py_RETURN_NONE;
 }

@@ -32,10 +32,6 @@ void initUtilitiesModule()
   registerROAccessor("state", pressed);
 }
 
-void checkUtilitiesModule()
-{
-}
-
 void XPLMSimulateKeyPress(int inKeyType, int inKey)
 {
   keyType = inKeyType;
