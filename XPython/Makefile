@@ -5,7 +5,7 @@ CXX=clang++
 
 CFLAGS+=-Wall -Wextra -g
 PY_CFLAGS=$(shell python3-config --cflags)
-XPLM_CPPFLAGS=-I./SDK/CHeaders -DIBM=0 -DAPL=0 -DLIN=1
+XPLM_CPPFLAGS=-I./SDK/CHeaders -I./SDK/CHeaders/XPLM -I./SDK/CHeaders/Widgets -DIBM=0 -DAPL=0 -DLIN=1
 COV_CFLAGS+= -fprofile-instr-generate -fcoverage-mapping
 
 PY_LDFLAGS=$(shell python3-config --ldflags)
@@ -35,7 +35,7 @@ plugin : CPPFLAGS+= ${XPLM_CPPFLAGS}
 plugin : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic -ldl
 #plugin : plugin.c defs.c display.c utils.c graphics.c data_access.c utilities.c scenery.c menus.c
 plugin : plugin.o defs.o display.o utils.o graphics.o data_access.o utilities.o scenery.o menus.o \
-         navigation.o plugins.o planes.o processing.o camera.o
+         navigation.o plugins.o planes.o processing.o camera.o widget_defs.o
 
 plugin.so : plugin
 	cp plugin plugin.so
