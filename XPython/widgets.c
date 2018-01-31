@@ -29,10 +29,21 @@ int widgetCallback(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inPa
   PyObject *callback;
   for(i = 0; i < PyList_Size(callbackList); ++i){
     callback = PyList_GetItem(callbackList, i);
-    PyObject *resObj = PyObject_CallFunction(callback, "iOOO", inMessage, widget, param1, param2);
-    res = PyLong_AsLong(PyNumber_Long(resObj));
-    Py_DECREF(resObj);
-    if(res == 1){
+    //Have to differentiate between python callbacks and "binary" function callbacks
+    // (like the ones returned by XPGetWidgetClassFunc)
+    if(PyLong_Check(callback)){
+      XPWidgetFunc_t cFunc = (XPWidgetFunc_t)PyLong_AsVoidPtr(callback);
+      res = cFunc(inMessage, inWidget, inParam1, inParam2);
+    }else{
+      PyObject *resObj = PyObject_CallFunction(callback, "iOOO", inMessage, widget, param1, param2);
+      if(!resObj){
+        PyErr_Print();
+        break;
+      }
+      res = PyLong_AsLong(PyNumber_Long(resObj));
+      Py_DECREF(resObj);
+    }
+    if(res != 0){
       break;
     }
   }
@@ -51,7 +62,7 @@ static PyObject *XPCreateWidgetFun(PyObject *self, PyObject *args)
   const char *inDescriptor;
   PyObject *container;
   XPWidgetClass inClass;
-  if(!PyArg_ParseTuple(args, "iiiiisOi", &inLeft, &inTop, &inRight, &inBottom, &inVisible, &inDescriptor, &inIsRoot,
+  if(!PyArg_ParseTuple(args, "iiiiisiOi", &inLeft, &inTop, &inRight, &inBottom, &inVisible, &inDescriptor, &inIsRoot,
                                          &container, &inClass)){
     return NULL;
   }
@@ -68,7 +79,7 @@ static PyObject *XPCreateCustomWidgetFun(PyObject *self, PyObject *args)
   const char *inDescriptor;
   PyObject *container;
   PyObject *inCallback;
-  if(!PyArg_ParseTuple(args, "OiiiiisOO", &pluginSelf, &inLeft, &inTop, &inRight, &inBottom, &inVisible, &inDescriptor,
+  if(!PyArg_ParseTuple(args, "OiiiiisiOO", &pluginSelf, &inLeft, &inTop, &inRight, &inBottom, &inVisible, &inDescriptor,
                        &inIsRoot, &container, &inCallback)){
     return NULL;
   }
