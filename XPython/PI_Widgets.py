@@ -4,6 +4,7 @@ from check_helper import *
 
 from XPLMDefs import *
 from XPLMDataAccess import *
+from XPWidgetDefs import *
 from XPWidgets import *
 
 class PythonInterface(checkBase):
@@ -224,6 +225,8 @@ class PythonInterface(checkBase):
       return 1.0
 
    def customCallback(self, inMessage, inWidget, inParam1, inParam2):
+      if inMessage == xpMsg_Destroy:
+         return 0
       self.checkVal('callback\'s message', inMessage, self.message)
       self.checkVal('callback\'s params', (inParam1, inParam2), self.params)
       self.checkVal('callback\'s widget class', inWidget, self.target_widget)

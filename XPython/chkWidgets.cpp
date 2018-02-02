@@ -120,6 +120,7 @@ widget::~widget()
       removeWidget(*i);
     }
   }
+  message(xpMsg_Destroy, (remove_children ? 1 : 0), 0);
   removeWidget(this);
 }
 
@@ -141,6 +142,7 @@ int widget::message(XPWidgetMessage inMessage, intptr_t inParam1, intptr_t inPar
 
   while((res == 0) && (i != callbacks.end())){
     res = (*i)(inMessage, static_cast<void *>(this), inParam1, inParam2);
+    ++i;
   }
   return res;
 }
