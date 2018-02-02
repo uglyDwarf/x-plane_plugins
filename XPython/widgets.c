@@ -101,7 +101,9 @@ static PyObject *XPDestroyWidgetFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OOi", &pluginSelf, &widget, &inDestroyChildren)){
     return NULL;
   }
-  PyDict_DelItem(widgetCallbackDict, widget);
+  // TODO callbacks for the widget should be removed!!!
+  //   When widgets are deleted recursively, maybe using destroy message...
+  //PyDict_DelItem(widgetCallbackDict, widget);
   XPDestroyWidget(PyLong_AsVoidPtr(widget), inDestroyChildren);
   Py_RETURN_NONE;
 }

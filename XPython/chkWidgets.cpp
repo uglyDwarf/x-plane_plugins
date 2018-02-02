@@ -44,11 +44,11 @@ class widget{
   int left, top, right, bottom, visible, isRoot, widgetClass;
   std::string descriptor;
   intptr_t id;
-  XPWidgetFunc_t callback;
   std::vector<class widget *> children;
   class widget* parent;
   std::map<XPWidgetPropertyID, intptr_t> properties;
   std::list<XPWidgetFunc_t> callbacks;
+  bool remove_children;
  public:
   widget(int inLeft, int inTop, int inRight, int inBottom, int inVisible, std::string inDescriptor, int inIsRoot, 
          void *inContainer, int inClass = -1, XPWidgetFunc_t inCallback = NULL);
@@ -75,20 +75,38 @@ class widget{
   void setProperty(XPWidgetPropertyID property, intptr_t value){properties[property] = value;};
   intptr_t getProperty(XPWidgetPropertyID property, int *exists);
   void addCallback(XPWidgetFunc_t cbk){callbacks.push_front(cbk);};
+  void setRemoveChildren(){remove_children = true;};
 };
 
 intptr_t widget::globalId = 444;
+
+static bool removeWidget(XPWidgetID inWidget)
+{
+  std::map<class widget *, int>::iterator i = widgets.find(static_cast<widget *>(inWidget));
+  if(i == widgets.end()){
+    return false;
+  }
+  widget *tmp = i->first;
+  widgets.erase(i);
+  return true;
+}
+
 
 widget::widget(int inLeft, int inTop, int inRight, int inBottom, int inVisible, std::string inDescriptor,
          int inIsRoot, void *inContainer, int inClass, XPWidgetFunc_t inCallback):
            left(inLeft), top(inTop), right(inRight), bottom(inBottom),
            visible(inVisible), descriptor(inDescriptor), isRoot(inIsRoot), parent(static_cast<widget*>(inContainer)),
-           widgetClass(inClass), callback(inCallback)
+           widgetClass(inClass), remove_children(false)
 {
+  if(inCallback){
+    addCallback(inCallback);
+
+  }
   if(isRoot){
     frontWidget = this;
   }
   id = globalId++;
+  widgets[this] = 1;
 }
 
 widget::~widget()
@@ -96,6 +114,13 @@ widget::~widget()
   if(parent){
     parent->removeChild(this);
   }
+  if(remove_children){
+    std::vector<class widget *>::iterator i;
+    for(i = children.begin(); i != children.end(); ++i){
+      removeWidget(*i);
+    }
+  }
+  removeWidget(this);
 }
 
 void widget::removeChild(const widget *ch)
@@ -111,14 +136,13 @@ void widget::removeChild(const widget *ch)
 
 int widget::message(XPWidgetMessage inMessage, intptr_t inParam1, intptr_t inParam2)
 {
-  if(callback != NULL){
-    return callback(inMessage, static_cast<void *>(this), inParam1, inParam2);
-  }else{
-    int1 = inMessage;
-    int2 = inParam1;
-    int3 = inParam2;
-    return 4567;
+  std::list<XPWidgetFunc_t>::iterator i = callbacks.begin();
+  int res = 0;
+
+  while((res == 0) && (i != callbacks.end())){
+    res = (*i)(inMessage, static_cast<void *>(this), inParam1, inParam2);
   }
+  return res;
 }
 
 widget *widget::getChild(int inXOffset, int inYOffset, int inRecursive, int inVisibleOnly)
@@ -133,7 +157,7 @@ widget *widget::getChild(int inXOffset, int inYOffset, int inRecursive, int inVi
       break;
     }
   }
-  if(inRecursive){
+  if(res && inRecursive){
     widget *tmp = res->getChild(inXOffset, inYOffset, inRecursive, inVisibleOnly);
     if(tmp != NULL){
       res = tmp;
@@ -193,7 +217,6 @@ XPWidgetID XPCreateWidget(int inLeft, int inTop, int inRight, int inBottom, int 
                           int inIsRoot, XPWidgetID inContainer, XPWidgetClass inClass)
 {
   widget *tmp = new widget(inLeft, inTop, inRight, inBottom, inVisible, inDescriptor, inIsRoot, inContainer, inClass);
-  widgets[tmp] = 1;
   tmp->addCallback(widgetCbk);
   int0 = inIsRoot;
   int1 = inClass;
@@ -207,7 +230,6 @@ XPWidgetID XPCreateCustomWidget(int inLeft, int inTop, int inRight, int inBottom
                           int inIsRoot, XPWidgetID inContainer, XPWidgetFunc_t inCallback)
 {
   widget *tmp = new widget(inLeft, inTop, inRight, inBottom, inVisible, inDescriptor, inIsRoot, inContainer, -1, inCallback);
-  widgets[tmp] = 1;
   int0 = inIsRoot;
   if(inContainer != NULL){
     static_cast<widget*>(inContainer)->addChild(tmp);
@@ -217,15 +239,13 @@ XPWidgetID XPCreateCustomWidget(int inLeft, int inTop, int inRight, int inBottom
 
 void XPDestroyWidget(XPWidgetID inWidget, int inDestroyChildren)
 {
-  std::map<class widget *, int>::iterator i = widgets.find(static_cast<widget *>(inWidget));
-  if(i == widgets.end()){
-    std::cout << "Widget doesn't exist!" << std::endl;
-    return;
+  widget *w = static_cast<widget *>(inWidget);
+  if(inDestroyChildren){
+    w->setRemoveChildren();
   }
-  widget *tmp = i->first;
-  widgets.erase(i);
-  delete tmp;
+  delete w;
   int0 = inDestroyChildren;
+  int1 = widgets.size();
 }
 
 int XPSendMessageToWidget(XPWidgetID inWidget, XPWidgetMessage inMessage, XPDispatchMode inMode, intptr_t inParam1,

@@ -32,10 +32,10 @@ class PythonInterface(checkBase):
       self.int2Dref = XPLMFindDataRef('widgets/int2')
       self.int3Dref = XPLMFindDataRef('widgets/int3')
       
-      self.widgetLeft = 105
-      self.widgetTop = 126
-      self.widgetRight = 125
-      self.widgetBottom = 106
+      self.widgetLeft = 300
+      self.widgetTop = 450
+      self.widgetRight = 400
+      self.widgetBottom = 350
       self.widgetVisible = 107
       self.widgetDesc = 'Awesome widget'
       self.widgetIsRoot = 108
@@ -59,10 +59,10 @@ class PythonInterface(checkBase):
       self.checkVal('widget container', XPGetParentWidget(self.widget), self.widgetContainer)
       self.checkVal('widget class', XPLMGetDatai(self.int1Dref), self.widgetClass)
 
-      self.c_widgetLeft = 1105
-      self.c_widgetTop = 1126
-      self.c_widgetRight = 1125
-      self.c_widgetBottom = 1106
+      self.c_widgetLeft = 285
+      self.c_widgetTop = 465
+      self.c_widgetRight = 349
+      self.c_widgetBottom = 401
       self.c_widgetVisible = 1107
       self.c_widgetDesc = 'Awesome custom widget'
       self.c_widgetIsRoot = 1108
@@ -93,13 +93,18 @@ class PythonInterface(checkBase):
       self.params = (1234, 2345)
       self.returnRes = 5678
       self.customCallbackCalled = 0
+      self.target_widget = self.cust_widget
       res = XPSendMessageToWidget(self.cust_widget, self.message, self.mode, self.params[0], self.params[1])
       self.checkVal('customWidget callback called', self.customCallbackCalled, 1)
       self.checkVal('customWidget callback retval', res, self.returnRes)
       self.checkVal('customWidget callback method', XPLMGetDatai(self.int0Dref), self.mode)
 
-      self.cust_widget1 = XPCreateCustomWidget(self, self.c_widgetLeft, self.c_widgetTop,
-                                               self.c_widgetRight, self.c_widgetBottom,
+      self.c_widget1Left = 351
+      self.c_widget1Top = 399
+      self.c_widget1Right = 415
+      self.c_widget1Bottom = 335
+      self.cust_widget1 = XPCreateCustomWidget(self, self.c_widget1Left, self.c_widget1Top,
+                                               self.c_widget1Right, self.c_widget1Bottom,
                                                self.c_widgetVisible, self.c_widgetDesc,
                                                self.c_widgetIsRoot, 0,
                                                self.c_widgetCallback)
@@ -119,18 +124,109 @@ class PythonInterface(checkBase):
       
       self.checkVal('XPFindRootWidget', XPFindRootWidget(self.cust_widget), self.widget)
 
+      left = []; top = []; right = []; bottom = []
+      XPGetWidgetExposedGeometry(self.cust_widget, left, top, right, bottom)
+      self.checkVal('XPGetWidgetExposedGeometry', (left[0], top[0], right[0], bottom[0]),
+                    (self.widgetLeft, self.widgetTop, self.c_widgetRight, self.c_widgetBottom))
+
+
+      self.xOffset = 320
+      self.yOffset = 430
+      self.recursive = 555
+      self.visibleOnly = 666
+      res = XPGetWidgetForLocation(self.widget, self.xOffset, self.yOffset, self.recursive, self.visibleOnly)
+      self.checkVal('XPGetWidgetForLocation result', res, self.cust_widget)
+      self.checkVal('XPGetWidgetForLocation X offset', XPLMGetDatai(self.int0Dref), self.xOffset)
+      self.checkVal('XPGetWidgetForLocation Y offset', XPLMGetDatai(self.int1Dref), self.yOffset)
+      self.checkVal('XPGetWidgetForLocation recursive', XPLMGetDatai(self.int2Dref), self.recursive)
+      self.checkVal('XPGetWidgetForLocation visibleOnly', XPLMGetDatai(self.int3Dref), self.visibleOnly)
+
+
+
+
+      self.c_widgetLeft = 1212
+      self.c_widgetTop = 1213
+      self.c_widgetRight = 1214
+      self.c_widgetBottom = 1215
+      XPSetWidgetGeometry(self.cust_widget, self.c_widgetLeft, self.c_widgetTop, self.c_widgetRight, self.c_widgetBottom)
+
+      left = []; top = []; right = []; bottom = []
+      XPGetWidgetGeometry(self.cust_widget, left, top, right, bottom)
+      self.checkVal('widget left', left[0], self.c_widgetLeft)
+      self.checkVal('widget top', top[0], self.c_widgetTop)
+      self.checkVal('widget right', right[0], self.c_widgetRight)
+      self.checkVal('widget bottom', bottom[0], self.c_widgetBottom)
+
+      self.checkVal('XPIsWidgetInFront', XPIsWidgetInFront(self.widget), 0)
+      XPBringRootWidgetToFront(self.cust_widget)
+      self.checkVal('XPIsWidgetInFront', XPIsWidgetInFront(self.widget), 1)
+
+      desc = []
+      XPGetWidgetDescriptor(self.cust_widget, desc, 4096)
+      self.checkVal('XPGetWidgetDescriptor', desc[0], self.c_widgetDesc)
+      self.c_widgetDesc = 'Cool custom widget'
+      XPSetWidgetDescriptor(self.cust_widget, self.c_widgetDesc)
+      desc = []
+      XPGetWidgetDescriptor(self.cust_widget, desc, 4096)
+      self.checkVal('XPSetWidgetDescriptor', desc[0], self.c_widgetDesc)
+
+      self.checkVal('XPGetWidgetWithFocus', XPGetWidgetWithFocus(), 0)
+      self.checkVal('XPSetKeyboardFocus', XPSetKeyboardFocus(self.cust_widget), self.cust_widget)
+      self.checkVal('XPGetWidgetWithFocus', XPGetWidgetWithFocus(), self.cust_widget)
+      XPLoseKeyboardFocus(self.cust_widget)
+      self.checkVal('XPLoseKeyboardFocus', XPGetWidgetWithFocus(), self.widget)
+
+      exists = []
+      self.prop = 12345
+      self.propVal = 23456
+      self.checkVal('XPGetWidgetProperty', XPGetWidgetProperty(self.widget, self.prop, exists), 0)
+      self.checkVal('XPGetWidgetProperty exists', exists[0], 0)
+      XPSetWidgetProperty(self.widget, self.prop, self.propVal)
+      exists = []
+      self.checkVal('XPGetWidgetProperty', XPGetWidgetProperty(self.widget, self.prop, exists), self.propVal)
+      self.checkVal('XPGetWidgetProperty exists', exists[0], 1)
+
+      self.w_class = 4356
+      cbk = XPGetWidgetClassFunc(self.w_class)
+      self.checkVal('XPGetWidgetClassFunc', XPLMGetDatai(self.int0Dref), self.w_class)
+      XPAddWidgetCallback(self, self.widget, cbk)
+      XPAddWidgetCallback(self, self.widget, self.c_widgetCallback)
+      
+      self.message = 4560
+      self.mode = 4561
+      self.params = (12345, 23456)
+      self.returnRes = 5678
+      self.customCallbackCalled = 0
+      self.target_widget = self.widget
+      res = XPSendMessageToWidget(self.widget, self.message, self.mode, self.params[0], self.params[1])
+      self.checkVal('widget callback called', self.customCallbackCalled, 1)
+      self.checkVal('widget callback retval', res, self.returnRes)
+
+      self.returnRes = 0
+      self.customCallbackCalled = 0
+      res = XPSendMessageToWidget(self.widget, self.message, self.mode, self.params[0], self.params[1])
+      self.checkVal('widget callback called', self.customCallbackCalled, 1)
+      self.checkVal('widget callback retval', res, self.message + 2 * self.params[0] + 3 * self.params[1])
+      self.checkVal('widget callback message', XPLMGetDatai(self.int0Dref), self.message)
+      self.checkVal('widget callback params', (XPLMGetDatai(self.int1Dref), XPLMGetDatai(self.int2Dref)), self.params)
+
 
       self.destroyChildren = 6789
       XPDestroyWidget(self, self.cust_widget1, self.destroyChildren)
       self.checkVal('XPDestroyWidget destroyChildren', XPLMGetDatai(self.int0Dref), self.destroyChildren)
       self.checkVal('XPCountChildWidgets', XPCountChildWidgets(self.widget), 1)
 
+      self.destroyChildren = 1
+      XPDestroyWidget(self, self.widget, self.destroyChildren)
+      self.checkVal('XPDestroyWidget destroyChildren', XPLMGetDatai(self.int0Dref), self.destroyChildren)
+      self.checkVal('XPDestroyWidget remaining', XPLMGetDatai(self.int1Dref), 0)
+
       return 1.0
 
    def customCallback(self, inMessage, inWidget, inParam1, inParam2):
       self.checkVal('callback\'s message', inMessage, self.message)
       self.checkVal('callback\'s params', (inParam1, inParam2), self.params)
-      self.checkVal('callback\'s widget class', inWidget, self.cust_widget)
+      self.checkVal('callback\'s widget class', inWidget, self.target_widget)
       self.customCallbackCalled = True
       return self.returnRes;
 
