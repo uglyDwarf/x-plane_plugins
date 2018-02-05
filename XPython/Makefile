@@ -35,7 +35,8 @@ plugin : CPPFLAGS+= ${XPLM_CPPFLAGS}
 plugin : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic -ldl #-fsanitize=address
 #plugin : plugin.c defs.c display.c utils.c graphics.c data_access.c utilities.c scenery.c menus.c
 plugin : plugin.o defs.o display.o utils.o graphics.o data_access.o utilities.o scenery.o menus.o \
-         navigation.o plugins.o planes.o processing.o camera.o widget_defs.o widgets.o
+         navigation.o plugins.o planes.o processing.o camera.o widget_defs.o widgets.o \
+         standard_widgets.o
 
 plugin.so : plugin
 	cp plugin plugin.so

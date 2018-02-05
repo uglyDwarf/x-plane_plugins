@@ -22,6 +22,7 @@ PyMODINIT_FUNC PyInit_XPLMProcessing(void);
 PyMODINIT_FUNC PyInit_XPLMCamera(void);
 PyMODINIT_FUNC PyInit_XPWidgetDefs(void);
 PyMODINIT_FUNC PyInit_XPWidgets(void);
+PyMODINIT_FUNC PyInit_XPStandardWidgets(void);
 
 
 //should be static, don't change after Py_SetProgramName is called 
@@ -52,6 +53,7 @@ int initPython(const char *programName){
   PyImport_AppendInittab("XPLMCamera", PyInit_XPLMCamera);
   PyImport_AppendInittab("XPWidgetDefs", PyInit_XPWidgetDefs);
   PyImport_AppendInittab("XPWidgets", PyInit_XPWidgets);
+  PyImport_AppendInittab("XPStandardWidgets", PyInit_XPStandardWidgets);
 
   Py_Initialize();
   if(!Py_IsInitialized()){
