@@ -19,6 +19,7 @@
 #include "chkProcessing.h"
 #include "chkCamera.h"
 #include "chkWidgets.h"
+#include "chkUIGraphics.h"
 
 //extern int XPluginStart(char *outName,
 //                        char *outSig,
@@ -88,6 +89,7 @@ int main(int argc, char *argv[])
   initCameraModule();
   initDisplayModule();
   initWidgetsModule();
+  initUIGraphicsModule();
 
   int res = XPluginStart(outName, outSig, outDesc);
   std::cout << "Y-Plane loaded plugin " << outName << "(" << res << ")" << std::endl;

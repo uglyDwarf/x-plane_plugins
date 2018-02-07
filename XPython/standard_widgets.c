@@ -10,7 +10,6 @@
 #include <Widgets/XPStandardWidgets.h>
 
 static PyMethodDef XPStandardWidgetsMethods[] = {
-//  {"XPCreateWidget", XPCreateWidgetFun, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 
@@ -30,9 +29,6 @@ static struct PyModuleDef XPStandardWidgetsModule = {
 PyMODINIT_FUNC
 PyInit_XPStandardWidgets(void)
 {
-//  if(!(widgetCallbackDict = PyDict_New())){
-//    return NULL;
-//  }
   PyObject *mod = PyModule_Create(&XPStandardWidgetsModule);
   if(mod){
     PyModule_AddIntConstant(mod, "xpWidgetClass_MainWindow", xpWidgetClass_MainWindow);
