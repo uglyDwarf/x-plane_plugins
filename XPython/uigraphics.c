@@ -183,9 +183,6 @@ static struct PyModuleDef XPUIGraphicsModule = {
 PyMODINIT_FUNC
 PyInit_XPUIGraphics(void)
 {
-//  if(!(widgetCallbackDict = PyDict_New())){
-//    return NULL;
-//  }
   PyObject *mod = PyModule_Create(&XPUIGraphicsModule);
   if(mod){
     PyModule_AddIntConstant(mod, "xpWindow_Help", xpWindow_Help);

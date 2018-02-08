@@ -26,7 +26,7 @@ main : LDFLAGS+= -Wl,--export-dynamic -g
 main : CPPFLAGS+= ${XPLM_CPPFLAGS} -g
 main : main.cpp chkDisplay.o chkGraphics.o chk_helper.o chkDataAccess.o chkUtilities.o \
        chkScenery.o chkMenus.o chkNavigation.o chkPlugin.o chkPlanes.o chkProcessing.o \
-       chkCamera.o chkWidgets.o chkUIGraphics.o -ldl
+       chkCamera.o chkWidgets.o chkUIGraphics.o chkWidgetUtils.o -ldl
 #main : main.cpp chkDisplay.cpp chkGraphics.cpp chk_helper.cpp chkDataAccess.cpp chkUtilities.cpp \
 #       chkScenery.cpp chkMenus.cpp chkPlugin.cpp -ldl
 
@@ -36,7 +36,7 @@ plugin : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic -ldl #-fsanitize=address
 #plugin : plugin.c defs.c display.c utils.c graphics.c data_access.c utilities.c scenery.c menus.c
 plugin : plugin.o defs.o display.o utils.o graphics.o data_access.o utilities.o scenery.o menus.o \
          navigation.o plugins.o planes.o processing.o camera.o widget_defs.o widgets.o \
-         standard_widgets.o uigraphics.o
+         standard_widgets.o uigraphics.o widgetutils.o
 
 plugin.so : plugin
 	cp plugin plugin.so

@@ -15,8 +15,8 @@ PyObject *widgetCallbackDict;
 int widgetCallback(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inParam1, intptr_t inParam2)
 {
   PyObject *widget = PyLong_FromVoidPtr(inWidget);
-  PyObject *param1 = PyLong_FromVoidPtr((void *)inParam1);
-  PyObject *param2 = PyLong_FromVoidPtr((void *)inParam2);
+  PyObject *param1 = PyLong_FromLong(inParam1);
+  PyObject *param2 = PyLong_FromLong(inParam2);
 
   PyObject *callbackList = PyDict_GetItem(widgetCallbackDict, widget);
   if(callbackList == NULL){
@@ -119,8 +119,8 @@ static PyObject *XPSendMessageToWidgetFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPWidgetID inWidget = PyLong_AsVoidPtr(widget);
-  intptr_t inParam1 = (intptr_t)PyLong_AsVoidPtr(param1);
-  intptr_t inParam2 = (intptr_t)PyLong_AsVoidPtr(param2);
+  intptr_t inParam1 = PyLong_AsLong(param1);
+  intptr_t inParam2 = PyLong_AsLong(param2);
 
   int res = XPSendMessageToWidget(inWidget, inMessage, inMode, inParam1, inParam2);
   return PyLong_FromLong(res);
@@ -348,7 +348,7 @@ static PyObject *XPSetWidgetPropertyFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPWidgetPropertyID inProperty = property;
-  XPSetWidgetProperty(PyLong_AsVoidPtr(widget), inProperty, (intptr_t)PyLong_AsVoidPtr(value));
+  XPSetWidgetProperty(PyLong_AsVoidPtr(widget), inProperty, PyLong_AsLong(value));
   Py_RETURN_NONE;
 }
 
