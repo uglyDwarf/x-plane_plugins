@@ -20,7 +20,7 @@ static std::map<class widget *, int> widgets;
 
 
 static int int0, int1, int2, int3;
-
+static XPLMDataRef d0, d1, d2, d3;
 
 class widget;
 static widget *frontWidget = NULL;
@@ -32,10 +32,10 @@ static int widgetCbk(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t in
 
 void initWidgetsModule()
 {
-  registerROAccessor("widgets/int0", int0);
-  registerROAccessor("widgets/int1", int1);
-  registerROAccessor("widgets/int2", int2);
-  registerROAccessor("widgets/int3", int3);
+  d0 = registerROAccessor("widgets/int0", int0);
+  d1 = registerROAccessor("widgets/int1", int1);
+  d2 = registerROAccessor("widgets/int2", int2);
+  d3 = registerROAccessor("widgets/int3", int3);
 }
 
 
@@ -107,6 +107,8 @@ widget::widget(int inLeft, int inTop, int inRight, int inBottom, int inVisible, 
   }
   id = globalId++;
   widgets[this] = 1;
+  setProperty(xpProperty_UserStart, isRoot);
+  setProperty(xpProperty_UserStart + 1, inClass);
 }
 
 widget::~widget()
@@ -116,8 +118,13 @@ widget::~widget()
   }
   if(remove_children){
     std::vector<class widget *>::iterator i;
-    for(i = children.begin(); i != children.end(); ++i){
+    // Children remove themselves from the list, so normal iteration
+    //   is not possible
+    while((i = children.begin()) != children.end()){
+      (*i)->setRemoveChildren();
       removeWidget(*i);
+      delete *i;
+      *i = NULL;
     }
   }
   message(xpMsg_Destroy, (remove_children ? 1 : 0), 0);
@@ -248,6 +255,15 @@ void XPDestroyWidget(XPWidgetID inWidget, int inDestroyChildren)
   delete w;
   int0 = inDestroyChildren;
   int1 = widgets.size();
+
+  /*
+  std::cout << "Remaining widgets:" << std::endl;
+  std::map<class widget *, int>::iterator i;
+  for(i = widgets.begin(); i != widgets.end(); ++i){
+    std::cout << "  \"" << i->first->getDescriptor() << "\"" << std::endl;
+  }
+  std::cout << std::endl;
+  */
 }
 
 int XPSendMessageToWidget(XPWidgetID inWidget, XPWidgetMessage inMessage, XPDispatchMode inMode, intptr_t inParam1,
@@ -418,4 +434,28 @@ XPWidgetFunc_t XPGetWidgetClassFunc(XPWidgetClass inWidgetClass)
   return widgetCbk;
 }
 
+
+#ifdef TESTING
+
+int main(int argc, char *argv[])
+{
+  initWidgetsModule();
+  std::cout << "Testing" << std::endl;
+
+  XPWidgetID parent = XPCreateWidget(0, 1, 2, 3, 1, "Parent", 1, 0, 0);
+  XPWidgetID child = XPCreateWidget(0, 1, 2, 3, 1, "Child", 0, parent, 0);
+
+  XPDestroyWidget(parent, 1);
+  std::cout << "Testing end" << std::endl;
+
+  XPLMUnregisterDataAccessor(d0);
+  XPLMUnregisterDataAccessor(d1);
+  XPLMUnregisterDataAccessor(d2);
+  XPLMUnregisterDataAccessor(d3);
+  std::cout << "Finished" << std::endl;
+}
+
+
+
+#endif
 

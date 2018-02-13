@@ -249,4 +249,14 @@ void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, void *inParam
 }
 
 
+/*
+TODO
 
+write, flush methods...
+
+//in init module function
+PySys_SetObject("stdout", m);
+PySys_SetObject("stderr", m);
+
+PyImport_ImportModule("logger");
+*/

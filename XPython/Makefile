@@ -38,6 +38,12 @@ plugin : plugin.o defs.o display.o utils.o graphics.o data_access.o utilities.o 
          navigation.o plugins.o planes.o processing.o camera.o widget_defs.o widgets.o \
          standard_widgets.o uigraphics.o widgetutils.o
 
+valenda : LDFLAGS+= -Wl,--export-dynamic -g
+valenda : CPPFLAGS+= ${XPLM_CPPFLAGS} -g -DTESTING
+valenda : chkWidgets.o chk_helper.o chkDataAccess.o
+	clang++ -o valenda chk_helper.o chkWidgets.o chkDataAccess.o
+
+
 plugin.so : plugin
 	cp plugin plugin.so
 

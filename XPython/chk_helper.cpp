@@ -128,9 +128,9 @@ static int readData(void *inRefcon, void *outValue, int inOffset, int inLength)
 }
 
 
-void registerROAccessor(const char*name, int &val)
+XPLMDataRef registerROAccessor(const char*name, int &val)
 {
-  XPLMRegisterDataAccessor(name, xplmType_Int, 0, 
+  return XPLMRegisterDataAccessor(name, xplmType_Int, 0, 
     readVal<int>, NULL, 
     NULL, NULL, 
     NULL, NULL, 
@@ -140,9 +140,9 @@ void registerROAccessor(const char*name, int &val)
     &val, NULL);
 }
 
-void registerROAccessor(const char*name, float &val)
+XPLMDataRef registerROAccessor(const char*name, float &val)
 {
-  XPLMRegisterDataAccessor(name, xplmType_Float, 0, 
+  return XPLMRegisterDataAccessor(name, xplmType_Float, 0, 
     NULL, NULL, 
     readVal<float>, NULL, 
     NULL, NULL, 
@@ -152,9 +152,9 @@ void registerROAccessor(const char*name, float &val)
     &val, NULL);
 }
 
-void registerROAccessor(const char*name, double &val)
+XPLMDataRef registerROAccessor(const char*name, double &val)
 {
-  XPLMRegisterDataAccessor(name, xplmType_Double, 0, 
+  return XPLMRegisterDataAccessor(name, xplmType_Double, 0, 
     NULL, NULL, 
     NULL, NULL, 
     readVal<double>, NULL, 
@@ -165,9 +165,9 @@ void registerROAccessor(const char*name, double &val)
 }
 
 
-void registerROAccessor(const char*name, std::string &val)
+XPLMDataRef registerROAccessor(const char*name, std::string &val)
 {
-  XPLMRegisterDataAccessor(name, xplmType_Data, 0, 
+  return XPLMRegisterDataAccessor(name, xplmType_Data, 0, 
     NULL, NULL, 
     NULL, NULL, 
     NULL, NULL, 

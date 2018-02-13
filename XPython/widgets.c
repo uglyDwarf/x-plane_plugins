@@ -241,24 +241,42 @@ static PyObject *XPGetWidgetGeometryFun(PyObject *self, PyObject *args)
 {
   (void) self;
   PyObject *widget, *left, *top, *right, *bottom;
-  if(!PyArg_ParseTuple(args, "OOOOO", &widget, &left, &top, &right, &bottom)){
-    return NULL;
+  bool lists;
+  if(PySequence_Size(args) > 1){
+    lists = true;
+    if(!PyArg_ParseTuple(args, "OOOOO", &widget, &left, &top, &right, &bottom)){
+      return NULL;
+    }
+  }else{
+    lists = false;
+    if(!PyArg_ParseTuple(args, "O", &widget)){
+      return NULL;
+    }
   }
   int outLeft, outTop, outRight, outBottom;
   XPGetWidgetGeometry(PyLong_AsVoidPtr(widget), &outLeft, &outTop, &outRight, &outBottom);
-  if(left != Py_None){
-    PyList_Append(left, PyLong_FromLong(outLeft));
+  if(lists){
+      if(left != Py_None){
+        PyList_Append(left, PyLong_FromLong(outLeft));
+      }
+      if(top != Py_None){
+        PyList_Append(top, PyLong_FromLong(outTop));
+      }
+      if(right != Py_None){
+        PyList_Append(right, PyLong_FromLong(outRight));
+      }
+      if(bottom != Py_None){
+        PyList_Append(bottom, PyLong_FromLong(outBottom));
+      }
+      Py_RETURN_NONE;
+  }else{
+    PyObject *res = PyList_New(4);
+    PyList_SetItem(res, 0, PyLong_FromLong(outLeft));
+    PyList_SetItem(res, 1, PyLong_FromLong(outTop));
+    PyList_SetItem(res, 2, PyLong_FromLong(outRight));
+    PyList_SetItem(res, 3, PyLong_FromLong(outBottom));
+    return res;
   }
-  if(top != Py_None){
-    PyList_Append(top, PyLong_FromLong(outTop));
-  }
-  if(right != Py_None){
-    PyList_Append(right, PyLong_FromLong(outRight));
-  }
-  if(bottom != Py_None){
-    PyList_Append(bottom, PyLong_FromLong(outBottom));
-  }
-  Py_RETURN_NONE;
 }
 
 static PyObject *XPSetWidgetGeometryFun(PyObject *self, PyObject *args)

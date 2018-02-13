@@ -50,7 +50,7 @@ void XPUCreateWidgets(const XPWidgetCreate_t *inWidgetDefs, int inCount, XPWidge
         break;
       default:
         if((0 <= defs->containerIndex) && (defs->containerIndex < i)){
-          container = ioWidgets[i];
+          container = ioWidgets[defs->containerIndex];
         }else{
           container = NULL;
         }

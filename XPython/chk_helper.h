@@ -1,6 +1,8 @@
 #ifndef CHK_HELPER__H
 #define CHK_HELPER__H
 
+#include <XPLM/XPLMDataAccess.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -15,10 +17,10 @@ extern "C" {
   void add_double_value(std::string name, double val);
 } //extern "C"
 
-  void registerROAccessor(const char*name, int &val);
-  void registerROAccessor(const char*name, float &val);
-  void registerROAccessor(const char*name, double &val);
-  void registerROAccessor(const char*name, std::string &val);
+  XPLMDataRef registerROAccessor(const char*name, int &val);
+  XPLMDataRef registerROAccessor(const char*name, float &val);
+  XPLMDataRef registerROAccessor(const char*name, double &val);
+  XPLMDataRef registerROAccessor(const char*name, std::string &val);
 
 #endif
 
