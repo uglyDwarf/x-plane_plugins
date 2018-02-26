@@ -162,25 +162,54 @@ PyObject *XPLMDrawAircraftFun(PyObject *self, PyObject *args)
   (void)self;
   int inPlaneIndex, inFullDraw;
   float inX, inY, inZ, inPitch, inRoll, inYaw;
-  PyObject *drawStateInfo;
+  PyObject *drawStateInfo, *tmp;
   XPLMPlaneDrawState_t inDrawStateInfo;
   if(!PyArg_ParseTuple(args, "iffffffiO", &inPlaneIndex, &inX, &inY, &inZ, &inPitch,
                                           &inRoll, &inYaw, &inFullDraw, &drawStateInfo)){
     return NULL;
   }
   inDrawStateInfo.structSize = sizeof(XPLMPlaneDrawState_t);
-  inDrawStateInfo.gearPosition = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(drawStateInfo, 1)));
-  inDrawStateInfo.flapRatio = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(drawStateInfo, 2)));
-  inDrawStateInfo.spoilerRatio = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(drawStateInfo, 3)));
-  inDrawStateInfo.speedBrakeRatio = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(drawStateInfo, 4)));
-  inDrawStateInfo.slatRatio = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(drawStateInfo, 5)));
-  inDrawStateInfo.wingSweep = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(drawStateInfo, 6)));
-  inDrawStateInfo.thrust = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(drawStateInfo, 7)));
-  inDrawStateInfo.yokePitch = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(drawStateInfo, 8)));
-  inDrawStateInfo.yokeHeading = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(drawStateInfo, 9)));
-  inDrawStateInfo.yokeRoll = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(drawStateInfo, 10)));
+  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 1));
+  inDrawStateInfo.gearPosition = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 2));
+  inDrawStateInfo.flapRatio = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 3));
+  inDrawStateInfo.spoilerRatio = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 4));
+  inDrawStateInfo.speedBrakeRatio = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 5));
+  inDrawStateInfo.slatRatio = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 6));
+  inDrawStateInfo.wingSweep = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 7));
+  inDrawStateInfo.thrust = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 8));
+  inDrawStateInfo.yokePitch = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 9));
+  inDrawStateInfo.yokeHeading = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 10));
+  inDrawStateInfo.yokeRoll = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
 
   XPLMDrawAircraft(inPlaneIndex, inX, inY, inZ, inPitch, inRoll, inYaw, inFullDraw, &inDrawStateInfo);
+  Py_RETURN_NONE;
+}
+
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  PyDict_Clear(availableDict);
+  Py_DECREF(availableDict);
   Py_RETURN_NONE;
 }
 
@@ -206,6 +235,7 @@ static PyMethodDef XPLMPlanesMethods[] = {
   {"XPLMDisableAIForPlane", XPLMDisableAIForPlaneFun, METH_VARARGS, ""},
   {"XPLMDrawAircraft", XPLMDrawAircraftFun, METH_VARARGS, ""},
   {"XPLMReinitUsersPlane", XPLMReinitUsersPlaneFun, METH_VARARGS, ""},
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

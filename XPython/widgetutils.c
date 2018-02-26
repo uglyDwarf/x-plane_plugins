@@ -43,7 +43,8 @@ static PyObject *XPUCreateWidgetsFun(PyObject *self, PyObject *args)
   for(i = 0; i < inCount; ++i){
     PyList_Append(widgets, PyLong_FromVoidPtr(ioWidgets[i]));
   }
-
+  free(ioWidgets);
+  free(defs);
   Py_RETURN_NONE;
 }
 
@@ -136,6 +137,13 @@ static PyObject *XPUDragWidgetFun(PyObject *self, PyObject *args)
   return PyLong_FromLong(res);
 }
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  Py_RETURN_NONE;
+}
+
 static PyMethodDef XPWidgetUtilsMethods[] = {
   {"XPUCreateWidgets", XPUCreateWidgetsFun, METH_VARARGS, ""},
   {"XPUMoveWidgetBy", XPUMoveWidgetByFun, METH_VARARGS, ""},
@@ -143,6 +151,7 @@ static PyMethodDef XPWidgetUtilsMethods[] = {
   {"XPUSelectIfNeeded", XPUSelectIfNeededFun, METH_VARARGS, ""},
   {"XPUDefocusKeyboard", XPUDefocusKeyboardFun, METH_VARARGS, ""},
   {"XPUDragWidget", XPUDragWidgetFun, METH_VARARGS, ""},
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

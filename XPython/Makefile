@@ -10,7 +10,7 @@ COV_CFLAGS+= -fprofile-instr-generate -fcoverage-mapping
 
 PY_LDFLAGS=$(shell python3-config --ldflags)
 
-all : main plugin.so
+all : main plugin.so plugin.txt
 	./main
 
 #all_cov : CXXFLAGS+= ${COV_CFLAGS}
@@ -30,9 +30,9 @@ main : main.cpp chkDisplay.o chkGraphics.o chk_helper.o chkDataAccess.o chkUtili
 #main : main.cpp chkDisplay.cpp chkGraphics.cpp chk_helper.cpp chkDataAccess.cpp chkUtilities.cpp \
 #       chkScenery.cpp chkMenus.cpp chkPlugin.cpp -ldl
 
-plugin : CFLAGS+= ${PY_CFLAGS} -fPIC #-fsanitize=address
+plugin : CFLAGS+= ${PY_CFLAGS} -fPIC -g #-fsanitize=address
 plugin : CPPFLAGS+= ${XPLM_CPPFLAGS}
-plugin : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic -ldl #-fsanitize=address
+plugin : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic -ldl -g #-fsanitize=address
 #plugin : plugin.c defs.c display.c utils.c graphics.c data_access.c utilities.c scenery.c menus.c
 plugin : plugin.o defs.o display.o utils.o graphics.o data_access.o utilities.o scenery.o menus.o \
          navigation.o plugins.o planes.o processing.o camera.o widget_defs.o widgets.o \
@@ -43,9 +43,14 @@ valenda : CPPFLAGS+= ${XPLM_CPPFLAGS} -g -DTESTING
 valenda : chkWidgets.o chk_helper.o chkDataAccess.o
 	clang++ -o valenda chk_helper.o chkWidgets.o chkDataAccess.o
 
+plugin.txt : plugin.so
+	objdump -d plugin.so > plugin.txt
 
 plugin.so : plugin
 	cp plugin plugin.so
+
+valgrind : main plugin.so plugin.txt
+	valgrind --tool=memcheck --suppressions=valgrind-python.supp --leak-check=full ./main
 
 clean :
 	rm -f *.so *.o main plugin default.prof* coverage.txt

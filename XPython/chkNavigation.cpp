@@ -30,6 +30,10 @@ void initNavigationModule()
 {
 }
 
+void cleanupNavigationModule()
+{
+}
+
 
 XPLMNavRef XPLMGetFirstNavAid(void)
 {

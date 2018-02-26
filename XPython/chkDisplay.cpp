@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <list>
 #include <vector>
 #include <string.h>
 
@@ -11,13 +12,22 @@
 #include "chk_helper.h"
 
 static int int0, int1, int2, int3; 
+static std::list<XPLMDataRef> d;
 
 void initDisplayModule(void)
 {
-  registerROAccessor("display/int0", int0);
-  registerROAccessor("display/int1", int1);
-  registerROAccessor("display/int2", int2);
-  registerROAccessor("display/int3", int3);
+  d.push_back(registerROAccessor("display/int0", int0));
+  d.push_back(registerROAccessor("display/int1", int1));
+  d.push_back(registerROAccessor("display/int2", int2));
+  d.push_back(registerROAccessor("display/int3", int3));
+}
+
+void cleanupDisplayModule(void)
+{
+  for(std::list<XPLMDataRef>::iterator i = d.begin(); i != d.end(); ++i){
+    XPLMUnregisterDataAccessor(*i);
+  }
+  d.empty();
 }
 
 class drawCallback{
@@ -123,6 +133,7 @@ int XPLMUnregisterDrawCallback(XPLMDrawCallback_f   inCallback,
   for(i = drawCallbacks.begin(); i != drawCallbacks.end(); ++i){
     if((*i)->is(inCallback, inPhase, inWantsBefore, inRefcon)){
       drawCallbacks.erase(i);
+      delete *i;
       return 1;
     }
   }
@@ -137,6 +148,7 @@ int XPLMUnregisterKeySniffer(XPLMKeySniffer_f inCallback,
   for(i = keySniffCallbacks.begin(); i != keySniffCallbacks.end(); ++i){
     if((*i)->is(inCallback, inBeforeWindows, inRefcon)){
       keySniffCallbacks.erase(i);
+      delete *i;
       return 1;
     }
   }

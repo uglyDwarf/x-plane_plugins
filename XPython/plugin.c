@@ -40,7 +40,7 @@ int initPython(const char *programName){
     return -1;
   }
   Py_SetProgramName(program);
-  //PyImport_AppendInittab("XPLMCHKHelper", PyInit_XPLMCHKHelper);
+
   PyImport_AppendInittab("XPLMDefs", PyInit_XPLMDefs);
   PyImport_AppendInittab("XPLMDisplay", PyInit_XPLMDisplay);
   PyImport_AppendInittab("XPLMGraphics", PyInit_XPLMGraphics);
@@ -64,6 +64,7 @@ int initPython(const char *programName){
     printf("Failed to initialize Python.\n");
     return -1;
   }
+
   //get "." into the python's path 
   PyRun_SimpleString("print('Adding the \".\" to path')\n"
                      "import sys\n"
@@ -76,6 +77,7 @@ bool loadPIClass(const char *fname)
 {
   PyObject *pName = NULL, *pModule = NULL, *pClass = NULL,
            *pObj = NULL, *pRes = NULL, *err = NULL;
+  printf("Decoding the filename '%s'.\n", fname);
 
   pName = PyUnicode_DecodeFSDefault(fname);
   if(pName == NULL){
@@ -164,9 +166,10 @@ int XPluginStart(char *outName, char *outSig, char *outDesc)
         modName[strlen(de->d_name) - 3] = '\0';
       }
       loadPIClass(modName);
+      free(modName);
     }
   }
-
+  closedir(dir);
   return 1;
 }
 
@@ -186,6 +189,41 @@ void XPluginStop(void)
   }
   PyDict_Clear(moduleDict);
 
+  PyRun_SimpleString("import XPLMDefs\n"
+                     "XPLMDefs.cleanup()\n"
+                     "import XPLMDisplay\n"
+                     "XPLMDisplay.cleanup()\n"
+                     "import XPLMGraphics\n"
+                     "XPLMGraphics.cleanup()\n"
+                     "import XPLMUtilities\n"
+                     "XPLMUtilities.cleanup()\n"
+                     "import XPLMScenery\n"
+                     "XPLMScenery.cleanup()\n"
+                     "import XPLMMenus\n"
+                     "XPLMMenus.cleanup()\n"
+                     "import XPLMNavigation\n"
+                     "XPLMNavigation.cleanup()\n"
+                     "import XPLMPlugin\n"
+                     "XPLMPlugin.cleanup()\n"
+                     "import XPLMPlanes\n"
+                     "XPLMPlanes.cleanup()\n"
+                     "import XPLMProcessing\n"
+                     "XPLMProcessing.cleanup()\n"
+                     "import XPLMCamera\n"
+                     "XPLMCamera.cleanup()\n"
+                     "import XPWidgetDefs\n"
+                     "XPWidgetDefs.cleanup()\n"
+                     "import XPWidgets\n"
+                     "XPWidgets.cleanup()\n"
+                     "import XPStandardWidgets\n"
+                     "XPStandardWidgets.cleanup()\n"
+                     "import XPUIGraphics\n"
+                     "XPUIGraphics.cleanup()\n"
+                     "import XPWidgetUtils\n"
+                     "XPWidgetUtils.cleanup()\n"
+                     "import XPLMDataAccess\n"
+                     "XPLMDataAccess.cleanup()\n"
+  );
   Py_Finalize();
   PyMem_RawFree(program);
   //printf("XPluginStop finished.\n");

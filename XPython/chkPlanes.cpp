@@ -36,31 +36,40 @@ static float thrust;
 static float yokePitch;
 static float yokeHeading;
 static float yokeRoll;
+static std::list<XPLMDataRef> d;
 
 
 void initPlanesModule()
 {
-  registerROAccessor("planes/Str0", str0);
-  registerROAccessor("planes/Str1", str1);
-  registerROAccessor("planes/Int0", int0);
-  registerROAccessor("planes/Int1", int1);
-  registerROAccessor("planes/inXVal", inXVal);
-  registerROAccessor("planes/inYVal", inYVal);
-  registerROAccessor("planes/inZVal", inZVal);
-  registerROAccessor("planes/inPitchVal", inPitchVal);
-  registerROAccessor("planes/inRollVal", inRollVal);
-  registerROAccessor("planes/inYawVal", inYawVal);
-  registerROAccessor("planes/structSize", structSize);
-  registerROAccessor("planes/gearPosition", gearPosition);
-  registerROAccessor("planes/flapRatio", flapRatio);
-  registerROAccessor("planes/spoilerRatio", spoilerRatio);
-  registerROAccessor("planes/speedBrakeRatio", speedBrakeRatio);
-  registerROAccessor("planes/slatRatio", slatRatio);
-  registerROAccessor("planes/wingSweep", wingSweep);
-  registerROAccessor("planes/thrust", thrust);
-  registerROAccessor("planes/yokePitch", yokePitch);
-  registerROAccessor("planes/yokeHeading", yokeHeading);
-  registerROAccessor("planes/yokeRoll", yokeRoll);
+  d.push_back(registerROAccessor("planes/Str0", str0));
+  d.push_back(registerROAccessor("planes/Str1", str1));
+  d.push_back(registerROAccessor("planes/Int0", int0));
+  d.push_back(registerROAccessor("planes/Int1", int1));
+  d.push_back(registerROAccessor("planes/inXVal", inXVal));
+  d.push_back(registerROAccessor("planes/inYVal", inYVal));
+  d.push_back(registerROAccessor("planes/inZVal", inZVal));
+  d.push_back(registerROAccessor("planes/inPitchVal", inPitchVal));
+  d.push_back(registerROAccessor("planes/inRollVal", inRollVal));
+  d.push_back(registerROAccessor("planes/inYawVal", inYawVal));
+  d.push_back(registerROAccessor("planes/structSize", structSize));
+  d.push_back(registerROAccessor("planes/gearPosition", gearPosition));
+  d.push_back(registerROAccessor("planes/flapRatio", flapRatio));
+  d.push_back(registerROAccessor("planes/spoilerRatio", spoilerRatio));
+  d.push_back(registerROAccessor("planes/speedBrakeRatio", speedBrakeRatio));
+  d.push_back(registerROAccessor("planes/slatRatio", slatRatio));
+  d.push_back(registerROAccessor("planes/wingSweep", wingSweep));
+  d.push_back(registerROAccessor("planes/thrust", thrust));
+  d.push_back(registerROAccessor("planes/yokePitch", yokePitch));
+  d.push_back(registerROAccessor("planes/yokeHeading", yokeHeading));
+  d.push_back(registerROAccessor("planes/yokeRoll", yokeRoll));
+}
+
+void cleanupPlanesModule()
+{
+  for(std::list<XPLMDataRef>::iterator i = d.begin(); i != d.end(); ++i){
+    XPLMUnregisterDataAccessor(*i);
+  }
+  d.empty();
 }
 
 void XPLMSetUsersAircraft(const char *inAircraftPath)

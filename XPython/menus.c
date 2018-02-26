@@ -180,7 +180,16 @@ static PyObject *XPLMRemoveMenuItemFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  PyDict_Clear(menuDict);
+  Py_DECREF(menuDict);
+  PyDict_Clear(menuRefDict);
+  Py_DECREF(menuRefDict);
+  Py_RETURN_NONE;
+}
 
 static PyMethodDef XPLMMenusMethods[] = {
   {"XPLMFindPluginsMenu", XPLMFindPluginsMenuFun, METH_VARARGS, ""},
@@ -194,6 +203,7 @@ static PyMethodDef XPLMMenusMethods[] = {
   {"XPLMCheckMenuItemState", XPLMCheckMenuItemStateFun, METH_VARARGS, ""},
   {"XPLMEnableMenuItem", XPLMEnableMenuItemFun, METH_VARARGS, ""},
   {"XPLMRemoveMenuItem", XPLMRemoveMenuItemFun, METH_VARARGS, ""},
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

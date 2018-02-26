@@ -2,6 +2,7 @@
 #define CHK_SCENERY__H
 
 void initSceneryModule();
+void cleanupSceneryModule();
 
 #endif
 

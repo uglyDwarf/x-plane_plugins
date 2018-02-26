@@ -152,6 +152,12 @@ static PyObject *XPGetTrackMetricsFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  Py_RETURN_NONE;
+}
 
 
 
@@ -164,6 +170,7 @@ static PyMethodDef XPUIGraphicsMethods[] = {
   {"XPDrawTrack", XPDrawTrackFun, METH_VARARGS, ""},
   {"XPGetTrackDefaultDimensions", XPGetTrackDefaultDimensionsFun, METH_VARARGS, ""},
   {"XPGetTrackMetrics", XPGetTrackMetricsFun, METH_VARARGS, ""},
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

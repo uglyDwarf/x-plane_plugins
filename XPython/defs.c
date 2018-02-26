@@ -5,12 +5,26 @@
 #include <dirent.h>
 #include <XPLM/XPLMDefs.h>
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  Py_RETURN_NONE;
+}
+
+static PyMethodDef XPLMDefsMethods[] = {
+  {"cleanup", cleanup, METH_VARARGS, ""},
+  {NULL, NULL, 0, NULL}
+};
+
+
+
 static struct PyModuleDef XPLMDefsModule = {
   PyModuleDef_HEAD_INIT,
   "XPLMDefs",
   NULL,
   -1,
-  NULL,
+  XPLMDefsMethods,
   NULL,
   NULL,
   NULL,

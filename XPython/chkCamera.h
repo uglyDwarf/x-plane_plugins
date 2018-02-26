@@ -2,6 +2,7 @@
 #define CHK_CAMERA__H
 
 void initCameraModule();
+void cleanupCameraModule();
 
 #endif
 

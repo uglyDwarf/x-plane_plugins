@@ -20,16 +20,25 @@ static std::string string;
 static int button;
 static int pressed;
 
+static std::list<XPLMDataRef> d;
 
 
 void initUtilitiesModule()
 {
-  registerROAccessor("keyType", keyType);
-  registerROAccessor("key", key);
-  registerROAccessor("string", string);
+  d.push_back(registerROAccessor("keyType", keyType));
+  d.push_back(registerROAccessor("key", key));
+  d.push_back(registerROAccessor("string", string));
 
-  registerROAccessor("button", button);
-  registerROAccessor("state", pressed);
+  d.push_back(registerROAccessor("button", button));
+  d.push_back(registerROAccessor("state", pressed));
+}
+
+void cleanupUtilitiesModule()
+{
+  for(std::list<XPLMDataRef>::iterator i = d.begin(); i != d.end(); ++i){
+    XPLMUnregisterDataAccessor(*i);
+  }
+  d.empty();
 }
 
 void XPLMSimulateKeyPress(int inKeyType, int inKey)

@@ -36,7 +36,8 @@ class PythonInterface(checkBase):
    
    def XPluginStop(self):
       XPLMUnregisterDrawCallback(self, self.drawCallbackFun, self.drawPhase, self.drawBefore, self.drawRefcon)
-      XPLMUnregisterKeySniffer(self, self.keySnifferFun, 1, 321)
+      self.checkVal("Key sniffer unregistration", XPLMUnregisterKeySniffer(self, self.keySnifferFun,
+                                                    self.keySnifferBeforeWin, self.keySnifferRefcon), 1);
       XPLMDestroyWindow(self, self.winID)
       self.checkVal('XPLMCreateWindow callbacks were not called', self.winRefcon, [519])
 

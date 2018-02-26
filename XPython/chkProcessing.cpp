@@ -29,7 +29,7 @@ class callback{
   bool check(XPLMFlightLoop_f loopCallback, void *ref)
     {if(cbk == loopCallback && ref == refcon) return true; else return false;};
   float call(float inElapsedSinceLastCall, float inElapsedTimeSinceLastFlightLoop, int inCounter)
-  {return cbk(inElapsedSinceLastCall, inElapsedTimeSinceLastFlightLoop, inCounter, refcon);}
+    {return cbk(inElapsedSinceLastCall, inElapsedTimeSinceLastFlightLoop, inCounter, refcon);}
 };
 
 
@@ -37,16 +37,24 @@ class callback{
 static int int0, int1;
 static float flt0, flt1, flt2;
 static callback *id;
+static std::list<XPLMDataRef> d;
 
 void initProcessingModule()
 {
-  registerROAccessor("processing/int0", int0);
-  registerROAccessor("processing/int1", int1);
-  registerROAccessor("processing/flt0", flt0);
-  registerROAccessor("processing/flt1", flt1);
-  registerROAccessor("processing/flt2", flt2);
+  d.push_back(registerROAccessor("processing/int0", int0));
+  d.push_back(registerROAccessor("processing/int1", int1));
+  d.push_back(registerROAccessor("processing/flt0", flt0));
+  d.push_back(registerROAccessor("processing/flt1", flt1));
+  d.push_back(registerROAccessor("processing/flt2", flt2));
 }
 
+void cleanupProcessingModule()
+{
+  for(std::list<XPLMDataRef>::iterator i = d.begin(); i != d.end(); ++i){
+    XPLMUnregisterDataAccessor(*i);
+  }
+  d.empty();
+}
 
 float XPLMGetElapsedTime()
 {
@@ -62,11 +70,12 @@ int XPLMGetCycleNumber()
 
 void XPLMRegisterFlightLoopCallback(XPLMFlightLoop_f inFlightLoop, float inInterval, void *inRefcon)
 {
-  callbacks[inRefcon] = new callback(inFlightLoop, inRefcon);
+  callback *cbk = new callback(inFlightLoop, inRefcon);
+  callbacks[inRefcon] = cbk;
   flt0 = 1000 * inInterval;
   flt1 = 2 * inInterval;
   int0 = rand();
-  flt2 += callbacks[inRefcon]->call(flt0, flt1, int0);
+  flt2 += cbk->call(flt0, flt1, int0);
 }
 
 void XPLMUnregisterFlightLoopCallback(XPLMFlightLoop_f inFlightLoop, void *inRefcon)
@@ -78,6 +87,7 @@ void XPLMUnregisterFlightLoopCallback(XPLMFlightLoop_f inFlightLoop, void *inRef
   }
   int0 = cbk->check(inFlightLoop, inRefcon);
   callbacks.erase(inRefcon);
+  delete cbk;
   return;
 }
 

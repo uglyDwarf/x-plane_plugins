@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <list>
 #include <vector>
 #include <dlfcn.h>
 #include <string.h>
@@ -38,31 +39,42 @@ static float float2;
 static double double0;
 
 static std::string str0;
+static std::list<XPLMDataRef> d;
 
 void initGraphicsModule(void)
 {
-  registerROAccessor("enableFog", enableFog);
-  registerROAccessor("numTexUnits", numTexUnits);
-  registerROAccessor("enableLighting", enableLighting);
-  registerROAccessor("enableAlphaTest", enableAlphaTest);
-  registerROAccessor("enableAlphaBlend", enableAlphaBlend);
-  registerROAccessor("enableDepthTest", enableDepthTest);
-  registerROAccessor("enableDepthWrite", enableDepthWrite);
-  registerROAccessor("texNum", texNum);
-  registerROAccessor("texUnitNum", texUnitNum);
-  registerROAccessor("int0", int0);
-  registerROAccessor("int1", int1);
-  registerROAccessor("int2", int2);
-  registerROAccessor("int3", int3);
-  registerROAccessor("int4", int4);
-  registerROAccessor("int5", int5);
-  registerROAccessor("float0", float0);
-  registerROAccessor("float1", float1);
-  registerROAccessor("float2", float2);
-  registerROAccessor("str0", str0);
-  registerROAccessor("double0", double0);
+  d.push_back(registerROAccessor("enableFog", enableFog));
+  d.push_back(registerROAccessor("numTexUnits", numTexUnits));
+  d.push_back(registerROAccessor("enableLighting", enableLighting));
+  d.push_back(registerROAccessor("enableAlphaTest", enableAlphaTest));
+  d.push_back(registerROAccessor("enableAlphaBlend", enableAlphaBlend));
+  d.push_back(registerROAccessor("enableDepthTest", enableDepthTest));
+  d.push_back(registerROAccessor("enableDepthWrite", enableDepthWrite));
+  d.push_back(registerROAccessor("texNum", texNum));
+  d.push_back(registerROAccessor("texUnitNum", texUnitNum));
+  d.push_back(registerROAccessor("int0", int0));
+  d.push_back(registerROAccessor("int1", int1));
+  d.push_back(registerROAccessor("int2", int2));
+  d.push_back(registerROAccessor("int3", int3));
+  d.push_back(registerROAccessor("int4", int4));
+  d.push_back(registerROAccessor("int5", int5));
+  d.push_back(registerROAccessor("float0", float0));
+  d.push_back(registerROAccessor("float1", float1));
+  d.push_back(registerROAccessor("float2", float2));
+  d.push_back(registerROAccessor("str0", str0));
+  d.push_back(registerROAccessor("double0", double0));
 
 }
+
+void cleanupGraphicsModule(void)
+{
+  for(std::list<XPLMDataRef>::iterator i = d.begin(); i != d.end(); ++i){
+    XPLMUnregisterDataAccessor(*i);
+  }
+  d.empty();
+}
+
+
 
 void XPLMSetGraphicsState(int inEnableFog, int inNumberTexUnits, int inEnableLighting,
                        int inEnableAlphaTesting, int inEnableAlphaBlending,

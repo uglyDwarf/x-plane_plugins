@@ -62,6 +62,8 @@ class dataAccessor{
                 writeData(inWriteData), readRefcon(inReadRefcon), 
                 writeRefcon(inWriteRefcon), good(true){};
   ~dataAccessor(){good = false;}
+  void *get_w_refcon()const {return writeRefcon;};
+  void *get_r_refcon()const {return readRefcon;};
   int get_int()const;
   float get_float()const;
   double get_double()const;
@@ -241,11 +243,13 @@ XPLMDataRef XPLMRegisterDataAccessor(const char *    inDataName,
                                       inReadData, inWriteData, inReadRefcon,
                                       inWriteRefcon);
   dataAccessors.insert(std::pair<std::string, dataAccessor *>(name, da));
+  //std::cout << name << da << std::endl;
   return da;
 }
 
 void XPLMUnregisterDataAccessor(XPLMDataRef inDataRef)
 {
+  //std::cout << "Unregister " << inDataRef << std::endl;
   dataAccessor *da = (dataAccessor *)inDataRef;
   assert(da != NULL);
   std::string name;
@@ -529,6 +533,22 @@ int XPLMUnshareData(const char *inDataName, XPLMDataTypeID inDataType,
                  inDataType << "but dataref is of type " << da->get_data_type() << std::endl;
     return 0;
   }
-  return da->remove_notificator(inNotificationFunc, inNotificationRefcon);
+
+  switch(inDataType){
+    case xplmType_Int:
+      delete (int *)da->get_w_refcon();
+      break;
+    case xplmType_Float:
+      delete (float *)da->get_w_refcon();
+      break;
+    case xplmType_Double:
+      delete (double *)da->get_w_refcon();
+      break;
+    default:
+      break;
+  }
+  int res = da->remove_notificator(inNotificationFunc, inNotificationRefcon);
+  XPLMUnregisterDataAccessor(da);
+  return res;
 }
 

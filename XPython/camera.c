@@ -13,6 +13,7 @@ static PyObject *camDict;
 
 static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosingControl, void *inRefcon)
 {
+  PyObject *tmp;
   PyObject *ref = PyLong_FromVoidPtr(inRefcon);
   PyObject *callbackInfo = PyDict_GetItem(camDict, ref);
   Py_XDECREF(ref);
@@ -28,15 +29,31 @@ static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosing
       PyErr_SetString(PyExc_RuntimeError ,"outCameraPosition must contain 7 floats.\n");
       return -1;
     }
-    outCameraPosition->x = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(pos, 0)));
-    outCameraPosition->y = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(pos, 1)));
-    outCameraPosition->z = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(pos, 2)));
-    outCameraPosition->pitch = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(pos, 3)));
-    outCameraPosition->heading = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(pos, 4)));
-    outCameraPosition->roll = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(pos, 5)));
-    outCameraPosition->zoom = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(pos, 6)));
+    tmp = PyNumber_Float(PySequence_GetItem(pos, 0));
+    outCameraPosition->x = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
+    tmp = PyNumber_Float(PySequence_GetItem(pos, 1));
+    outCameraPosition->y = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
+    tmp = PyNumber_Float(PySequence_GetItem(pos, 2));
+    outCameraPosition->z = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
+    tmp = PyNumber_Float(PySequence_GetItem(pos, 3));
+    outCameraPosition->pitch = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
+    tmp = PyNumber_Float(PySequence_GetItem(pos, 4));
+    outCameraPosition->heading = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
+    tmp = PyNumber_Float(PySequence_GetItem(pos, 5));
+    outCameraPosition->roll = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
+    tmp = PyNumber_Float(PySequence_GetItem(pos, 6));
+    outCameraPosition->zoom = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
   }
-  int res = PyLong_AsLong(PyNumber_Long(resObj));
+  tmp = PyNumber_Long(resObj);
+  int res = PyLong_AsLong(tmp);
+  Py_DECREF(tmp);
   Py_XDECREF(resObj);
   return res;
 }
@@ -97,11 +114,21 @@ static PyObject *XPLMReadCameraPositionFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  PyDict_Clear(camDict);
+  Py_DECREF(camDict);
+  Py_RETURN_NONE;
+}
+
 static PyMethodDef XPLMCameraMethods[] = {
   {"XPLMControlCamera", XPLMControlCameraFun, METH_VARARGS, ""},
   {"XPLMDontControlCamera", XPLMDontControlCameraFun, METH_VARARGS, ""},
   {"XPLMIsCameraBeingControlled", XPLMIsCameraBeingControlledFun, METH_VARARGS, ""},
   {"XPLMReadCameraPosition", XPLMReadCameraPositionFun, METH_VARARGS, ""},
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

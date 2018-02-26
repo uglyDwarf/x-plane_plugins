@@ -301,7 +301,9 @@ static int commandCallback(XPLMCommandRef inCommand, XPLMCommandPhase inPhase, v
     PyErr_Print();
   }
   Py_DECREF(pID);
-  int res = PyLong_AsLong(PyNumber_Long(oRes));
+  PyObject *tmp = PyNumber_Long(oRes);
+  int res = PyLong_AsLong(tmp);
+  Py_DECREF(tmp);
   err = PyErr_Occurred();
   if(err){
     PyErr_Print();
@@ -407,7 +409,18 @@ static PyObject *XPLMUnregisterCommandHandlerFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  PyDict_Clear(errCallbacks);
+  Py_DECREF(errCallbacks);
+  PyDict_Clear(commandCallbacks);
+  Py_DECREF(commandCallbacks);
+  PyDict_Clear(commandRefcons);
+  Py_DECREF(commandRefcons);
+  Py_RETURN_NONE;
+}
 
 static PyMethodDef XPLMUtilitiesMethods[] = {
   {"XPLMSimulateKeyPress", XPLMSimulateKeyPressFun, METH_VARARGS, ""},
@@ -437,6 +450,7 @@ static PyMethodDef XPLMUtilitiesMethods[] = {
   {"XPLMCreateCommand", XPLMCreateCommandFun, METH_VARARGS, ""},
   {"XPLMRegisterCommandHandler", XPLMRegisterCommandHandlerFun, METH_VARARGS, ""},
   {"XPLMUnregisterCommandHandler", XPLMUnregisterCommandHandlerFun, METH_VARARGS, ""},
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

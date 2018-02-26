@@ -75,6 +75,7 @@ static PyObject *XPLMGenerateTextureNumbersFun(PyObject *self, PyObject *args)
       }
     }
   }
+  free(array);
   Py_RETURN_NONE;
 } 
 
@@ -163,14 +164,23 @@ static PyObject *XPLMDrawStringFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_TypeError , "inColourRGB must have 3 items");
     return NULL;
   }
-  float inColorRGB[3] = {PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(rgbList, 0))),
-                         PyFloat_AsDouble(PySequence_GetItem(rgbList, 1)),
-                         PyFloat_AsDouble(PySequence_GetItem(rgbList, 2))};
+  PyObject *r, *g, *b;
+  r = PyNumber_Float(PySequence_GetItem(rgbList, 0));
+  g = PyNumber_Float(PySequence_GetItem(rgbList, 1));
+  b = PyNumber_Float(PySequence_GetItem(rgbList, 2));
+  float inColorRGB[3] = {PyFloat_AsDouble(r),
+                         PyFloat_AsDouble(g),
+                         PyFloat_AsDouble(b)};
+  Py_DECREF(r);
+  Py_DECREF(g);
+  Py_DECREF(b);
   if(wordWrapWidthObj == Py_None){
     inWordWrapWidth = NULL;
   }else{
     inWordWrapWidth = &wordWrapWidth;
-    wordWrapWidth = PyLong_AsLong(PyNumber_Long(wordWrapWidthObj));
+    PyObject *tmp = PyNumber_Long(wordWrapWidthObj);
+    wordWrapWidth = PyLong_AsLong(tmp);
+    Py_DECREF(tmp);
   }
   inChar = strdup(inCharC);
   XPLMDrawString(inColorRGB, inXOffset, inYOffset, inChar, inWordWrapWidth, inFontID);
@@ -198,9 +208,16 @@ static PyObject *XPLMDrawNumberFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_TypeError , "inColourRGB must have 3 items");
     return NULL;
   }
-  float inColorRGB[3] = {PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(rgbList, 0))),
-                         PyFloat_AsDouble(PySequence_GetItem(rgbList, 1)),
-                         PyFloat_AsDouble(PySequence_GetItem(rgbList, 2))};
+  PyObject *r, *g, *b;
+  r = PyNumber_Float(PySequence_GetItem(rgbList, 0));
+  g = PyNumber_Float(PySequence_GetItem(rgbList, 1));
+  b = PyNumber_Float(PySequence_GetItem(rgbList, 2));
+  float inColorRGB[3] = {PyFloat_AsDouble(r),
+                         PyFloat_AsDouble(g),
+                         PyFloat_AsDouble(b)};
+  Py_DECREF(r);
+  Py_DECREF(g);
+  Py_DECREF(b);
 
   XPLMDrawNumber(inColorRGB, inXOffset, inYOffset, inValue, inDigits, inDecimals, inShowSign, inFontID);
 
@@ -247,6 +264,13 @@ static PyObject *XPLMMeasureStringFun(PyObject *self, PyObject *args)
 }
 
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  Py_RETURN_NONE;
+}
+
 static PyMethodDef XPLMGraphicsMethods[] = {
   {"XPLMSetGraphicsState", XPLMSetGraphicsStateFun, METH_VARARGS, "Sets state of the graphics pipeline."},
   {"XPLMBindTexture2d", XPLMBindTexture2dFun, METH_VARARGS, "Bind a 2D texture."},
@@ -259,6 +283,7 @@ static PyMethodDef XPLMGraphicsMethods[] = {
   {"XPLMDrawNumber", XPLMDrawNumberFun, METH_VARARGS, "Draw number."},
   {"XPLMGetFontDimensions", XPLMGetFontDimensionsFun, METH_VARARGS, "Get fond dimmensions."},
   {"XPLMMeasureString", XPLMMeasureStringFun, METH_VARARGS, "Measure a string."},
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

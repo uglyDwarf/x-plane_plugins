@@ -19,6 +19,7 @@ static std::string path;
 static int lighting;
 static int earth_relative;
 static std::vector<XPLMDrawInfo_t> locations;
+static std::list<XPLMDataRef> d;
 
 static int getVecData(void *inRefcon, float *outValues, int inOffset, int inMax)
 {
@@ -36,9 +37,10 @@ static int getVecData(void *inRefcon, float *outValues, int inOffset, int inMax)
   return 7;
 }
 
-static void registerROAccessor(const char *name, std::vector<XPLMDrawInfo_t> &locations)
+
+static XPLMDataRef registerROAccessor(const char *name, std::vector<XPLMDrawInfo_t> &locations)
 {
-  XPLMRegisterDataAccessor(name, xplmType_FloatArray, 0, 
+  return XPLMRegisterDataAccessor(name, xplmType_FloatArray, 0, 
     NULL, NULL, 
     NULL, NULL, 
     NULL, NULL, 
@@ -52,25 +54,31 @@ static void registerROAccessor(const char *name, std::vector<XPLMDrawInfo_t> &lo
 
 void initSceneryModule()
 {
-  registerROAccessor("probe.structSize", probe.structSize);
-  registerROAccessor("probe.locationX", probe.locationX);
-  registerROAccessor("probe.locationY", probe.locationY);
-  registerROAccessor("probe.locationZ", probe.locationZ);
-  registerROAccessor("probe.normalX", probe.normalX);
-  registerROAccessor("probe.normalY", probe.normalY);
-  registerROAccessor("probe.normalZ", probe.normalZ);
-  registerROAccessor("probe.velocityX", probe.velocityX);
-  registerROAccessor("probe.velocityY", probe.velocityY);
-  registerROAccessor("probe.velocityZ", probe.velocityZ);
-  registerROAccessor("probe.is_wet", probe.is_wet);
+  d.push_back(registerROAccessor("probe.structSize", probe.structSize));
+  d.push_back(registerROAccessor("probe.locationX", probe.locationX));
+  d.push_back(registerROAccessor("probe.locationY", probe.locationY));
+  d.push_back(registerROAccessor("probe.locationZ", probe.locationZ));
+  d.push_back(registerROAccessor("probe.normalX", probe.normalX));
+  d.push_back(registerROAccessor("probe.normalY", probe.normalY));
+  d.push_back(registerROAccessor("probe.normalZ", probe.normalZ));
+  d.push_back(registerROAccessor("probe.velocityX", probe.velocityX));
+  d.push_back(registerROAccessor("probe.velocityY", probe.velocityY));
+  d.push_back(registerROAccessor("probe.velocityZ", probe.velocityZ));
+  d.push_back(registerROAccessor("probe.is_wet", probe.is_wet));
 
-  registerROAccessor("obj.path", path);
-  registerROAccessor("obj.lighting", lighting);
-  registerROAccessor("obj.earth_relative", earth_relative);
-  registerROAccessor("obj.locations", locations);
-
+  d.push_back(registerROAccessor("obj.path", path));
+  d.push_back(registerROAccessor("obj.lighting", lighting));
+  d.push_back(registerROAccessor("obj.earth_relative", earth_relative));
+  d.push_back(registerROAccessor("obj.locations", locations));
 }
 
+void cleanupSceneryModule()
+{
+  for(std::list<XPLMDataRef>::iterator i = d.begin(); i != d.end(); ++i){
+    XPLMUnregisterDataAccessor(*i);
+  }
+  d.empty();
+}
 
 XPLMProbeRef XPLMCreateProbe(XPLMProbeType inProbeType)
 {

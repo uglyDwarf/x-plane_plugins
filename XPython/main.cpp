@@ -103,6 +103,21 @@ int main(int argc, char *argv[])
   XPluginEnable();
   std::cout << "===============================================" << std::endl;
   XPluginStop();
+
+  cleanupUtilitiesModule();
+  cleanupSceneryModule();
+  cleanupMenusModule();
+  cleanupNavigationModule();
+  cleanupPluginModule();
+  cleanupGraphicsModule();
+  cleanupPlanesModule();
+  cleanupProcessingModule();
+  cleanupCameraModule();
+  cleanupDisplayModule();
+  cleanupWidgetsModule();
+  cleanupUIGraphicsModule();
+  cleanupWidgetUtilsModule();
+
   dlclose(plugin);
   return 0;
 }

@@ -38,6 +38,13 @@ void initWidgetsModule()
   d3 = registerROAccessor("widgets/int3", int3);
 }
 
+void cleanupWidgetsModule()
+{
+  XPLMUnregisterDataAccessor(d0);
+  XPLMUnregisterDataAccessor(d1);
+  XPLMUnregisterDataAccessor(d2);
+  XPLMUnregisterDataAccessor(d3);
+}
 
 class widget{
   static intptr_t globalId;

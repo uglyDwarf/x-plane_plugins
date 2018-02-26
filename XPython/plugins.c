@@ -207,6 +207,14 @@ PyObject *XPLMEnumerateFeaturesFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  PyDict_Clear(feDict);
+  Py_DECREF(feDict);
+  Py_RETURN_NONE;
+}
 
 static PyMethodDef XPLMPluginMethods[] = {
   {"XPLMGetMyID", XPLMGetMyIDFun, METH_VARARGS, ""},
@@ -224,6 +232,7 @@ static PyMethodDef XPLMPluginMethods[] = {
   {"XPLMIsFeatureEnabled", XPLMIsFeatureEnabledFun, METH_VARARGS, ""},
   {"XPLMEnableFeature", XPLMEnableFeatureFun, METH_VARARGS, ""},
   {"XPLMEnumerateFeatures", XPLMEnumerateFeaturesFun, METH_VARARGS, ""},
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

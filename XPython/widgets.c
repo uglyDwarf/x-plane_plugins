@@ -11,7 +11,6 @@
 
 PyObject *widgetCallbackDict;
 
-
 int widgetCallback(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inParam1, intptr_t inParam2)
 {
   PyObject *widget = PyLong_FromVoidPtr(inWidget);
@@ -40,7 +39,9 @@ int widgetCallback(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inPa
         PyErr_Print();
         break;
       }
-      res = PyLong_AsLong(PyNumber_Long(resObj));
+      PyObject *tmp = PyNumber_Long(resObj);
+      res = PyLong_AsLong(tmp);
+      Py_DECREF(tmp);
       Py_DECREF(resObj);
     }
     if(res != 0){
@@ -456,6 +457,15 @@ static PyObject *XPGetWidgetClassFuncFun(PyObject *self, PyObject *args)
   return PyLong_FromVoidPtr(res);
 }
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  PyDict_Clear(widgetCallbackDict);
+  Py_DECREF(widgetCallbackDict);
+  Py_RETURN_NONE;
+}
+
 static PyMethodDef XPWidgetsMethods[] = {
   {"XPCreateWidget", XPCreateWidgetFun, METH_VARARGS, ""},
   {"XPCreateCustomWidget", XPCreateCustomWidgetFun, METH_VARARGS, ""},
@@ -484,6 +494,7 @@ static PyMethodDef XPWidgetsMethods[] = {
   {"XPGetWidgetWithFocus", XPGetWidgetWithFocusFun, METH_VARARGS, ""},
   {"XPAddWidgetCallback", XPAddWidgetCallbackFun, METH_VARARGS, ""},
   {"XPGetWidgetClassFunc", XPGetWidgetClassFuncFun, METH_VARARGS, ""},
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

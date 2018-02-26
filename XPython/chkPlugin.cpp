@@ -24,6 +24,10 @@ void initPluginModule()
 {
 }
 
+void cleanupPluginModule()
+{
+}
+
 
 XPLMPluginID XPLMGetMyID(void)
 {

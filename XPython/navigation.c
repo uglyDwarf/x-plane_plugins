@@ -58,12 +58,17 @@ static PyObject *XPLMFindNavAidFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "zzOOOi", &inNameFragment, &inIDFragment, &objLat, &objLon, &objFreq, &inType)){
     return NULL;
   }
+  PyObject *tmp;
   if(objLat != Py_None){
-    lat = PyFloat_AsDouble(PyNumber_Float(objLat));
+    tmp = PyNumber_Float(objLat);
+    lat = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
     inLat = &lat;
   }
   if(objLon != Py_None){
-    lon = PyFloat_AsDouble(PyNumber_Float(objLon));
+    tmp = PyNumber_Float(objLon);
+    lon = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
     inLon = &lon;
   }
   if(objFreq != Py_None){
@@ -264,6 +269,12 @@ static PyObject *XPLMGetGPSDestinationFun(PyObject *self, PyObject *args)
   return PyLong_FromLong(XPLMGetGPSDestination());
 }
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  Py_RETURN_NONE;
+}
 
 static PyMethodDef XPLMNavigationMethods[] = {
   {"XPLMGetFirstNavAid", XPLMGetFirstNavAidFun, METH_VARARGS, ""},
@@ -283,6 +294,7 @@ static PyMethodDef XPLMNavigationMethods[] = {
   {"XPLMClearFMSEntry", XPLMClearFMSEntryFun, METH_VARARGS, ""},
   {"XPLMGetGPSDestinationType", XPLMGetGPSDestinationTypeFun, METH_VARARGS, ""},
   {"XPLMGetGPSDestination", XPLMGetGPSDestinationFun, METH_VARARGS, ""},
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

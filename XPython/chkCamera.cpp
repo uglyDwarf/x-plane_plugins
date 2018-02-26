@@ -18,11 +18,21 @@
 static float x, y, z, pitch, heading, roll, zoom;
 static int int0;
 static int duration;
+static std::list<XPLMDataRef> d;
 
 void initCameraModule()
 {
-  registerROAccessor("camera/int0", int0);
+  d.push_back(registerROAccessor("camera/int0", int0));
 }
+
+void cleanupCameraModule()
+{
+  for(std::list<XPLMDataRef>::iterator i = d.begin(); i != d.end(); ++i){
+    XPLMUnregisterDataAccessor(*i);
+  }
+  d.empty();
+}
+
 
 void XPLMControlCamera(XPLMCameraControlDuration inHowLong, XPLMCameraControl_f inControlFunc, void *inRefcon)
 {

@@ -24,14 +24,24 @@ static int lang;
 static XPLMMenuCheck check;
 static XPLMMenuHandler_f menuHandler;
 static void *menuRef;
+static std::list<XPLMDataRef> d;
 
 void initMenusModule()
 {
-  registerROAccessor("name", name);
-  registerROAccessor("item", item);
-  registerROAccessor("lang", lang);
-  registerROAccessor("check", check);
+  d.push_back(registerROAccessor("name", name));
+  d.push_back(registerROAccessor("item", item));
+  d.push_back(registerROAccessor("lang", lang));
+  d.push_back(registerROAccessor("check", check));
 }
+
+void cleanupMenusModule()
+{
+  for(std::list<XPLMDataRef>::iterator i = d.begin(); i != d.end(); ++i){
+    XPLMUnregisterDataAccessor(*i);
+  }
+  d.empty();
+}
+
 
 XPLMMenuID XPLMFindPluginsMenu(void)
 {

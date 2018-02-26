@@ -2,6 +2,7 @@
 #define CHK_WIDGETUTILS__H
 
 void initWidgetUtilsModule();
+void cleanupWidgetUtilsModule();
 
 #endif
 

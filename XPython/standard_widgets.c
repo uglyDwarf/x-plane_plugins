@@ -9,7 +9,16 @@
 #include <Widgets/XPWidgetDefs.h>
 #include <Widgets/XPStandardWidgets.h>
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  Py_RETURN_NONE;
+}
+
+
 static PyMethodDef XPStandardWidgetsMethods[] = {
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

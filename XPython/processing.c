@@ -147,7 +147,9 @@ static PyObject *XPLMCreateFlightLoopFun(PyObject* self, PyObject *args)
 
   XPLMCreateFlightLoop_t fl;
   fl.structSize = sizeof(fl);
-  fl.phase = PyLong_AsLong(PyNumber_Long(PySequence_GetItem(params, 0)));
+  PyObject *tmp = PyNumber_Long(PySequence_GetItem(params, 0));
+  fl.phase = PyLong_AsLong(tmp);
+  Py_DECREF(tmp);
   fl.callbackFunc = flightLoopCallback;
   fl.refcon = (void *)++flCntr;
   
@@ -199,6 +201,19 @@ static PyObject *XPLMScheduleFlightLoopFun(PyObject *self, PyObject*args)
   Py_RETURN_NONE;
 }
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  PyDict_Clear(flDict);
+  Py_DECREF(flDict);
+  PyDict_Clear(flRevDict);
+  Py_DECREF(flRevDict);
+  PyDict_Clear(flIDDict);
+  Py_DECREF(flIDDict);
+  Py_RETURN_NONE;
+}
+
 
 static PyMethodDef XPLMProcessingMethods[] = {
   {"XPLMGetElapsedTime", XPLMGetElapsedTimeFun, METH_VARARGS, ""},
@@ -210,6 +225,7 @@ static PyMethodDef XPLMProcessingMethods[] = {
   {"XPLMCreateFlightLoop", XPLMCreateFlightLoopFun, METH_VARARGS, ""},
   {"XPLMDestroyFlightLoop", XPLMDestroyFlightLoopFun, METH_VARARGS, ""},
   {"XPLMScheduleFlightLoop", XPLMScheduleFlightLoopFun, METH_VARARGS, ""},
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

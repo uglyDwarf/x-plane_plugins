@@ -8,7 +8,15 @@
 #include <XPLM/XPLMDefs.h>
 #include <Widgets/XPWidgetDefs.h>
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  Py_RETURN_NONE;
+}
+
 static PyMethodDef XPWidgetDefsMethods[] = {
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

@@ -117,7 +117,7 @@ static PyObject *XPLMUnregisterKeySnifferFun(PyObject *self, PyObject *args)
   }
   PyObject *pKey = NULL, *pVal = NULL;
   Py_ssize_t pos = 0;
-  int res = 0;
+  int res = -1;
   while(PyDict_Next(keySniffCallbackDict, &pos, &pKey, &pVal)){
     if(PyObject_RichCompareBool(pVal, args, Py_EQ)){
       if(PyDict_DelItem(keySniffCallbackDict, pKey) == 0){
@@ -270,12 +270,23 @@ static PyObject *XPLMCreateWindowExFun(PyObject *self, PyObject *args)
   }
   
   XPLMCreateWindow_t params;
+  PyObject *tmp;
   params.structSize = sizeof(params);
-  params.left = PyLong_AsLong(PyNumber_Long(PySequence_GetItem(paramsObj, 0)));
-  params.top = PyLong_AsLong(PyNumber_Long(PySequence_GetItem(paramsObj, 1)));
-  params.right = PyLong_AsLong(PyNumber_Long(PySequence_GetItem(paramsObj, 2)));
-  params.bottom = PyLong_AsLong(PyNumber_Long(PySequence_GetItem(paramsObj, 3)));
-  params.visible = PyLong_AsLong(PyNumber_Long(PySequence_GetItem(paramsObj, 4)));
+  tmp = PyNumber_Long(PySequence_GetItem(paramsObj, 0));
+  params.left = PyLong_AsLong(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Long(PySequence_GetItem(paramsObj, 1));
+  params.top = PyLong_AsLong(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Long(PySequence_GetItem(paramsObj, 2));
+  params.right = PyLong_AsLong(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Long(PySequence_GetItem(paramsObj, 3));
+  params.bottom = PyLong_AsLong(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Long(PySequence_GetItem(paramsObj, 4));
+  params.visible = PyLong_AsLong(tmp);
+  Py_DECREF(tmp);
   params.drawWindowFunc = drawWindow;
   params.handleKeyFunc = handleKey;
   params.handleMouseClickFunc = handleMouseClick;
@@ -640,6 +651,25 @@ static PyObject *XPLMSetHotKeyCombinationFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 } 
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  PyDict_Clear(drawCallbackDict);
+  Py_DECREF(drawCallbackDict);
+  PyDict_Clear(drawCallbackIDDict);
+  Py_DECREF(drawCallbackIDDict);
+  PyDict_Clear(keySniffCallbackDict);
+  Py_DECREF(keySniffCallbackDict);
+  PyDict_Clear(windowDict);
+  Py_DECREF(windowDict);
+  PyDict_Clear(hotkeyDict);
+  Py_DECREF(hotkeyDict);
+  PyDict_Clear(hotkeyIDDict);
+  Py_DECREF(hotkeyIDDict);
+  
+  Py_RETURN_NONE;
+}
 
 
 static PyMethodDef XPLMDisplayMethods[] = {
@@ -667,6 +697,7 @@ static PyMethodDef XPLMDisplayMethods[] = {
   {"XPLMGetNthHotKey", XPLMGetNthHotKeyFun, METH_VARARGS, "Return Nth hotkey ID."},
   {"XPLMGetHotKeyInfo", XPLMGetHotKeyInfoFun, METH_VARARGS, "Get hotkey info."},
   {"XPLMSetHotKeyCombination", XPLMSetHotKeyCombinationFun, METH_VARARGS, "Set new hotkey key combination."},
+  {"cleanup", cleanup, METH_VARARGS, "cleanup"},
   {NULL, NULL, 0, NULL}
 };
 

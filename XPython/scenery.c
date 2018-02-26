@@ -116,7 +116,7 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
   (void)self;
   PyObject *object;
   int inCount;
-  PyObject *locations;
+  PyObject *locations, *tmp;
   int lighting;
   int earth_relative;
   if(!PyArg_ParseTuple(args, "OiOii", &object, &inCount, &locations, &lighting, &earth_relative)){
@@ -129,12 +129,24 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
   for(i = 0; i < inCount; ++i){
     PyObject *loc = PySequence_GetItem(locations, i);
     inLocations[i].structSize = sizeof(XPLMDrawInfo_t);
-    inLocations[i].x = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(loc, 0)));
-    inLocations[i].y = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(loc, 1)));
-    inLocations[i].z = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(loc, 2)));
-    inLocations[i].pitch = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(loc, 3)));
-    inLocations[i].heading = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(loc, 4)));
-    inLocations[i].roll = PyFloat_AsDouble(PyNumber_Float(PySequence_GetItem(loc, 5)));
+    tmp = PyNumber_Float(PySequence_GetItem(loc, 0));
+    inLocations[i].x = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
+    tmp = PyNumber_Float(PySequence_GetItem(loc, 1));
+    inLocations[i].y = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
+    tmp = PyNumber_Float(PySequence_GetItem(loc, 2));
+    inLocations[i].z = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
+    tmp = PyNumber_Float(PySequence_GetItem(loc, 3));
+    inLocations[i].pitch = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
+    tmp = PyNumber_Float(PySequence_GetItem(loc, 4));
+    inLocations[i].heading = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
+    tmp = PyNumber_Float(PySequence_GetItem(loc, 5));
+    inLocations[i].roll = PyFloat_AsDouble(tmp);
+    Py_DECREF(tmp);
   }
 
   XPLMDrawObjects(inObject, inCount, inLocations, lighting, earth_relative);
@@ -185,6 +197,17 @@ static PyObject *XPLMLookupObjectsFun(PyObject *self, PyObject *args)
   return PyLong_FromLong(res);
 }
 
+static PyObject *cleanup(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  PyDict_Clear(loaderDict);
+  Py_DECREF(loaderDict);
+  PyDict_Clear(libEnumDict);
+  Py_DECREF(libEnumDict);
+  Py_RETURN_NONE;
+}
+
 
 static PyMethodDef XPLMSceneryMethods[] = {
   {"XPLMCreateProbe", XPLMCreateProbeFun, METH_VARARGS, ""},
@@ -195,6 +218,7 @@ static PyMethodDef XPLMSceneryMethods[] = {
   {"XPLMDrawObjects", XPLMDrawObjectsFun, METH_VARARGS, ""},
   {"XPLMUnloadObject", XPLMUnloadObjectFun, METH_VARARGS, ""},
   {"XPLMLookupObjects", XPLMLookupObjectsFun, METH_VARARGS, ""},
+  {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

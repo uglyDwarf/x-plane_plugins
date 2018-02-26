@@ -18,18 +18,27 @@
 
 
 static int int0, int1, int2, int3, int4, int5, int6, int7, int8;
+static std::list<XPLMDataRef> d;
 
 void initUIGraphicsModule()
 {
-  registerROAccessor("uiGraphics/int0", int0);
-  registerROAccessor("uiGraphics/int1", int1);
-  registerROAccessor("uiGraphics/int2", int2);
-  registerROAccessor("uiGraphics/int3", int3);
-  registerROAccessor("uiGraphics/int4", int4);
-  registerROAccessor("uiGraphics/int5", int5);
-  registerROAccessor("uiGraphics/int6", int6);
-  registerROAccessor("uiGraphics/int7", int7);
-  registerROAccessor("uiGraphics/int8", int8);
+  d.push_back(registerROAccessor("uiGraphics/int0", int0));
+  d.push_back(registerROAccessor("uiGraphics/int1", int1));
+  d.push_back(registerROAccessor("uiGraphics/int2", int2));
+  d.push_back(registerROAccessor("uiGraphics/int3", int3));
+  d.push_back(registerROAccessor("uiGraphics/int4", int4));
+  d.push_back(registerROAccessor("uiGraphics/int5", int5));
+  d.push_back(registerROAccessor("uiGraphics/int6", int6));
+  d.push_back(registerROAccessor("uiGraphics/int7", int7));
+  d.push_back(registerROAccessor("uiGraphics/int8", int8));
+}
+
+void cleanupUIGraphicsModule()
+{
+  for(std::list<XPLMDataRef>::iterator i = d.begin(); i != d.end(); ++i){
+    XPLMUnregisterDataAccessor(*i);
+  }
+  d.empty();
 }
 
 void XPDrawWindow(int inX1, int inY1, int inX2, int inY2, XPWindowStyle inStyle)

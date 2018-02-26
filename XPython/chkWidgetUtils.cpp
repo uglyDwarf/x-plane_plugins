@@ -18,17 +18,27 @@
 #include "chk_helper.h"
 
 
-static int int0, int1, int2, int3, int4, int5, int6, int7, int8;
+static int int0, int1, int2, int3, int4, int5, int6;
+static std::list<XPLMDataRef> d;
+
 
 void initWidgetUtilsModule()
 {
-  registerROAccessor("widgetUtils/int0", int0);
-  registerROAccessor("widgetUtils/int1", int1);
-  registerROAccessor("widgetUtils/int2", int2);
-  registerROAccessor("widgetUtils/int3", int3);
-  registerROAccessor("widgetUtils/int4", int4);
-  registerROAccessor("widgetUtils/int5", int5);
-  registerROAccessor("widgetUtils/int6", int6);
+  d.push_back(registerROAccessor("widgetUtils/int0", int0));
+  d.push_back(registerROAccessor("widgetUtils/int1", int1));
+  d.push_back(registerROAccessor("widgetUtils/int2", int2));
+  d.push_back(registerROAccessor("widgetUtils/int3", int3));
+  d.push_back(registerROAccessor("widgetUtils/int4", int4));
+  d.push_back(registerROAccessor("widgetUtils/int5", int5));
+  d.push_back(registerROAccessor("widgetUtils/int6", int6));
+}
+
+void cleanupWidgetUtilsModule()
+{
+  for(std::list<XPLMDataRef>::iterator i = d.begin(); i != d.end(); ++i){
+    XPLMUnregisterDataAccessor(*i);
+  }
+  d.empty();
 }
 
 void XPUCreateWidgets(const XPWidgetCreate_t *inWidgetDefs, int inCount, XPWidgetID inParamParent, XPWidgetID *ioWidgets)
