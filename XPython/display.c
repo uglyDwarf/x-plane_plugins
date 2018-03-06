@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #define XPLM200
+#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDisplay.h>
 #include "utils.h"
@@ -17,6 +18,25 @@ static PyObject *windowDict;
 static intptr_t hotkeyCntr;
 static PyObject *hotkeyDict;
 static PyObject *hotkeyIDDict;
+
+static PyObject *monitorBndsCallback;
+
+
+static void receiveMonitorBounds(int inMonitorIndex, int inLeftBx, int inTopBx,
+                                       int inRightBx, int inBottomBx, void *refcon)
+{
+  PyObject *pRes = PyObject_CallFunction(monitorBndsCallback, "(iiiiiO)", inMonitorIndex,
+                                         inLeftBx, inTopBx, inRightBx, inBottomBx, (PyObject*)refcon);
+  if(!pRes){
+    printf("ReceiveMonitorBoundsGlobal callback failed.\n");
+    PyObject *err = PyErr_Occurred();
+    if(err){
+      PyErr_Print();
+    }
+  }
+
+  Py_XDECREF(pRes);
+}
 
 int XPLMDrawCallback(XPLMDrawingPhase inPhase, int inIsBefore, void *inRefcon);
 int XPLMKeySnifferCallback(char inChar, XPLMKeyFlags inFlags, char inVirtualKey, void *inRefCon);
@@ -167,7 +187,7 @@ static void handleKey(XPLMWindowID  inWindowID,
     printf("Unknown window passed to handleKey (%p).\n", inWindowID);
     return;
   }
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 1), "(OiiiOi)",
+  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 2), "(OiiiOi)",
                         pID, (int)inKey, inFlags, (unsigned int)inVirtualKey, inRefcon, losingFocus);
   Py_XDECREF(oRes);
   PyObject *err = PyErr_Occurred();
@@ -189,7 +209,31 @@ static int handleMouseClick(XPLMWindowID     inWindowID,
     printf("Unknown window passed to handleMouseClick (%p).\n", inWindowID);
     return 1;
   }
-  PyObject *pRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 2), "(OiiiO)", pID, x, y, inMouse, inRefcon);
+  PyObject *pRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 1), "(OiiiO)", pID, x, y, inMouse, inRefcon);
+  PyObject *err = PyErr_Occurred();
+  Py_DECREF(pID);
+  if(err){
+    PyErr_Print();
+    return 1;
+  }
+  int res = (int)PyLong_AsLong(pRes);
+  Py_DECREF(pRes);
+  return res;
+}
+
+static int handleRightClick(XPLMWindowID     inWindowID,
+                     int              x,
+                     int              y,
+                     XPLMMouseStatus  inMouse,
+                     void            *inRefcon)
+{
+  PyObject *pID = PyLong_FromVoidPtr(inWindowID);
+  PyObject *pCbks = PyDict_GetItem(windowDict, pID);
+  if(pCbks == NULL){
+    printf("Unknown window passed to handleMouseClick (%p).\n", inWindowID);
+    return 1;
+  }
+  PyObject *pRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 5), "(OiiiO)", pID, x, y, inMouse, inRefcon);
   PyObject *err = PyErr_Occurred();
   Py_DECREF(pID);
   if(err){
@@ -271,6 +315,9 @@ static PyObject *XPLMCreateWindowExFun(PyObject *self, PyObject *args)
   
   XPLMCreateWindow_t params;
   PyObject *tmp;
+  PyObject *drawWindowFunc, *handleMouseClickFunc, *handleKeyFunc,
+           *handleCursorFunc, *handleMouseWheelFunc;
+  PyObject *handleRightClickFunc = Py_None;
   params.structSize = sizeof(params);
   tmp = PyNumber_Long(PySequence_GetItem(paramsObj, 0));
   params.left = PyLong_AsLong(tmp);
@@ -287,14 +334,43 @@ static PyObject *XPLMCreateWindowExFun(PyObject *self, PyObject *args)
   tmp = PyNumber_Long(PySequence_GetItem(paramsObj, 4));
   params.visible = PyLong_AsLong(tmp);
   Py_DECREF(tmp);
+  drawWindowFunc = PySequence_GetItem(paramsObj, 5);
+  Py_INCREF(drawWindowFunc);
+  handleMouseClickFunc = PySequence_GetItem(paramsObj, 6);
+  Py_INCREF(handleMouseClickFunc);
+  handleKeyFunc = PySequence_GetItem(paramsObj, 7);
+  Py_INCREF(handleKeyFunc);
+  handleCursorFunc = PySequence_GetItem(paramsObj, 8);
+  Py_INCREF(handleCursorFunc);
+  handleMouseWheelFunc = PySequence_GetItem(paramsObj, 9);
+  Py_INCREF(handleMouseWheelFunc);
   params.drawWindowFunc = drawWindow;
-  params.handleKeyFunc = handleKey;
   params.handleMouseClickFunc = handleMouseClick;
+  params.handleKeyFunc = handleKey;
   params.handleCursorFunc = handleCursor;
   params.handleMouseWheelFunc = handleMouseWheel;
   params.refcon = PySequence_GetItem(paramsObj, 10);
 
-  PyObject *cbkTuple = PySequence_GetSlice(paramsObj, 5, 10);
+  //SDK 3.0+
+  if(PySequence_Length(paramsObj) > 11){
+    tmp = PyNumber_Long(PySequence_GetItem(paramsObj, 11));
+    params.decorateAsFloatingWindow = PyLong_AsLong(tmp);
+    Py_DECREF(tmp);
+    tmp = PyNumber_Long(PySequence_GetItem(paramsObj, 12));
+    params.layer = PyLong_AsLong(tmp);
+    Py_DECREF(tmp);
+    params.handleRightClickFunc = handleRightClick;
+    handleRightClickFunc = PySequence_GetItem(paramsObj, 13);
+    Py_INCREF(handleRightClickFunc);
+  }
+  
+  PyObject *cbkTuple = Py_BuildValue("(OOOOOO)", drawWindowFunc, handleMouseClickFunc, handleKeyFunc,
+                                               handleCursorFunc, handleMouseWheelFunc, handleRightClickFunc);
+  if(!cbkTuple){
+    PyErr_SetString(PyExc_RuntimeError ,"XPLMCreateWindowEx couldn't create a callback tuple.\n");
+    return NULL;
+  }
+  PySequence_GetSlice(paramsObj, 5, 13);
   if(!cbkTuple){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMCreateWindowEx couldn't create a sequence slice.\n");
     return NULL;
@@ -317,7 +393,10 @@ static PyObject *XPLMCreateWindowFun(PyObject *self, PyObject *args)
     return NULL;
   }
   Py_INCREF(refcon);
-  PyObject *cbkTuple = Py_BuildValue("OOOOO", drawCallback, keyCallback, mouseCallback, Py_None, Py_None);
+  Py_INCREF(drawCallback);
+  Py_INCREF(mouseCallback);
+  Py_INCREF(keyCallback);
+  PyObject *cbkTuple = Py_BuildValue("(OOOOOO)", drawCallback, mouseCallback, keyCallback, Py_None, Py_None, Py_None);
   if(!cbkTuple){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMCreateWindow couldn't create a tuple.\n");
     return NULL;
@@ -369,6 +448,52 @@ static PyObject *XPLMGetScreenSizeFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+static PyObject *XPLMGetScreenBoundsGlobalFun(PyObject *self, PyObject *args)
+{
+  (void) self;
+  PyObject *lObj, *tObj, *rObj, *bObj;
+  if(!PyArg_ParseTuple(args, "OOOO", &lObj, &tObj, &rObj, &bObj)){
+    return NULL;
+  }
+  int outLeft, outTop, outRight, outBottom;
+  XPLMGetScreenBoundsGlobal(&outLeft, &outTop, &outRight, &outBottom);
+  if(PyList_Check(lObj)){
+    PyList_Insert(lObj, 0, PyLong_FromLong(outLeft));
+  }
+  if(PyList_Check(tObj)){
+    PyList_Insert(tObj, 0, PyLong_FromLong(outTop));
+  }
+  if(PyList_Check(rObj)){
+    PyList_Insert(rObj, 0, PyLong_FromLong(outRight));
+  }
+  if(PyList_Check(bObj)){
+    PyList_Insert(bObj, 0, PyLong_FromLong(outBottom));
+  }
+  Py_RETURN_NONE;
+}
+
+static PyObject *XPLMGetAllMonitorBoundsGlobalFun(PyObject *self, PyObject *args)
+{
+  (void) self;
+  PyObject *pluginSelf, *refconObj;
+  if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &monitorBndsCallback, &refconObj)){
+    return NULL;
+  }
+  XPLMGetAllMonitorBoundsGlobal(receiveMonitorBounds, (void *)refconObj);
+  Py_RETURN_NONE;
+}
+
+static PyObject *XPLMGetAllMonitorBoundsOSFun(PyObject *self, PyObject *args)
+{
+  (void) self;
+  PyObject *pluginSelf, *refconObj;
+  if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &monitorBndsCallback, &refconObj)){
+    return NULL;
+  }
+  XPLMGetAllMonitorBoundsOS(receiveMonitorBounds, (void *)refconObj);
+  Py_RETURN_NONE;
+}
+
 static PyObject *XPLMGetMouseLocationFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -378,6 +503,24 @@ static PyObject *XPLMGetMouseLocationFun(PyObject *self, PyObject *args)
   }
   int x, y;
   XPLMGetMouseLocation(&x, &y);
+  if(PyList_Check(xObj)){
+    PyList_Insert(xObj, 0, PyLong_FromLong(x));
+  }
+  if(PyList_Check(yObj)){
+    PyList_Insert(yObj, 0, PyLong_FromLong(y));
+  }
+  Py_RETURN_NONE;
+}
+
+static PyObject *XPLMGetMouseLocationGlobalFun(PyObject *self, PyObject *args)
+{
+  (void) self;
+  PyObject *xObj, *yObj;
+  if(!PyArg_ParseTuple(args, "OO", &xObj, &yObj)){
+    return NULL;
+  }
+  int x, y;
+  XPLMGetMouseLocationGlobal(&x, &y);
   if(PyList_Check(xObj)){
     PyList_Insert(xObj, 0, PyLong_FromLong(x));
   }
@@ -424,6 +567,43 @@ static PyObject *XPLMSetWindowGeometryFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+static PyObject *XPLMGetWindowGeometryOSFun(PyObject *self, PyObject *args)
+{
+  (void) self;
+  PyObject *win, *leftObj, *topObj, *rightObj, *bottomObj;
+  if(!PyArg_ParseTuple(args, "OOOOO", &win, &leftObj, &topObj, &rightObj, &bottomObj)){
+    return NULL;
+  }
+  int left, top, right, bottom;
+  XPLMGetWindowGeometryOS(PyLong_AsVoidPtr(win), &left, &top, &right, &bottom);
+  if(PyList_Check(leftObj)){
+    PyList_Insert(leftObj, 0, PyLong_FromLong(left));
+  }
+  if(PyList_Check(topObj)){
+    PyList_Insert(topObj, 0, PyLong_FromLong(top));
+  }
+  if(PyList_Check(rightObj)){
+    PyList_Insert(rightObj, 0, PyLong_FromLong(right));
+  }
+  if(PyList_Check(bottomObj)){
+    PyList_Insert(bottomObj, 0, PyLong_FromLong(bottom));
+  }
+  Py_RETURN_NONE;
+}
+
+static PyObject *XPLMSetWindowGeometryOSFun(PyObject *self, PyObject *args)
+{
+  (void) self;
+  PyObject *win;
+  int inLeft, inTop, inRight, inBottom;
+  if(!PyArg_ParseTuple(args, "Oiiii", &win, &inLeft, &inTop, &inRight, &inBottom)){
+    return NULL;
+  }
+  void *inWindowID = PyLong_AsVoidPtr(win);
+  XPLMSetWindowGeometryOS(inWindowID, inLeft, inTop, inRight, inBottom);
+  Py_RETURN_NONE;
+}
+
 static PyObject *XPLMGetWindowIsVisibleFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -445,6 +625,69 @@ static PyObject *XPLMSetWindowIsVisibleFun(PyObject *self, PyObject *args)
   }
   XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
   XPLMSetWindowIsVisible(inWindowID, inIsVisible);
+  Py_RETURN_NONE;
+}
+
+static PyObject *XPLMWindowIsPoppedOutFun(PyObject *self, PyObject *args)
+{
+  (void) self;
+  PyObject *win;
+  if(!PyArg_ParseTuple(args, "O", &win)){
+    return NULL;
+  }
+  void *inWindowID = PyLong_AsVoidPtr(win);
+  return PyLong_FromLong(XPLMWindowIsPoppedOut(inWindowID));
+}
+
+static PyObject *XPLMSetWindowGravityFun(PyObject *self, PyObject *args)
+{
+  (void) self;
+  PyObject *win;
+  float inLeftGravity, inTopGravity, inRightGravity, inBottomGravity;
+  if(!PyArg_ParseTuple(args, "Offff", &win, &inLeftGravity, &inTopGravity, &inRightGravity, &inBottomGravity)){
+    return NULL;
+  }
+  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMSetWindowGravity(inWindowID, inLeftGravity, inTopGravity, inRightGravity, inBottomGravity);
+  Py_RETURN_NONE;
+}
+
+static PyObject *XPLMSetWindowResizingLimitsFun(PyObject *self, PyObject *args)
+{
+  (void) self;
+  PyObject *win;
+  int inMinWidthBoxels, inMinHeightBoxels, inMaxWidthBoxels, inMaxHeightBoxels;
+  if(!PyArg_ParseTuple(args, "Oiiii", &win, &inMinWidthBoxels, &inMinHeightBoxels, &inMaxWidthBoxels, &inMaxHeightBoxels)){
+    return NULL;
+  }
+  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMSetWindowResizingLimits(inWindowID, inMinWidthBoxels, inMinHeightBoxels, inMaxWidthBoxels, inMaxHeightBoxels);
+  Py_RETURN_NONE;
+}
+
+static PyObject *XPLMSetWindowPositioningModeFun(PyObject *self, PyObject *args)
+{
+  (void) self;
+  PyObject *win;
+  int inPositioningMode, inMonitorIndex;
+  if(!PyArg_ParseTuple(args, "Oii", &win, &inPositioningMode, &inMonitorIndex)){
+    return NULL;
+  }
+  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMSetWindowPositioningMode(inWindowID, inPositioningMode, inMonitorIndex);
+  Py_RETURN_NONE;
+}
+
+static PyObject *XPLMSetWindowTitleFun(PyObject *self, PyObject *args)
+{
+  (void) self;
+  PyObject *win;
+  const char *inWindowTitle;
+  if(!PyArg_ParseTuple(args, "Os", &win, &inWindowTitle)){
+    return NULL;
+  }
+  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMSetWindowTitle(inWindowID, inWindowTitle);
   Py_RETURN_NONE;
 }
 
@@ -667,7 +910,6 @@ static PyObject *cleanup(PyObject *self, PyObject *args)
   Py_DECREF(hotkeyDict);
   PyDict_Clear(hotkeyIDDict);
   Py_DECREF(hotkeyIDDict);
-  
   Py_RETURN_NONE;
 }
 
@@ -681,11 +923,22 @@ static PyMethodDef XPLMDisplayMethods[] = {
   {"XPLMCreateWindow", XPLMCreateWindowFun, METH_VARARGS, "Create a window."},
   {"XPLMDestroyWindow", XPLMDestroyWindowFun, METH_VARARGS, "Destroy a window."},
   {"XPLMGetScreenSize", XPLMGetScreenSizeFun, METH_VARARGS, "Get screen size."},
+  {"XPLMGetScreenBoundsGlobal", XPLMGetScreenBoundsGlobalFun, METH_VARARGS, "Get screen bounds."},
+  {"XPLMGetAllMonitorBoundsGlobal", XPLMGetAllMonitorBoundsGlobalFun, METH_VARARGS, "Get monitors bounds."},
+  {"XPLMGetAllMonitorBoundsOS", XPLMGetAllMonitorBoundsOSFun, METH_VARARGS, "Get all monitors bounds."},
   {"XPLMGetMouseLocation", XPLMGetMouseLocationFun, METH_VARARGS, "Get mouse location."},
+  {"XPLMGetMouseLocationGlobal", XPLMGetMouseLocationGlobalFun, METH_VARARGS, "Get global mouse location."},
   {"XPLMGetWindowGeometry", XPLMGetWindowGeometryFun, METH_VARARGS, "Get window geometry."},
   {"XPLMSetWindowGeometry", XPLMSetWindowGeometryFun, METH_VARARGS, "Set window geometry."},
+  {"XPLMGetWindowGeometryOS", XPLMGetWindowGeometryOSFun, METH_VARARGS, "Get window geometry."},
+  {"XPLMSetWindowGeometryOS", XPLMSetWindowGeometryOSFun, METH_VARARGS, "Set window geometry."},
   {"XPLMGetWindowIsVisible", XPLMGetWindowIsVisibleFun, METH_VARARGS, "Get window visibility."},
   {"XPLMSetWindowIsVisible", XPLMSetWindowIsVisibleFun, METH_VARARGS, "Set window visibility."},
+  {"XPLMWindowIsPoppedOut", XPLMWindowIsPoppedOutFun, METH_VARARGS, ""},
+  {"XPLMSetWindowGravity", XPLMSetWindowGravityFun, METH_VARARGS, ""},
+  {"XPLMSetWindowResizingLimits", XPLMSetWindowResizingLimitsFun, METH_VARARGS, ""},
+  {"XPLMSetWindowPositioningMode", XPLMSetWindowPositioningModeFun, METH_VARARGS, ""},
+  {"XPLMSetWindowTitle", XPLMSetWindowTitleFun, METH_VARARGS, ""},
   {"XPLMGetWindowRefCon", XPLMGetWindowRefConFun, METH_VARARGS, "Get window refcon."},
   {"XPLMSetWindowRefCon", XPLMSetWindowRefConFun, METH_VARARGS, "Set window refcon."},
   {"XPLMTakeKeyboardFocus", XPLMTakeKeyboardFocusFun, METH_VARARGS, "Take keyboard focus."},
@@ -734,49 +987,59 @@ PyInit_XPLMDisplay(void)
   if(!(hotkeyIDDict = PyDict_New())){
     return NULL;
   }
-  
   PyObject *mod = PyModule_Create(&XPLMDisplayModule);
   if(mod){
     /* This is the earliest point at which you can draw in 3-d.                    */
-    PyModule_AddIntConstant(mod, "xplm_Phase_FirstScene", 0);
+    PyModule_AddIntConstant(mod, "xplm_Phase_FirstScene", xplm_Phase_FirstScene);
     /* Drawing of land and water.                                                  */
-    PyModule_AddIntConstant(mod, "xplm_Phase_Terrain", 5);
+    PyModule_AddIntConstant(mod, "xplm_Phase_Terrain", xplm_Phase_Terrain);
     /* Drawing runways and other airport detail.                                   */
-    PyModule_AddIntConstant(mod, "xplm_Phase_Airports", 10);
+    PyModule_AddIntConstant(mod, "xplm_Phase_Airports", xplm_Phase_Airports);
     /* Drawing roads", trails, trains, etc.                                         */
-    PyModule_AddIntConstant(mod, "xplm_Phase_Vectors", 15);
+    PyModule_AddIntConstant(mod, "xplm_Phase_Vectors", xplm_Phase_Vectors);
     /* 3-d objects (houses", smokestacks, etc.                                      */
-    PyModule_AddIntConstant(mod, "xplm_Phase_Objects", 20);
+    PyModule_AddIntConstant(mod, "xplm_Phase_Objects", xplm_Phase_Objects);
     /* External views of airplanes", both yours and the AI aircraft.                */
-    PyModule_AddIntConstant(mod, "xplm_Phase_Airplanes", 25);
+    PyModule_AddIntConstant(mod, "xplm_Phase_Airplanes", xplm_Phase_Airplanes);
     /* This is the last point at which you can draw in 3-d.                        */
-    PyModule_AddIntConstant(mod, "xplm_Phase_LastScene", 30);
+    PyModule_AddIntConstant(mod, "xplm_Phase_LastScene", xplm_Phase_LastScene);
     /* This is the first phase where you can draw in 2-d.                          */
-    PyModule_AddIntConstant(mod, "xplm_Phase_FirstCockpit", 35);
+    PyModule_AddIntConstant(mod, "xplm_Phase_FirstCockpit", xplm_Phase_FirstCockpit);
     /* The non-moving parts of the aircraft panel.                                 */
-    PyModule_AddIntConstant(mod, "xplm_Phase_Panel", 40);
+    PyModule_AddIntConstant(mod, "xplm_Phase_Panel", xplm_Phase_Panel);
     /* The moving parts of the aircraft panel.                                     */
-    PyModule_AddIntConstant(mod, "xplm_Phase_Gauges", 45);
+    PyModule_AddIntConstant(mod, "xplm_Phase_Gauges", xplm_Phase_Gauges);
     /* Floating windows from plugins.                                              */
-    PyModule_AddIntConstant(mod, "xplm_Phase_Window", 50);
+    PyModule_AddIntConstant(mod, "xplm_Phase_Window", xplm_Phase_Window);
     /* The last change to draw in 2d.                                              */
-    PyModule_AddIntConstant(mod, "xplm_Phase_LastCockpit", 55);
+    PyModule_AddIntConstant(mod, "xplm_Phase_LastCockpit", xplm_Phase_LastCockpit);
     /* 3-d Drawing for the local map.  Use regular OpenGL coordinates to draw in   *
      * this phase.                                                                 */
-    PyModule_AddIntConstant(mod, "xplm_Phase_LocalMap3D", 100);
+    PyModule_AddIntConstant(mod, "xplm_Phase_LocalMap3D", xplm_Phase_LocalMap3D);
     /* 2-d Drawing of text over the local map.                                     */
-    PyModule_AddIntConstant(mod, "xplm_Phase_LocalMap2D", 101);
+    PyModule_AddIntConstant(mod, "xplm_Phase_LocalMap2D", xplm_Phase_LocalMap2D);
     /* Drawing of the side-profile view in the local map screen.                   */
-    PyModule_AddIntConstant(mod, "xplm_Phase_LocalMapProfile", 102);
+    PyModule_AddIntConstant(mod, "xplm_Phase_LocalMapProfile", xplm_Phase_LocalMapProfile);
 
-    PyModule_AddIntConstant(mod, "xplm_MouseDown", 1);
-    PyModule_AddIntConstant(mod, "xplm_MouseDrag", 2);
-    PyModule_AddIntConstant(mod, "xplm_MouseUp",   3);
+    PyModule_AddIntConstant(mod, "xplm_MouseDown", xplm_MouseDown);
+    PyModule_AddIntConstant(mod, "xplm_MouseDrag", xplm_MouseDrag);
+    PyModule_AddIntConstant(mod, "xplm_MouseUp",   xplm_MouseUp);
 
-    PyModule_AddIntConstant(mod, "xplm_CursorDefault", 0);
-    PyModule_AddIntConstant(mod, "xplm_CursorHidden",  1);
-    PyModule_AddIntConstant(mod, "xplm_CursorArrow",   2);
-    PyModule_AddIntConstant(mod, "xplm_CursorCustom",  3);
+    PyModule_AddIntConstant(mod, "xplm_CursorDefault", xplm_CursorDefault);
+    PyModule_AddIntConstant(mod, "xplm_CursorHidden",  xplm_CursorHidden);
+    PyModule_AddIntConstant(mod, "xplm_CursorArrow",   xplm_CursorArrow);
+    PyModule_AddIntConstant(mod, "xplm_CursorCustom",  xplm_CursorCustom);
+
+    PyModule_AddIntConstant(mod, "xplm_WindowLayerFlightOverlay", xplm_WindowLayerFlightOverlay);
+    PyModule_AddIntConstant(mod, "xplm_WindowLayerFloatingWindows", xplm_WindowLayerFloatingWindows);
+    PyModule_AddIntConstant(mod, "xplm_WindowLayerModal", xplm_WindowLayerModal);
+    PyModule_AddIntConstant(mod, "xplm_WindowLayerGrowlNotifications", xplm_WindowLayerGrowlNotifications);
+    
+    PyModule_AddIntConstant(mod, "xplm_WindowPositionFree", xplm_WindowPositionFree);
+    PyModule_AddIntConstant(mod, "xplm_WindowCenterOnMonitor", xplm_WindowCenterOnMonitor);
+    PyModule_AddIntConstant(mod, "xplm_WindowFullScreenOnMonitor", xplm_WindowFullScreenOnMonitor);
+    PyModule_AddIntConstant(mod, "xplm_WindowFullScreenOnAllMonitors", xplm_WindowFullScreenOnAllMonitors);
+    PyModule_AddIntConstant(mod, "xplm_WindowPopOut", xplm_WindowPopOut);
   }
 
   return mod;

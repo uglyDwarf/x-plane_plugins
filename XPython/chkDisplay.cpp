@@ -6,12 +6,15 @@
 
 #define XPLM200
 #define XPLM210
+#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDisplay.h>
 
 #include "chk_helper.h"
 
-static int int0, int1, int2, int3; 
+static std::string str0;
+static int int0, int1, int2, int3;
+static float f0, f1, f2, f3;
 static std::list<XPLMDataRef> d;
 
 void initDisplayModule(void)
@@ -20,6 +23,11 @@ void initDisplayModule(void)
   d.push_back(registerROAccessor("display/int1", int1));
   d.push_back(registerROAccessor("display/int2", int2));
   d.push_back(registerROAccessor("display/int3", int3));
+  d.push_back(registerROAccessor("display/float0", f0));
+  d.push_back(registerROAccessor("display/float1", f1));
+  d.push_back(registerROAccessor("display/float2", f2));
+  d.push_back(registerROAccessor("display/float3", f3));
+  d.push_back(registerROAccessor("display/str0", str0));
 }
 
 void cleanupDisplayModule(void)
@@ -165,6 +173,7 @@ class windowInfo{
   void draw();
   void handleKey(char inKey, XPLMKeyFlags inFlags, char inVirtualKey, int losingFocus);
   int handleMouseClick(int x, int y, XPLMMouseStatus inMouse);
+  int handleRightClick(int x, int y, XPLMMouseStatus inMouse);
   XPLMCursorStatus handleCursor(int x, int y);
   int handleMouseWheel(int x, int y, int wheel, int clicks);
   bool isEx();
@@ -213,6 +222,11 @@ int windowInfo::handleMouseClick(int x, int y, XPLMMouseStatus inMouse)
   return info.handleMouseClickFunc(id, x, y, inMouse, info.refcon);
 }
 
+int windowInfo::handleRightClick(int x, int y, XPLMMouseStatus inMouse)
+{
+  return info.handleRightClickFunc(id, x, y, inMouse, info.refcon);
+}
+
 XPLMCursorStatus windowInfo::handleCursor(int x, int y)
 {
   return info.handleCursorFunc(id, x, y, info.refcon);
@@ -240,6 +254,8 @@ XPLMWindowID XPLMCreateWindowEx(XPLMCreateWindow_t *inParams)
 {
   windowInfo *wi = new windowInfo(inParams);
   windowInfoList.insert(std::pair<void *, windowInfo *>(wi->getID(), wi));
+  int0 = inParams->decorateAsFloatingWindow;
+  int1 = inParams->layer;
   return wi->getID();
 }
 
@@ -280,6 +296,7 @@ void XPLMDestroyWindow(XPLMWindowID inWindowID)
       if(ii->isEx()){
         int1 = ii->handleCursor(444, 555);
         int2 = ii->handleMouseWheel(666, 777, 8, 42);
+        int3 = ii->handleRightClick(888, 999, xplm_MouseUp);
       }
       delete ii;
       //std::cout << "XPLMDestroyWindow removed window ID " << inWindowID << std::endl;
@@ -299,6 +316,34 @@ void XPLMGetScreenSize(int *outWidth, int *outHeight)
   }
 }
 
+void XPLMGetScreenBoundsGlobal(int *outLeft, int *outTop, int *outRight, int *outBottom)
+{
+  if(outLeft){
+    *outLeft = 320;
+  }
+  if(outTop){
+    *outTop = 480;
+  }
+  if(outRight){
+    *outRight = 640;
+  }
+  if(outBottom){
+    *outBottom = 240;
+  }
+}
+
+void XPLMGetAllMonitorBoundsGlobal(XPLMReceiveMonitorBoundsGlobal_f inMonitorBoundsCallback, void *refcon)
+{
+  inMonitorBoundsCallback(0, 5, 1030, 1285, 6, refcon);
+  inMonitorBoundsCallback(1, 1285, 1087, 3205, 7, refcon);
+}
+
+void XPLMGetAllMonitorBoundsOS(XPLMReceiveMonitorBoundsGlobal_f inMonitorBoundsCallback, void *refcon)
+{
+  inMonitorBoundsCallback(0, 9, 1208, 1609, 8, refcon);
+  inMonitorBoundsCallback(1, 1610, 491, 2250, 11, refcon);
+}
+
 void XPLMGetMouseLocation(int *outX, int *outY)
 {
   if(outX){
@@ -306,6 +351,16 @@ void XPLMGetMouseLocation(int *outX, int *outY)
   }
   if(outY){
     *outY = 768;
+  }
+}
+
+void XPLMGetMouseLocationGlobal(int *outX, int *outY)
+{
+  if(outX){
+    *outX = 1600;
+  }
+  if(outY){
+    *outY = 1200;
   }
 }
 
@@ -364,7 +419,49 @@ void XPLMSetWindowGeometry(XPLMWindowID inWindowID,
   if(wi->isEx()){
     int1 = wi->handleCursor(444, 555);
     int2 = wi->handleMouseWheel(666, 777, 8, 42);
+    int3 = wi->handleRightClick(888, 999, xplm_MouseUp);
   }
+}
+
+void XPLMGetWindowGeometryOS(XPLMWindowID inWindowID,
+                             int *        outLeft,
+                             int *        outTop,
+                             int *        outRight,
+                             int *        outBottom)
+{
+  windowInfo *wi;
+  if(!(wi = findWinInfo(inWindowID))){
+    return;
+  }
+  
+  if(outLeft){
+    *outLeft = wi->getLeft() + 1024;
+  }
+  if(outTop){
+    *outTop = wi->getTop();
+  }
+  if(outRight){
+    *outRight = wi->getRight() + 1024;
+  }
+  if(outBottom){
+    *outBottom = wi->getBottom();
+  }
+}
+
+void XPLMSetWindowGeometryOS(XPLMWindowID inWindowID,
+                             int          inLeft,
+                             int          inTop,
+                             int          inRight,
+                             int          inBottom)
+{
+  windowInfo *wi;
+  if(!(wi = findWinInfo(inWindowID))){
+    return;
+  }
+  wi->setLeft(inLeft - 1024);
+  wi->setTop(inTop);
+  wi->setRight(inRight - 1024);
+  wi->setBottom(inBottom);
 }
 
 int XPLMGetWindowIsVisible(XPLMWindowID inWindowID)
@@ -384,6 +481,63 @@ void XPLMSetWindowIsVisible(XPLMWindowID inWindowID,
     return;
   }
   wi->setVisible(inIsVisible);
+}
+
+int XPLMWindowIsPoppedOut(XPLMWindowID inWindowID)
+{
+  windowInfo *wi;
+  if(!(wi = findWinInfo(inWindowID))){
+    return -1;
+  }
+  return wi->getVisible() * 2;
+}
+
+void XPLMSetWindowGravity(XPLMWindowID inWindowID, float inLeftGravity, float inTopGravity, 
+                          float inRightGravity, float inBottomGravity)
+{
+  windowInfo *wi;
+  if(!(wi = findWinInfo(inWindowID))){
+    return;
+  }
+  int0 = wi->getVisible() * 3;
+  f0 = inLeftGravity;
+  f1 = inTopGravity;
+  f2 = inRightGravity;
+  f3 = inBottomGravity;
+}
+
+void XPLMSetWindowResizingLimits(XPLMWindowID inWindowID, int inMinWidthBoxels, int inMinHeightBoxels,
+                                 int inMaxWidthBoxels, int inMaxHeightBoxels)
+{
+  windowInfo *wi;
+  if(!(wi = findWinInfo(inWindowID))){
+    return;
+  }
+  int0 = inMinWidthBoxels + wi->getVisible() * 5;
+  int1 = inMinHeightBoxels;
+  int2 = inMaxWidthBoxels;
+  int3 = inMaxHeightBoxels;
+}
+
+void XPLMSetWindowPositioningMode(XPLMWindowID inWindowID, XPLMWindowPositioningMode inPositioningMode, int inMonitorIndex)
+{
+  windowInfo *wi;
+  if(!(wi = findWinInfo(inWindowID))){
+    return;
+  }
+  int0 = wi->getVisible() * 7;
+  int1 = inPositioningMode;
+  int2 = inMonitorIndex;
+}
+
+void XPLMSetWindowTitle(XPLMWindowID inWindowID, const char *inWindowTitle)
+{
+  windowInfo *wi;
+  if(!(wi = findWinInfo(inWindowID))){
+    return;
+  }
+  int0 = wi->getVisible() * 9;
+  str0 = inWindowTitle;
 }
 
 void *XPLMGetWindowRefCon(XPLMWindowID inWindowID)

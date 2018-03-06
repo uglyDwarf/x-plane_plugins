@@ -13,7 +13,7 @@ PY_LDFLAGS=$(shell python3-config --ldflags)
 all : main plugin.so plugin.txt
 	./main
 
-#all_cov : CXXFLAGS+= ${COV_CFLAGS}
+all_cov : CXXFLAGS+= ${COV_CFLAGS}
 all_cov : CFLAGS+= ${COV_CFLAGS}
 all_cov : main plugin.so
 	./main
@@ -24,6 +24,8 @@ all_cov : main plugin.so
 
 main : LDFLAGS+= -Wl,--export-dynamic -g
 main : CPPFLAGS+= ${XPLM_CPPFLAGS} -g
+main : CXXFLAGS+= ${COV_CFLAGS}
+main : CFLAGS+= ${COV_CFLAGS}
 main : main.cpp chkDisplay.o chkGraphics.o chk_helper.o chkDataAccess.o chkUtilities.o \
        chkScenery.o chkMenus.o chkNavigation.o chkPlugin.o chkPlanes.o chkProcessing.o \
        chkCamera.o chkWidgets.o chkUIGraphics.o chkWidgetUtils.o -ldl
