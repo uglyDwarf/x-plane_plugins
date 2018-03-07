@@ -9,6 +9,7 @@
 #include <sstream>
 #define XPLM200
 #define XPLM210
+#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMMenus.h>
@@ -17,6 +18,7 @@
 
 
 static const XPLMMenuID mainMenuID = (void *)0x12345678;
+static const XPLMMenuID aircraftMenuID = (void *)0x11223344;
 static const XPLMMenuID newMenuID = (void *)0x87654321;
 static std::string name;
 static int item;
@@ -48,6 +50,11 @@ XPLMMenuID XPLMFindPluginsMenu(void)
   return mainMenuID;
 }
 
+XPLMMenuID XPLMFindAircraftMenu(void)
+{
+  return aircraftMenuID;
+}
+
 XPLMMenuID XPLMCreateMenu(const char *inName, XPLMMenuID inParentMenu, int inParentItem, XPLMMenuHandler_f inHandler,
                           void *inMenuRef)
 {
@@ -77,6 +84,14 @@ int XPLMAppendMenuItem(XPLMMenuID inMenu, const char *inItemName, void *inItemRe
   name = inItemName;
   lang = inForceEnglish;
   menuHandler(menuRef, inItemRef);
+  return ++item;
+}
+
+int XPLMAppendMenuItemWithCommand(XPLMMenuID inMenu, const char *inItemName, XPLMCommandRef inCommandToExecute)
+{
+  assert(inMenu == newMenuID);
+  name = inItemName;
+  XPLMCommandOnce(inCommandToExecute);
   return ++item;
 }
 

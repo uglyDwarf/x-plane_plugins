@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #define XPLM200
 #define XPLM210
+#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMMenus.h>
 #include "utils.h"
@@ -36,6 +37,13 @@ static PyObject *XPLMFindPluginsMenuFun(PyObject *self, PyObject *args)
   (void)self;
   (void)args;
   return PyLong_FromVoidPtr(XPLMFindPluginsMenu());
+}
+
+static PyObject *XPLMFindAircraftMenuFun(PyObject *self, PyObject *args)
+{
+  (void)self;
+  (void)args;
+  return PyLong_FromVoidPtr(XPLMFindAircraftMenu());
 }
 
 static PyObject *XPLMCreateMenuFun(PyObject *self, PyObject *args)
@@ -96,6 +104,21 @@ static PyObject *XPLMAppendMenuItemFun(PyObject *self, PyObject *args)
   }
   XPLMMenuID inMenu = PyLong_AsVoidPtr(menuID);
   int res = XPLMAppendMenuItem(inMenu, inItemName, inItemRef, inForceEnglish);
+  return PyLong_FromLong(res);
+}
+
+static PyObject *XPLMAppendMenuItemWithCommandFun(PyObject *self, PyObject *args)
+{
+  (void)self;
+  PyObject *menuID;
+  const char *inItemName;
+  PyObject *commandToExecute;
+  if(!PyArg_ParseTuple(args, "OsO", &menuID, &inItemName, &commandToExecute)){
+    return NULL;
+  }
+  XPLMMenuID inMenu = PyLong_AsVoidPtr(menuID);
+  XPLMCommandRef inCommandToExecute = (XPLMCommandRef)PyLong_AsVoidPtr(commandToExecute);
+  int res = XPLMAppendMenuItemWithCommand(inMenu, inItemName, inCommandToExecute);
   return PyLong_FromLong(res);
 }
 
@@ -193,10 +216,12 @@ static PyObject *cleanup(PyObject *self, PyObject *args)
 
 static PyMethodDef XPLMMenusMethods[] = {
   {"XPLMFindPluginsMenu", XPLMFindPluginsMenuFun, METH_VARARGS, ""},
+  {"XPLMFindAircraftMenu", XPLMFindAircraftMenuFun, METH_VARARGS, ""},
   {"XPLMCreateMenu", XPLMCreateMenuFun, METH_VARARGS, ""},
   {"XPLMDestroyMenu", XPLMDestroyMenuFun, METH_VARARGS, ""},
   {"XPLMClearAllMenuItems", XPLMClearAllMenuItemsFun, METH_VARARGS, ""},
   {"XPLMAppendMenuItem", XPLMAppendMenuItemFun, METH_VARARGS, ""},
+  {"XPLMAppendMenuItemWithCommand", XPLMAppendMenuItemWithCommandFun, METH_VARARGS, ""},
   {"XPLMAppendMenuSeparator", XPLMAppendMenuSeparatorFun, METH_VARARGS, ""},
   {"XPLMSetMenuItemName", XPLMSetMenuItemNameFun, METH_VARARGS, ""},
   {"XPLMCheckMenuItem", XPLMCheckMenuItemFun, METH_VARARGS, ""},
