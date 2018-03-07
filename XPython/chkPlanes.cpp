@@ -9,6 +9,7 @@
 #include <sstream>
 #define XPLM200
 #define XPLM210
+#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMPlanes.h>
@@ -36,6 +37,7 @@ static float thrust;
 static float yokePitch;
 static float yokeHeading;
 static float yokeRoll;
+static double latitude, longitude;
 static std::list<XPLMDataRef> d;
 
 
@@ -62,6 +64,8 @@ void initPlanesModule()
   d.push_back(registerROAccessor("planes/yokePitch", yokePitch));
   d.push_back(registerROAccessor("planes/yokeHeading", yokeHeading));
   d.push_back(registerROAccessor("planes/yokeRoll", yokeRoll));
+  d.push_back(registerROAccessor("planes/latitude", latitude));
+  d.push_back(registerROAccessor("planes/longitude", longitude));
 }
 
 void cleanupPlanesModule()
@@ -80,6 +84,16 @@ void XPLMSetUsersAircraft(const char *inAircraftPath)
 void XPLMPlaceUserAtAirport(const char *inAirportCode)
 {
   str1 = inAirportCode;
+}
+
+void XPLMPlaceUserAtLocation(double latitudeDegrees, double longitudeDegrees, 
+                             float elevationMetersMSL, float headingDegreesTrue, float speedMetersPerSecond)
+{
+  latitude = latitudeDegrees;
+  longitude = longitudeDegrees;
+  inXVal = elevationMetersMSL;
+  inYVal = headingDegreesTrue;
+  inZVal = speedMetersPerSecond;
 }
 
 void XPLMCountAircraft(int *outTotalAircraft, int *outActiveAircraft, XPLMPluginID *outController)

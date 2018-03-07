@@ -48,6 +48,9 @@ class PythonInterface(checkBase):
       yokePitchDref = XPLMFindDataRef("planes/yokePitch")
       yokeHeadingDref = XPLMFindDataRef("planes/yokeHeading")
       yokeRollDref = XPLMFindDataRef("planes/yokeRoll")
+      latitudeDref = XPLMFindDataRef("planes/latitude")
+      longitudeDref = XPLMFindDataRef("planes/longitude")
+
 
       acf = 'F4 Phantom'
       XPLMSetUsersAircraft(acf)
@@ -57,6 +60,14 @@ class PythonInterface(checkBase):
       XPLMPlaceUserAtAirport(airport)
       self.checkVal('XPLMPlaceUserAtAirport didn\'t pass the inAirportCode parameter correctly',
                     self.getString(str1Dref), airport)
+      (lat, lon) = (3.14, 2.72)
+      (alt, hdg, spd) = (10.2, 361.0, 660.2)
+      XPLMPlaceUserAtLocation(lat, lon, alt, hdg, spd)
+      self.checkVal('XPLMPlaceUserAtLocation:latitude', XPLMGetDatad(latitudeDref), lat)
+      self.checkVal('XPLMPlaceUserAtLocation:longitude', XPLMGetDatad(longitudeDref), lat)
+      self.checkVal('XPLMPlaceUserAtLocation:elevationMetersMSL', XPLMGetDatad(inXVal, alt)
+      self.checkVal('XPLMPlaceUserAtLocation:headingDegreesTrue', XPLMGetDatad(inYVal, hdg)
+      self.checkVal('XPLMPlaceUserAtLocation:speedMetersPerSecond', XPLMGetDatad(inZVal), spd)
       
       index = 7777;
       (outFileName, outPath) = XPLMGetNthAircraftModel(index)

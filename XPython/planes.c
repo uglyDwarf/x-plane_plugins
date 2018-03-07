@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #define XPLM200
 #define XPLM210
+#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMPlanes.h>
 #include "utils.h"
@@ -30,6 +31,20 @@ PyObject *XPLMPlaceUserAtAirportFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMPlaceUserAtAirport(inAirportCode);
+  Py_RETURN_NONE;
+}
+
+PyObject *XPLMPlaceUserAtLocationFun(PyObject *self, PyObject *args)
+{
+  (void)self;
+  double latitudeDegrees, longitudeDegrees;
+  float elevationMetersMSL, headingDegreesTrue, speedMetersPerSecond;
+  if(!PyArg_ParseTuple(args, "ddfff", &latitudeDegrees, &longitudeDegrees,
+                       &elevationMetersMSL, &headingDegreesTrue, &speedMetersPerSecond)){
+    return NULL;
+  }
+  XPLMPlaceUserAtLocation(latitudeDegrees, longitudeDegrees,
+                          elevationMetersMSL, headingDegreesTrue, speedMetersPerSecond);
   Py_RETURN_NONE;
 }
 
@@ -226,6 +241,7 @@ PyObject *XPLMReinitUsersPlaneFun(PyObject *self, PyObject *args)
 static PyMethodDef XPLMPlanesMethods[] = {
   {"XPLMSetUsersAircraft", XPLMSetUsersAircraftFun, METH_VARARGS, ""},
   {"XPLMPlaceUserAtAirport", XPLMPlaceUserAtAirportFun, METH_VARARGS, ""},
+  {"XPLMPlaceUserAtLocation", XPLMPlaceUserAtLocationFun, METH_VARARGS, ""},
   {"XPLMCountAircraft", XPLMCountAircraftFun, METH_VARARGS, ""},
   {"XPLMGetNthAircraftModel", XPLMGetNthAircraftModelFun, METH_VARARGS, ""},
   {"XPLMReleasePlanes", XPLMReleasePlanesFun, METH_VARARGS, ""},
