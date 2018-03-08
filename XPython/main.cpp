@@ -21,6 +21,7 @@
 #include "chkWidgets.h"
 #include "chkUIGraphics.h"
 #include "chkWidgetUtils.h"
+#include "chkInstance.h"
 
 //extern int XPluginStart(char *outName,
 //                        char *outSig,
@@ -92,6 +93,7 @@ int main(int argc, char *argv[])
   initWidgetsModule();
   initUIGraphicsModule();
   initWidgetUtilsModule();
+  initInstanceModule();
 
   int res = XPluginStart(outName, outSig, outDesc);
   std::cout << "Y-Plane loaded plugin " << outName << "(" << res << ")" << std::endl;
@@ -117,7 +119,7 @@ int main(int argc, char *argv[])
   cleanupWidgetsModule();
   cleanupUIGraphicsModule();
   cleanupWidgetUtilsModule();
-
+  cleanupInstanceModule();
   dlclose(plugin);
   return 0;
 }

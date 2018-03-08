@@ -64,10 +64,10 @@ class PythonInterface(checkBase):
       (alt, hdg, spd) = (10.2, 361.0, 660.2)
       XPLMPlaceUserAtLocation(lat, lon, alt, hdg, spd)
       self.checkVal('XPLMPlaceUserAtLocation:latitude', XPLMGetDatad(latitudeDref), lat)
-      self.checkVal('XPLMPlaceUserAtLocation:longitude', XPLMGetDatad(longitudeDref), lat)
-      self.checkVal('XPLMPlaceUserAtLocation:elevationMetersMSL', XPLMGetDatad(inXVal, alt)
-      self.checkVal('XPLMPlaceUserAtLocation:headingDegreesTrue', XPLMGetDatad(inYVal, hdg)
-      self.checkVal('XPLMPlaceUserAtLocation:speedMetersPerSecond', XPLMGetDatad(inZVal), spd)
+      self.checkVal('XPLMPlaceUserAtLocation:longitude', XPLMGetDatad(longitudeDref), lon)
+      self.checkVal('XPLMPlaceUserAtLocation:elevationMetersMSL', XPLMGetDataf(inXValDref), alt)
+      self.checkVal('XPLMPlaceUserAtLocation:headingDegreesTrue', XPLMGetDataf(inYValDref), hdg)
+      self.checkVal('XPLMPlaceUserAtLocation:speedMetersPerSecond', XPLMGetDataf(inZValDref), spd)
       
       index = 7777;
       (outFileName, outPath) = XPLMGetNthAircraftModel(index)
