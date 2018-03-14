@@ -26,6 +26,7 @@ PyMODINIT_FUNC PyInit_XPStandardWidgets(void);
 PyMODINIT_FUNC PyInit_XPUIGraphics(void);
 PyMODINIT_FUNC PyInit_XPWidgetUtils(void);
 PyMODINIT_FUNC PyInit_XPLMInstance(void);
+PyMODINIT_FUNC PyInit_XPLMMap(void);
 
 
 //should be static, don't change after Py_SetProgramName is called 
@@ -60,6 +61,7 @@ int initPython(const char *programName){
   PyImport_AppendInittab("XPUIGraphics", PyInit_XPUIGraphics);
   PyImport_AppendInittab("XPWidgetUtils", PyInit_XPWidgetUtils);
   PyImport_AppendInittab("XPLMInstance", PyInit_XPLMInstance);
+  PyImport_AppendInittab("XPLMMap", PyInit_XPLMMap);
 
   Py_Initialize();
   if(!Py_IsInitialized()){
@@ -225,6 +227,8 @@ void XPluginStop(void)
                      "XPWidgetUtils.cleanup()\n"
                      "import XPLMInstance\n"
                      "XPLMInstance.cleanup()\n"
+                     "import XPLMMap\n"
+                     "XPLMMap.cleanup()\n"
                      "import XPLMDataAccess\n"
                      "XPLMDataAccess.cleanup()\n"
   );
