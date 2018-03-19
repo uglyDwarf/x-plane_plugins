@@ -28,6 +28,57 @@ PyMODINIT_FUNC PyInit_XPWidgetUtils(void);
 PyMODINIT_FUNC PyInit_XPLMInstance(void);
 PyMODINIT_FUNC PyInit_XPLMMap(void);
 
+static FILE *logFile;
+
+static PyObject *logWriterWrite(PyObject *self, PyObject *args)
+{
+  (void) self;
+  char *msg;
+  if(!PyArg_ParseTuple(args, "s", &msg)){
+    return NULL;
+  }
+  //printf("%s", msg);
+  fprintf(logFile, "%s", msg);
+  Py_RETURN_NONE;
+}
+
+static PyObject *logWriterFlush(PyObject *self, PyObject *args)
+{
+  (void) self;
+  (void) args;
+  Py_RETURN_NONE;
+}
+
+static PyMethodDef logWriterMethods[] = {
+  {"write", logWriterWrite, METH_VARARGS, ""},
+  {"flush", logWriterFlush, METH_VARARGS, ""},
+  {NULL, NULL, 0, NULL}
+};
+
+static struct PyModuleDef XPythonLogWriterModule = {
+  PyModuleDef_HEAD_INIT,
+  "XPythonLogWriter",
+  NULL,
+  -1,
+  logWriterMethods,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+
+PyMODINIT_FUNC
+PyInit_XPythonLogWriter(void)
+{
+  logFile = fopen("XPython.log", "w");
+  PyObject *mod = PyModule_Create(&XPythonLogWriterModule);
+  if(mod){
+    PySys_SetObject("stdout", mod);
+    PySys_SetObject("stderr", mod);
+  }
+
+  return mod;
+};
 
 //should be static, don't change after Py_SetProgramName is called 
 // should be freed by PyMem_RawFree()
@@ -62,6 +113,7 @@ int initPython(const char *programName){
   PyImport_AppendInittab("XPWidgetUtils", PyInit_XPWidgetUtils);
   PyImport_AppendInittab("XPLMInstance", PyInit_XPLMInstance);
   PyImport_AppendInittab("XPLMMap", PyInit_XPLMMap);
+  PyImport_AppendInittab("XPythonLogger", PyInit_XPythonLogWriter);
 
   Py_Initialize();
   if(!Py_IsInitialized()){
@@ -70,7 +122,8 @@ int initPython(const char *programName){
   }
 
   //get "." into the python's path 
-  PyRun_SimpleString("print('Adding the \".\" to path')\n"
+  PyRun_SimpleString("import XPythonLogger\n"
+                     "print('Adding the \".\" to path')\n"
                      "import sys\n"
                      "sys.path.append('.')");
   moduleDict = PyDict_New();
@@ -81,7 +134,7 @@ bool loadPIClass(const char *fname)
 {
   PyObject *pName = NULL, *pModule = NULL, *pClass = NULL,
            *pObj = NULL, *pRes = NULL, *err = NULL;
-  printf("Decoding the filename '%s'.\n", fname);
+  //printf("Decoding the filename '%s'.\n", fname);
 
   pName = PyUnicode_DecodeFSDefault(fname);
   if(pName == NULL){
@@ -295,14 +348,4 @@ void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, void *inParam
 }
 
 
-/*
-TODO
 
-write, flush methods...
-
-//in init module function
-PySys_SetObject("stdout", m);
-PySys_SetObject("stderr", m);
-
-PyImport_ImportModule("logger");
-*/

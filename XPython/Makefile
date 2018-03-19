@@ -55,5 +55,5 @@ valgrind : main plugin.so plugin.txt
 	valgrind --tool=memcheck --suppressions=valgrind-python.supp --leak-check=full ./main
 
 clean :
-	rm -f *.so *.o main plugin default.prof* coverage.txt
+	rm -f *.so *.o main plugin default.prof* coverage.txt *.log
 

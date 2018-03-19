@@ -63,7 +63,6 @@ int main(int argc, char *argv[])
 {
   (void) argc;
   (void) argv;
-  std::cout << "Hello World!" << std::endl;
   dlerror();
   void *plugin = dlopen("./plugin.so", RTLD_NOW | RTLD_GLOBAL);
   std::cout << "Plugin: " << plugin << std::endl;
