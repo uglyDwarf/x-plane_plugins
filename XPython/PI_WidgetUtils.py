@@ -110,14 +110,14 @@ class PythonInterface(checkBase):
 
       (self.msg, self.inParam1, self.inParam2) = (4567, 4568, 4569)
       res = XPUFixedLayout(self.msg, self.child1, self.inParam1, self.inParam2)
-      self.checkVal('XPUFixedLayout res, inWidget', res, self.child1Visible + self.msg)
+      self.checkVal('XPUFixedLayout res, inWidget', res, self.child1Visible * self.child1Class + self.msg)
       self.checkVal('XPUFixedLayout inMessage', XPLMGetDatai(self.int0Dref),  self.msg)
       self.checkVal('XPUFixedLayout inParam1', XPLMGetDatai(self.int1Dref),  self.inParam1)
       self.checkVal('XPUFixedLayout inParam2', XPLMGetDatai(self.int2Dref),  self.inParam2)
 
       (self.msg, self.inParam1, self.inParam2, self.eatClick) = (4570, 4571, 4572, 4573)
       res = XPUSelectIfNeeded(self.msg, self.child11, self.inParam1, self.inParam2, self.eatClick)
-      self.checkVal('XPUSelectIfNeeded res, inWidget', res, self.child11Visible + self.inParam1)
+      self.checkVal('XPUSelectIfNeeded res, inWidget', res, self.child11Visible * self.child1Class + self.inParam1)
       self.checkVal('XPUSelectIfNeeded inMessage', XPLMGetDatai(self.int1Dref),  self.msg)
       self.checkVal('XPUSelectIfNeeded inParam1', XPLMGetDatai(self.int2Dref),  self.inParam1)
       self.checkVal('XPUSelectIfNeeded inParam2', XPLMGetDatai(self.int3Dref),  self.inParam2)

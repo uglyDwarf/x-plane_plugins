@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <sstream>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMProcessing.h>
@@ -25,18 +23,20 @@ class callback{
   void *refcon;
   float interval;
  public:
-  callback(XPLMFlightLoop_f loopCallback, void *ref):cbk(loopCallback), refcon(ref), interval(-1.0){};
+  callback(XPLMFlightLoop_f loopCallback, void *ref, float _interval):cbk(loopCallback), refcon(ref), interval(_interval){};
   bool check(XPLMFlightLoop_f loopCallback, void *ref)
     {if(cbk == loopCallback && ref == refcon) return true; else return false;};
   float call(float inElapsedSinceLastCall, float inElapsedTimeSinceLastFlightLoop, int inCounter)
-    {return cbk(inElapsedSinceLastCall, inElapsedTimeSinceLastFlightLoop, inCounter, refcon);}
+    {return cbk(inElapsedSinceLastCall, inElapsedTimeSinceLastFlightLoop + interval, inCounter, refcon);}
 };
 
 
 
 static int int0, int1;
 static float flt0, flt1, flt2;
+#if defined(XPLM210)
 static callback *id;
+#endif
 static std::list<XPLMDataRef> d;
 
 void initProcessingModule()
@@ -70,7 +70,7 @@ int XPLMGetCycleNumber()
 
 void XPLMRegisterFlightLoopCallback(XPLMFlightLoop_f inFlightLoop, float inInterval, void *inRefcon)
 {
-  callback *cbk = new callback(inFlightLoop, inRefcon);
+  callback *cbk = new callback(inFlightLoop, inRefcon, inInterval);
   callbacks[inRefcon] = cbk;
   flt0 = 1000 * inInterval;
   flt1 = 2 * inInterval;
@@ -103,12 +103,13 @@ void XPLMSetFlightLoopCallbackInterval(XPLMFlightLoop_f inFlightLoop, float inIn
   int1 = inRelativeToNow;
 }
 
+#if defined(XPLM210)
 XPLMFlightLoopID XPLMCreateFlightLoop(XPLMCreateFlightLoop_t *inParams)
 {
   if(inParams->structSize != sizeof(XPLMCreateFlightLoop_t)){
     return NULL;
   }
-  id = new callback(inParams->callbackFunc, inParams->refcon);
+  id = new callback(inParams->callbackFunc, inParams->refcon, -42);
   int0 = inParams->phase;
   return id;
 }
@@ -128,4 +129,5 @@ void XPLMScheduleFlightLoop(XPLMFlightLoopID inFlightLoopID, float inInterval, i
   int0 = inRelativeToNow;
   flt2 += static_cast<callback*>(inFlightLoopID)->call(1000 * flt0, 2 * flt0, int0);
 }
+#endif
 

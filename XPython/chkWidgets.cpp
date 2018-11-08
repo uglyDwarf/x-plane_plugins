@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <sstream>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 #include <Widgets/XPWidgetDefs.h>
@@ -58,7 +56,7 @@ class widget{
   bool remove_children;
  public:
   widget(int inLeft, int inTop, int inRight, int inBottom, int inVisible, std::string inDescriptor, int inIsRoot, 
-         void *inContainer, int inClass = -1, XPWidgetFunc_t inCallback = NULL);
+         void *inContainer, int inClass = 11, XPWidgetFunc_t inCallback = NULL);
   ~widget();
   void *getID(){return (void*)id;};
   int message(XPWidgetMessage inMessage, intptr_t inParam1, intptr_t inParam2);
@@ -69,7 +67,7 @@ class widget{
   void setParent(class widget *p){parent = p;};
   class widget *getParent(){return parent;};
   void setVisible(int v){visible = v;};
-  int getVisible(){return visible;};
+  int getVisible(){return visible * widgetClass;};
   void getGeometry(int *outLeft, int *outTop, int *outRight, int *outBottom){*outLeft = left; *outTop = top;
                                                                              *outRight = right; *outBottom = bottom;};
   void setGeometry(int inLeft, int inTop, int inRight, int inBottom){left = inLeft; top = inTop;
@@ -93,7 +91,7 @@ static bool removeWidget(XPWidgetID inWidget)
   if(i == widgets.end()){
     return false;
   }
-  widget *tmp = i->first;
+  //widget *tmp = i->first;
   widgets.erase(i);
   return true;
 }
@@ -102,8 +100,8 @@ static bool removeWidget(XPWidgetID inWidget)
 widget::widget(int inLeft, int inTop, int inRight, int inBottom, int inVisible, std::string inDescriptor,
          int inIsRoot, void *inContainer, int inClass, XPWidgetFunc_t inCallback):
            left(inLeft), top(inTop), right(inRight), bottom(inBottom),
-           visible(inVisible), descriptor(inDescriptor), isRoot(inIsRoot), parent(static_cast<widget*>(inContainer)),
-           widgetClass(inClass), remove_children(false)
+           visible(inVisible), isRoot(inIsRoot), widgetClass(inClass), descriptor(inDescriptor),
+           parent(static_cast<widget*>(inContainer)), remove_children(false)
 {
   if(inCallback){
     addCallback(inCallback);
@@ -164,7 +162,7 @@ int widget::message(XPWidgetMessage inMessage, intptr_t inParam1, intptr_t inPar
 widget *widget::getChild(int inXOffset, int inYOffset, int inRecursive, int inVisibleOnly)
 {
   widget *res = NULL;
-  for(int i = 0; i < children.size(); ++i){
+  for(size_t i = 0; i < children.size(); ++i){
     if(inVisibleOnly && (!children[i]->getVisible())){
       continue;
     }
@@ -245,7 +243,7 @@ XPWidgetID XPCreateWidget(int inLeft, int inTop, int inRight, int inBottom, int 
 XPWidgetID XPCreateCustomWidget(int inLeft, int inTop, int inRight, int inBottom, int inVisible, const char * inDescriptor,
                           int inIsRoot, XPWidgetID inContainer, XPWidgetFunc_t inCallback)
 {
-  widget *tmp = new widget(inLeft, inTop, inRight, inBottom, inVisible, inDescriptor, inIsRoot, inContainer, -1, inCallback);
+  widget *tmp = new widget(inLeft, inTop, inRight, inBottom, inVisible, inDescriptor, inIsRoot, inContainer, 11, inCallback);
   int0 = inIsRoot;
   if(inContainer != NULL){
     static_cast<widget*>(inContainer)->addChild(tmp);
@@ -429,9 +427,11 @@ void XPAddWidgetCallback(XPWidgetID inWidget, XPWidgetFunc_t inNewCallback)
 
 static int widgetCbk(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inParam1, intptr_t inParam2)
 {
+  widget *tgt = static_cast<widget *>(inWidget);
   int0 = inMessage;
   int1 = inParam1;
   int2 = inParam2;
+  int3 = (intptr_t) tgt;
   return int0 + 2 * int1 + 3 * int2;
 }
 

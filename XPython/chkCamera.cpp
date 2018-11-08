@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <sstream>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMCamera.h>

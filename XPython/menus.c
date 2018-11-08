@@ -8,6 +8,7 @@
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMMenus.h>
 #include "utils.h"
+#include "plugin_dl.h"
 
 static intptr_t menuCntr;
 static PyObject *menuDict;
@@ -43,7 +44,11 @@ static PyObject *XPLMFindAircraftMenuFun(PyObject *self, PyObject *args)
 {
   (void)self;
   (void)args;
-  return PyLong_FromVoidPtr(XPLMFindAircraftMenu());
+  if(!XPLMFindAircraftMenu_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMFindAircraftMenu is available only in XPLM300 and up.\n");
+    return NULL;
+  }
+  return PyLong_FromVoidPtr(XPLMFindAircraftMenu_ptr());
 }
 
 static PyObject *XPLMCreateMenuFun(PyObject *self, PyObject *args)
@@ -113,12 +118,16 @@ static PyObject *XPLMAppendMenuItemWithCommandFun(PyObject *self, PyObject *args
   PyObject *menuID;
   const char *inItemName;
   PyObject *commandToExecute;
+  if(!XPLMAppendMenuItemWithCommand_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMAppendMenuItemWithCommand is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "OsO", &menuID, &inItemName, &commandToExecute)){
     return NULL;
   }
   XPLMMenuID inMenu = PyLong_AsVoidPtr(menuID);
   XPLMCommandRef inCommandToExecute = (XPLMCommandRef)PyLong_AsVoidPtr(commandToExecute);
-  int res = XPLMAppendMenuItemWithCommand(inMenu, inItemName, inCommandToExecute);
+  int res = XPLMAppendMenuItemWithCommand_ptr(inMenu, inItemName, inCommandToExecute);
   return PyLong_FromLong(res);
 }
 
@@ -195,11 +204,15 @@ static PyObject *XPLMRemoveMenuItemFun(PyObject *self, PyObject *args)
   (void)self;
   PyObject *menuID;
   int inIndex;
+  if(!XPLMRemoveMenuItem_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMRemoveMenuItem is available only in XPLM210 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "Oi", &menuID, &inIndex)){
     return NULL;
   }
   XPLMMenuID inMenu = PyLong_AsVoidPtr(menuID);
-  XPLMRemoveMenuItem(inMenu, inIndex);
+  XPLMRemoveMenuItem_ptr(inMenu, inIndex);
   Py_RETURN_NONE;
 }
 

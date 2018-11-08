@@ -4,9 +4,6 @@
 #include <vector>
 #include <string.h>
 
-#define XPLM200
-#define XPLM210
-#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDisplay.h>
 
@@ -164,32 +161,63 @@ int XPLMUnregisterKeySniffer(XPLMKeySniffer_f inCallback,
 }
 
 class windowInfo{
-  XPLMCreateWindow_t info;
+  int structSize, left, top, right, bottom, visible;
+  XPLMDrawWindow_f drawWindowFunc;
+  XPLMHandleMouseClick_f handleMouseClickFunc;
+  XPLMHandleKey_f handleKeyFunc;
+#if defined(XPLM200)
+  XPLMHandleCursor_f handleCursorFunc;
+  XPLMHandleMouseWheel_f handleMouseWheelFunc;
+#endif
+  void *refcon;
+#if defined(XPLM300)
+  int decorateAsFloatingWindow, layer; 
+  XPLMHandleMouseClick_f    handleRightClickFunc;
+#endif
   XPLMWindowID id;
   static intptr_t idCntr;
  public:
-  windowInfo(XPLMCreateWindow_t *inParams);
+  windowInfo(
+    int size,
+    int l, int t, int r, int b, int vis,
+    XPLMDrawWindow_f drawFunc,
+    XPLMHandleMouseClick_f mouseClickFunc,
+    XPLMHandleKey_f keyFunc,
+#if defined(XPLM200)
+    XPLMHandleCursor_f cursorFunc,
+    XPLMHandleMouseWheel_f wheelFunc,
+#endif
+    void *rfc
+#if defined(XPLM300)
+    ,int dFW, int layer, 
+    XPLMHandleMouseClick_f rightClickFunc
+#endif
+  );
   ~windowInfo();
   void draw();
   void handleKey(char inKey, XPLMKeyFlags inFlags, char inVirtualKey, int losingFocus);
   int handleMouseClick(int x, int y, XPLMMouseStatus inMouse);
+#if defined(XPLM300)
   int handleRightClick(int x, int y, XPLMMouseStatus inMouse);
+#endif
+#if defined(XPLM200)
   XPLMCursorStatus handleCursor(int x, int y);
   int handleMouseWheel(int x, int y, int wheel, int clicks);
+#endif
   bool isEx();
   XPLMWindowID getID();
-  int getLeft()const{return info.left;};
-  int getTop()const{return info.top;};
-  int getRight()const{return info.right;};
-  int getBottom()const{return info.bottom;};
-  int getVisible()const{return info.visible;};
-  void *getRefcon()const{return info.refcon;};
-  void setLeft(int left){info.left = left;};
-  void setTop(int top){info.top = top;};
-  void setRight(int right){info.right = right;};
-  void setBottom(int bottom){info.bottom = bottom;};
-  void setVisible(int visible){info.visible = visible;};
-  void setRefcon(void *refcon){info.refcon = refcon;};
+  int getLeft()const{return left;};
+  int getTop()const{return top;};
+  int getRight()const{return right;};
+  int getBottom()const{return bottom;};
+  int getVisible()const{return visible;};
+  void *getRefcon()const{return refcon;};
+  void setLeft(int l){left = l;};
+  void setTop(int t){top = t;};
+  void setRight(int r){right = r;};
+  void setBottom(int b){bottom = b;};
+  void setVisible(int vis){visible = vis;};
+  void setRefcon(void *rfc){refcon = rfc;};
 };
 
 intptr_t windowInfo::idCntr = 0;
@@ -197,8 +225,35 @@ std::map<void *, windowInfo*> windowInfoList;
 XPLMWindowID winInFront = NULL;
 XPLMWindowID winInFocus = NULL;
 
-windowInfo::windowInfo(XPLMCreateWindow_t *inParams) : info(*inParams), id((void *)++idCntr)
+windowInfo::windowInfo(int size,
+    int l, int t, int r, int b, int vis,
+    XPLMDrawWindow_f drawFunc,
+    XPLMHandleMouseClick_f mouseClickFunc,
+    XPLMHandleKey_f keyFunc,
+#if defined(XPLM200)
+    XPLMHandleCursor_f cursorFunc,
+    XPLMHandleMouseWheel_f wheelFunc,
+#endif
+    void *rfc
+#if defined(XPLM300)
+    ,int dFW, int lyr, 
+    XPLMHandleMouseClick_f rightClickFunc
+#endif
+                        ) : id((void *)++idCntr)
 {
+  structSize = size;
+  left = l; top = t; right = r; bottom = b; visible = vis;
+  drawWindowFunc = drawFunc; handleMouseClickFunc = mouseClickFunc;
+  handleKeyFunc = keyFunc; 
+#if defined(XPLM200)
+  handleCursorFunc = cursorFunc;
+  handleMouseWheelFunc = wheelFunc;
+#endif
+  refcon = rfc;
+#if defined(XPLM300)
+  decorateAsFloatingWindow = dFW; layer = lyr;
+  handleRightClickFunc = rightClickFunc;
+#endif
   winInFront = id;
   winInFocus = id;
 }
@@ -209,33 +264,36 @@ windowInfo::~windowInfo()
 
 void windowInfo::draw()
 {
-  info.drawWindowFunc(id, info.refcon);
+  drawWindowFunc(id, refcon);
 }
 
 void windowInfo::handleKey(char inKey, XPLMKeyFlags inFlags, char inVirtualKey, int losingFocus)
 {
-  info.handleKeyFunc(id, inKey, inFlags, inVirtualKey, info.refcon, losingFocus);
+  handleKeyFunc(id, inKey, inFlags, inVirtualKey, refcon, losingFocus);
 }
 
 int windowInfo::handleMouseClick(int x, int y, XPLMMouseStatus inMouse)
 {
-  return info.handleMouseClickFunc(id, x, y, inMouse, info.refcon);
+  return handleMouseClickFunc(id, x, y, inMouse, refcon);
 }
 
+#if defined(XPLM300)
 int windowInfo::handleRightClick(int x, int y, XPLMMouseStatus inMouse)
 {
-  return info.handleRightClickFunc(id, x, y, inMouse, info.refcon);
+  return handleRightClickFunc(id, x, y, inMouse, refcon);
 }
-
+#endif
+#if defined(XPLM200)
 XPLMCursorStatus windowInfo::handleCursor(int x, int y)
 {
-  return info.handleCursorFunc(id, x, y, info.refcon);
+  return handleCursorFunc(id, x, y, refcon);
 }
 
 int windowInfo::handleMouseWheel(int x, int y, int wheel, int clicks)
 {
-  return info.handleMouseWheelFunc(id, x, y, wheel, clicks, info.refcon);
+  return handleMouseWheelFunc(id, x, y, wheel, clicks, refcon);
 }
+#endif
 
 XPLMWindowID windowInfo::getID()
 {
@@ -244,20 +302,35 @@ XPLMWindowID windowInfo::getID()
 
 bool windowInfo::isEx()
 {
-  if((info.handleCursorFunc == NULL) || (info.handleMouseWheelFunc == NULL)){
+#if defined(XPLM200)
+  if((handleCursorFunc == NULL) || (handleMouseWheelFunc == NULL)){
     return false;
   }
   return true;
+#else
+  return false;
+#endif
 }
 
+#if defined(XPLM200)
 XPLMWindowID XPLMCreateWindowEx(XPLMCreateWindow_t *inParams)
 {
-  windowInfo *wi = new windowInfo(inParams);
+  windowInfo *wi = new windowInfo(inParams->structSize, inParams->left, inParams->top,
+    inParams->right, inParams->bottom, inParams->visible, inParams->drawWindowFunc,
+    inParams->handleMouseClickFunc, inParams->handleKeyFunc, inParams->handleCursorFunc,
+    inParams->handleMouseWheelFunc, inParams->refcon
+  #if defined(XPLM300)
+    ,inParams->decorateAsFloatingWindow, inParams->layer, inParams->handleRightClickFunc
+  #endif
+  );
   windowInfoList.insert(std::pair<void *, windowInfo *>(wi->getID(), wi));
+  #if defined(XPLM300)
   int0 = inParams->decorateAsFloatingWindow;
   int1 = inParams->layer;
+  #endif
   return wi->getID();
 }
+#endif
 
 XPLMWindowID XPLMCreateWindow(int inLeft,
                               int inTop,
@@ -268,20 +341,25 @@ XPLMWindowID XPLMCreateWindow(int inLeft,
                               XPLMHandleKey_f        inKeyCallback,
                               XPLMHandleMouseClick_f inMouseCallback,
                               void                  *inRefcon){
-  XPLMCreateWindow_t p = {.structSize = sizeof(XPLMCreateWindow_t),
-                          .left = inLeft,
-                          .top = inTop,
-                          .right = inRight,
-                          .bottom = inBottom,
-                          .visible = inIsVisible,
-                          .drawWindowFunc = inDrawCallback,
-                          .handleMouseClickFunc = inMouseCallback,
-                          .handleKeyFunc = inKeyCallback,
-                          .handleCursorFunc = NULL,
-                          .handleMouseWheelFunc = NULL,
-                          .refcon = inRefcon
-                         };
-  return XPLMCreateWindowEx(&p);
+  windowInfo *wi = new windowInfo(
+#if defined(XPLM200)
+    sizeof(XPLMCreateWindow_t),
+#else
+    0,
+#endif
+    inLeft, inTop,
+    inRight, inBottom, inIsVisible, inDrawCallback,
+    inMouseCallback, inKeyCallback, 
+  #if defined(XPLM200)
+    NULL, NULL,
+  #endif
+    inRefcon
+  #if defined(XPLM300)
+    ,0, 0, NULL
+  #endif
+  );
+  windowInfoList.insert(std::pair<void *, windowInfo *>(wi->getID(), wi));
+  return wi->getID();
 }
 
 void XPLMDestroyWindow(XPLMWindowID inWindowID)
@@ -294,9 +372,13 @@ void XPLMDestroyWindow(XPLMWindowID inWindowID)
       ii->handleKey('P', xplm_ControlFlag | xplm_UpFlag, XPLM_VK_P, 1);
       int0 = ii->handleMouseClick(222, 333, xplm_MouseUp);
       if(ii->isEx()){
+#if defined(XPLM200)
         int1 = ii->handleCursor(444, 555);
         int2 = ii->handleMouseWheel(666, 777, 8, 42);
+#endif
+#if defined(XPLM300)
         int3 = ii->handleRightClick(888, 999, xplm_MouseUp);
+#endif
       }
       delete ii;
       //std::cout << "XPLMDestroyWindow removed window ID " << inWindowID << std::endl;
@@ -316,6 +398,8 @@ void XPLMGetScreenSize(int *outWidth, int *outHeight)
   }
 }
 
+
+#if defined(XPLM300)
 void XPLMGetScreenBoundsGlobal(int *outLeft, int *outTop, int *outRight, int *outBottom)
 {
   if(outLeft){
@@ -343,6 +427,7 @@ void XPLMGetAllMonitorBoundsOS(XPLMReceiveMonitorBoundsGlobal_f inMonitorBoundsC
   inMonitorBoundsCallback(0, 9, 1208, 1609, 8, refcon);
   inMonitorBoundsCallback(1, 1610, 491, 2250, 11, refcon);
 }
+#endif
 
 void XPLMGetMouseLocation(int *outX, int *outY)
 {
@@ -354,6 +439,7 @@ void XPLMGetMouseLocation(int *outX, int *outY)
   }
 }
 
+#if defined(XPLM300)
 void XPLMGetMouseLocationGlobal(int *outX, int *outY)
 {
   if(outX){
@@ -363,6 +449,7 @@ void XPLMGetMouseLocationGlobal(int *outX, int *outY)
     *outY = 1200;
   }
 }
+#endif
 
 windowInfo *findWinInfo(XPLMWindowID inWindowID)
 {
@@ -417,12 +504,17 @@ void XPLMSetWindowGeometry(XPLMWindowID inWindowID,
   wi->handleKey('P', xplm_ControlFlag | xplm_UpFlag, XPLM_VK_P, 1);
   int0 = wi->handleMouseClick(222, 333, xplm_MouseUp);
   if(wi->isEx()){
+#if defined(XPLM200)
     int1 = wi->handleCursor(444, 555);
     int2 = wi->handleMouseWheel(666, 777, 8, 42);
+#endif
+#if defined(XPLM300)
     int3 = wi->handleRightClick(888, 999, xplm_MouseUp);
+#endif
   }
 }
 
+#if defined(XPLM300)
 void XPLMGetWindowGeometryOS(XPLMWindowID inWindowID,
                              int *        outLeft,
                              int *        outTop,
@@ -463,6 +555,7 @@ void XPLMSetWindowGeometryOS(XPLMWindowID inWindowID,
   wi->setRight(inRight - 1024);
   wi->setBottom(inBottom);
 }
+#endif
 
 int XPLMGetWindowIsVisible(XPLMWindowID inWindowID)
 {
@@ -483,6 +576,7 @@ void XPLMSetWindowIsVisible(XPLMWindowID inWindowID,
   wi->setVisible(inIsVisible);
 }
 
+#if defined(XPLM300)
 int XPLMWindowIsPoppedOut(XPLMWindowID inWindowID)
 {
   windowInfo *wi;
@@ -539,6 +633,7 @@ void XPLMSetWindowTitle(XPLMWindowID inWindowID, const char *inWindowTitle)
   int0 = wi->getVisible() * 9;
   str0 = inWindowTitle;
 }
+#endif
 
 void *XPLMGetWindowRefCon(XPLMWindowID inWindowID)
 {
@@ -679,7 +774,8 @@ int XPLMCountHotKeys(void){
 
 XPLMHotKeyID XPLMGetNthHotKey(int inIndex)
 {
-  if((inIndex < 0) || (inIndex >= hotkeyVector.size())){
+  std::vector<hotkey>::size_type index = inIndex;
+  if(index >= hotkeyVector.size()){
     return NULL;
   }
   //std::cout << "Hotkey index " << inIndex << " requested" << std::endl;

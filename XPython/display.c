@@ -7,6 +7,7 @@
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDisplay.h>
 #include "utils.h"
+#include "plugin_dl.h"
 
 static PyObject *drawCallbackDict, *drawCallbackIDDict;
 static intptr_t drawCallbackCntr;
@@ -452,11 +453,15 @@ static PyObject *XPLMGetScreenBoundsGlobalFun(PyObject *self, PyObject *args)
 {
   (void) self;
   PyObject *lObj, *tObj, *rObj, *bObj;
+  if(!XPLMGetScreenBoundsGlobal_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMGetScreenBoundsGlobal is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "OOOO", &lObj, &tObj, &rObj, &bObj)){
     return NULL;
   }
   int outLeft, outTop, outRight, outBottom;
-  XPLMGetScreenBoundsGlobal(&outLeft, &outTop, &outRight, &outBottom);
+  XPLMGetScreenBoundsGlobal_ptr(&outLeft, &outTop, &outRight, &outBottom);
   if(PyList_Check(lObj)){
     PyList_Insert(lObj, 0, PyLong_FromLong(outLeft));
   }
@@ -476,10 +481,14 @@ static PyObject *XPLMGetAllMonitorBoundsGlobalFun(PyObject *self, PyObject *args
 {
   (void) self;
   PyObject *pluginSelf, *refconObj;
+  if(!XPLMGetAllMonitorBoundsGlobal_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMGetAllMonitorBoundsGlobal is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &monitorBndsCallback, &refconObj)){
     return NULL;
   }
-  XPLMGetAllMonitorBoundsGlobal(receiveMonitorBounds, (void *)refconObj);
+  XPLMGetAllMonitorBoundsGlobal_ptr(receiveMonitorBounds, (void *)refconObj);
   Py_RETURN_NONE;
 }
 
@@ -487,10 +496,14 @@ static PyObject *XPLMGetAllMonitorBoundsOSFun(PyObject *self, PyObject *args)
 {
   (void) self;
   PyObject *pluginSelf, *refconObj;
+  if(!XPLMGetAllMonitorBoundsOS_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMGetAllMonitorBoundsOS is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &monitorBndsCallback, &refconObj)){
     return NULL;
   }
-  XPLMGetAllMonitorBoundsOS(receiveMonitorBounds, (void *)refconObj);
+  XPLMGetAllMonitorBoundsOS_ptr(receiveMonitorBounds, (void *)refconObj);
   Py_RETURN_NONE;
 }
 
@@ -516,11 +529,15 @@ static PyObject *XPLMGetMouseLocationGlobalFun(PyObject *self, PyObject *args)
 {
   (void) self;
   PyObject *xObj, *yObj;
+  if(!XPLMGetMouseLocationGlobal_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMGetMouseLocationGlobal is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "OO", &xObj, &yObj)){
     return NULL;
   }
   int x, y;
-  XPLMGetMouseLocationGlobal(&x, &y);
+  XPLMGetMouseLocationGlobal_ptr(&x, &y);
   if(PyList_Check(xObj)){
     PyList_Insert(xObj, 0, PyLong_FromLong(x));
   }
@@ -571,11 +588,15 @@ static PyObject *XPLMGetWindowGeometryOSFun(PyObject *self, PyObject *args)
 {
   (void) self;
   PyObject *win, *leftObj, *topObj, *rightObj, *bottomObj;
+  if(!XPLMGetWindowGeometryOS_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMGetWindowGeometryOS is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "OOOOO", &win, &leftObj, &topObj, &rightObj, &bottomObj)){
     return NULL;
   }
   int left, top, right, bottom;
-  XPLMGetWindowGeometryOS(PyLong_AsVoidPtr(win), &left, &top, &right, &bottom);
+  XPLMGetWindowGeometryOS_ptr(PyLong_AsVoidPtr(win), &left, &top, &right, &bottom);
   if(PyList_Check(leftObj)){
     PyList_Insert(leftObj, 0, PyLong_FromLong(left));
   }
@@ -596,11 +617,15 @@ static PyObject *XPLMSetWindowGeometryOSFun(PyObject *self, PyObject *args)
   (void) self;
   PyObject *win;
   int inLeft, inTop, inRight, inBottom;
+  if(!XPLMSetWindowGeometryOS_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMSetWindowGeometryOS is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "Oiiii", &win, &inLeft, &inTop, &inRight, &inBottom)){
     return NULL;
   }
   void *inWindowID = PyLong_AsVoidPtr(win);
-  XPLMSetWindowGeometryOS(inWindowID, inLeft, inTop, inRight, inBottom);
+  XPLMSetWindowGeometryOS_ptr(inWindowID, inLeft, inTop, inRight, inBottom);
   Py_RETURN_NONE;
 }
 
@@ -632,11 +657,15 @@ static PyObject *XPLMWindowIsPoppedOutFun(PyObject *self, PyObject *args)
 {
   (void) self;
   PyObject *win;
+  if(!XPLMWindowIsPoppedOut_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMWindowIsPoppedOut is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
   void *inWindowID = PyLong_AsVoidPtr(win);
-  return PyLong_FromLong(XPLMWindowIsPoppedOut(inWindowID));
+  return PyLong_FromLong(XPLMWindowIsPoppedOut_ptr(inWindowID));
 }
 
 static PyObject *XPLMSetWindowGravityFun(PyObject *self, PyObject *args)
@@ -644,11 +673,15 @@ static PyObject *XPLMSetWindowGravityFun(PyObject *self, PyObject *args)
   (void) self;
   PyObject *win;
   float inLeftGravity, inTopGravity, inRightGravity, inBottomGravity;
+  if(!XPLMSetWindowGravity_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMSetWindowGravity is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "Offff", &win, &inLeftGravity, &inTopGravity, &inRightGravity, &inBottomGravity)){
     return NULL;
   }
   XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
-  XPLMSetWindowGravity(inWindowID, inLeftGravity, inTopGravity, inRightGravity, inBottomGravity);
+  XPLMSetWindowGravity_ptr(inWindowID, inLeftGravity, inTopGravity, inRightGravity, inBottomGravity);
   Py_RETURN_NONE;
 }
 
@@ -657,11 +690,15 @@ static PyObject *XPLMSetWindowResizingLimitsFun(PyObject *self, PyObject *args)
   (void) self;
   PyObject *win;
   int inMinWidthBoxels, inMinHeightBoxels, inMaxWidthBoxels, inMaxHeightBoxels;
+  if(!XPLMSetWindowResizingLimits_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMSetWindowResizingLimits is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "Oiiii", &win, &inMinWidthBoxels, &inMinHeightBoxels, &inMaxWidthBoxels, &inMaxHeightBoxels)){
     return NULL;
   }
   XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
-  XPLMSetWindowResizingLimits(inWindowID, inMinWidthBoxels, inMinHeightBoxels, inMaxWidthBoxels, inMaxHeightBoxels);
+  XPLMSetWindowResizingLimits_ptr(inWindowID, inMinWidthBoxels, inMinHeightBoxels, inMaxWidthBoxels, inMaxHeightBoxels);
   Py_RETURN_NONE;
 }
 
@@ -670,11 +707,15 @@ static PyObject *XPLMSetWindowPositioningModeFun(PyObject *self, PyObject *args)
   (void) self;
   PyObject *win;
   int inPositioningMode, inMonitorIndex;
+  if(!XPLMSetWindowPositioningMode_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMSetWindowPositioningMode is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "Oii", &win, &inPositioningMode, &inMonitorIndex)){
     return NULL;
   }
   XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
-  XPLMSetWindowPositioningMode(inWindowID, inPositioningMode, inMonitorIndex);
+  XPLMSetWindowPositioningMode_ptr(inWindowID, inPositioningMode, inMonitorIndex);
   Py_RETURN_NONE;
 }
 
@@ -683,11 +724,15 @@ static PyObject *XPLMSetWindowTitleFun(PyObject *self, PyObject *args)
   (void) self;
   PyObject *win;
   const char *inWindowTitle;
+  if(!XPLMSetWindowTitle_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMSetWindowTitle is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "Os", &win, &inWindowTitle)){
     return NULL;
   }
   XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
-  XPLMSetWindowTitle(inWindowID, inWindowTitle);
+  XPLMSetWindowTitle_ptr(inWindowID, inWindowTitle);
   Py_RETURN_NONE;
 }
 

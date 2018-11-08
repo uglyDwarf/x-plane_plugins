@@ -7,9 +7,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <sstream>
-#define XPLM200
-#define XPLM210
-#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMPlanes.h>
@@ -86,6 +83,7 @@ void XPLMPlaceUserAtAirport(const char *inAirportCode)
   str1 = inAirportCode;
 }
 
+#if defined(XPLM300)
 void XPLMPlaceUserAtLocation(double latitudeDegrees, double longitudeDegrees, 
                              float elevationMetersMSL, float headingDegreesTrue, float speedMetersPerSecond)
 {
@@ -95,6 +93,7 @@ void XPLMPlaceUserAtLocation(double latitudeDegrees, double longitudeDegrees,
   inYVal = headingDegreesTrue;
   inZVal = speedMetersPerSecond;
 }
+#endif
 
 void XPLMCountAircraft(int *outTotalAircraft, int *outActiveAircraft, XPLMPluginID *outController)
 {

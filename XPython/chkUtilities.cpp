@@ -5,8 +5,6 @@
 #include <dlfcn.h>
 #include <string.h>
 #include <sstream>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMUtilities.h>
@@ -123,7 +121,7 @@ int XPLMGetDirectoryContents(const char *inDirectoryPath, int inFirstReturn, cha
   button = inIndexCount;
   int index = 0;
   char *text = outFileNames;
-  int remaining = inFileNameBufSize;
+  size_t remaining = inFileNameBufSize;
   while(index < inIndexCount){
     std::ostringstream fname;
     fname << "File" << index + inFirstReturn;
@@ -157,8 +155,18 @@ int XPLMInitialized(void)
 
 void XPLMGetVersions(int *outXPlaneVersion, int *outXPLMVersion, XPLMHostApplicationID *outHostID)
 {
+  *outXPlaneVersion = 1125;
+  *outXPLMVersion = 365;
+  #if defined(XPLM300)
   *outXPlaneVersion = 1105;
-  *outXPLMVersion = 203;
+  *outXPLMVersion = 300;
+  #elif defined(XPLM210)
+  *outXPlaneVersion = 1060;
+  *outXPLMVersion = 210;
+  #else
+  *outXPlaneVersion = 970;
+  *outXPLMVersion = 200;
+  #endif
   *outHostID = xplm_Host_YoungsMod;
 }
 

@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <sstream>
 #include <cassert>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMInstance.h>
@@ -17,7 +15,6 @@
 
 static std::string str0;
 static int int0;
-static int obj;
 static int inst;
 static float x, y, z, pitch, heading, roll, float0;
 

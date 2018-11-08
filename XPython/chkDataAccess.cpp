@@ -4,8 +4,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <cassert>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 

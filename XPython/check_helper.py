@@ -4,6 +4,7 @@
 from XPLMDataAccess import *
 
 class checkBase(object):
+   #_all_errors
    def __init__(self, moduleName, expectedChecks = None):
       self._modName = moduleName
       self._errors = 0
@@ -20,6 +21,10 @@ class checkBase(object):
       else:
          print('{0} module check: {1} errors found.'.format(self._modName, self._errors))
 
+
+   def checkSummary(self):
+      pass
+      
    def floatEq(self, a, b):
       if (a == None) or (b == None):
          return False

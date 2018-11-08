@@ -51,7 +51,7 @@ class PythonInterface(checkBase):
       self.checkVal('widget top', top[0], self.widgetTop)
       self.checkVal('widget right', right[0], self.widgetRight)
       self.checkVal('widget bottom', bottom[0], self.widgetBottom)
-      self.checkVal('widget visible', XPIsWidgetVisible(self.widget), self.widgetVisible)
+      self.checkVal('widget visible', XPIsWidgetVisible(self.widget), self.widgetVisible * self.widgetClass)
       desc = []
       res = XPGetWidgetDescriptor(self.widget, desc, 1024)
       self.checkVal('widget descriptor length', res, len(self.widgetDesc))
@@ -82,7 +82,7 @@ class PythonInterface(checkBase):
       self.checkVal('widget top', top[0], self.c_widgetTop)
       self.checkVal('widget right', right[0], self.c_widgetRight)
       self.checkVal('widget bottom', bottom[0], self.c_widgetBottom)
-      self.checkVal('widget visible', XPIsWidgetVisible(self.cust_widget), self.c_widgetVisible)
+      self.checkVal('widget visible', XPIsWidgetVisible(self.cust_widget), self.c_widgetVisible * 11) # default widgetClass
       desc = []
       res = XPGetWidgetDescriptor(self.cust_widget, desc, 1024)
       self.checkVal('widget descriptor length', res, len(self.c_widgetDesc))
@@ -117,11 +117,11 @@ class PythonInterface(checkBase):
 
       self.checkVal('XPGetParentWidget', XPGetParentWidget(self.cust_widget), self.widget)
       
-      self.checkVal('XPIsWidgetVisible', XPIsWidgetVisible(self.cust_widget), self.c_widgetVisible)
+      self.checkVal('XPIsWidgetVisible', XPIsWidgetVisible(self.cust_widget), self.c_widgetVisible * 11)
       XPHideWidget(self.cust_widget)
-      self.checkVal('XPIsWidgetVisible', XPIsWidgetVisible(self.cust_widget), 0)
+      self.checkVal('XPIsWidgetVisible', XPIsWidgetVisible(self.cust_widget), 0 * 11)
       XPShowWidget(self.cust_widget)
-      self.checkVal('XPIsWidgetVisible', XPIsWidgetVisible(self.cust_widget), 1)
+      self.checkVal('XPIsWidgetVisible', XPIsWidgetVisible(self.cust_widget), 1 * 11)
       
       self.checkVal('XPFindRootWidget', XPFindRootWidget(self.cust_widget), self.widget)
 

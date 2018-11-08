@@ -117,9 +117,9 @@ static int readData(void *inRefcon, void *outValue, int inOffset, int inLength)
   }
   char *tgt = static_cast<char *>(outValue);
   const char *src = str.c_str();
-  int i;
-  for(i = 0; i < inLength; ++i){
-    if(inOffset + i >= len){
+  size_t i;
+  for(i = 0; i < (size_t)inLength; ++i){
+    if((size_t)inOffset + i >= len){
       break;
     }
     tgt[i] = src[inOffset + i];

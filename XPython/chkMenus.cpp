@@ -7,9 +7,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <sstream>
-#define XPLM200
-#define XPLM210
-#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMMenus.h>
@@ -18,7 +15,9 @@
 
 
 static const XPLMMenuID mainMenuID = (void *)0x12345678;
+#if defined(XPLM300)
 static const XPLMMenuID aircraftMenuID = (void *)0x11223344;
+#endif
 static const XPLMMenuID newMenuID = (void *)0x87654321;
 static std::string name;
 static int item;
@@ -50,10 +49,12 @@ XPLMMenuID XPLMFindPluginsMenu(void)
   return mainMenuID;
 }
 
+#if defined(XPLM300)
 XPLMMenuID XPLMFindAircraftMenu(void)
 {
   return aircraftMenuID;
 }
+#endif
 
 XPLMMenuID XPLMCreateMenu(const char *inName, XPLMMenuID inParentMenu, int inParentItem, XPLMMenuHandler_f inHandler,
                           void *inMenuRef)
@@ -87,6 +88,7 @@ int XPLMAppendMenuItem(XPLMMenuID inMenu, const char *inItemName, void *inItemRe
   return ++item;
 }
 
+#if defined(XPLM300)
 int XPLMAppendMenuItemWithCommand(XPLMMenuID inMenu, const char *inItemName, XPLMCommandRef inCommandToExecute)
 {
   assert(inMenu == newMenuID);
@@ -94,6 +96,7 @@ int XPLMAppendMenuItemWithCommand(XPLMMenuID inMenu, const char *inItemName, XPL
   XPLMCommandOnce(inCommandToExecute);
   return ++item;
 }
+#endif
 
 void XPLMAppendMenuSeparator(XPLMMenuID inMenu)
 {
@@ -130,10 +133,11 @@ void XPLMEnableMenuItem(XPLMMenuID inMenu, int inIndex, int enabled)
   lang = enabled;
 }
 
+#if defined(XPLM210)
 void XPLMRemoveMenuItem(XPLMMenuID inMenu, int inIndex)
 {
   assert(inMenu == newMenuID);
   item = inIndex;
   name = "removed";
 }
-
+#endif

@@ -6,6 +6,7 @@
 #define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMProcessing.h>
+#include "plugin_dl.h"
 
 static intptr_t flCntr;
 static PyObject *flDict;
@@ -141,6 +142,10 @@ static PyObject *XPLMCreateFlightLoopFun(PyObject* self, PyObject *args)
 {
   (void)self;
   PyObject *pluginSelf, *params;
+  if(!XPLMCreateFlightLoop_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMCreateFlightLoop is available only in XPLM210 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &params)){
     return NULL;
   }
@@ -153,7 +158,7 @@ static PyObject *XPLMCreateFlightLoopFun(PyObject* self, PyObject *args)
   fl.callbackFunc = flightLoopCallback;
   fl.refcon = (void *)++flCntr;
   
-  XPLMFlightLoopID res = XPLMCreateFlightLoop(&fl);
+  XPLMFlightLoopID res = XPLMCreateFlightLoop_ptr(&fl);
 
   PyObject *id = PyLong_FromVoidPtr(fl.refcon);
   PyObject *argObj = Py_BuildValue("(OOfO)", pluginSelf, PySequence_GetItem(params, 1),
@@ -171,6 +176,10 @@ static PyObject *XPLMDestroyFlightLoopFun(PyObject *self, PyObject *args)
 {
   (void)self;
   PyObject *revId, *pluginSelf;
+  if(!XPLMDestroyFlightLoop_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMDestroyFlightLoop is available only in XPLM210 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &revId)){
     return NULL;
   }
@@ -182,7 +191,7 @@ static PyObject *XPLMDestroyFlightLoopFun(PyObject *self, PyObject *args)
   }
   PyDict_DelItem(flRevDict, revId);
   PyDict_DelItem(flDict, id);
-  XPLMDestroyFlightLoop(PyLong_AsVoidPtr(revId));
+  XPLMDestroyFlightLoop_ptr(PyLong_AsVoidPtr(revId));
   Py_XDECREF(id);
   Py_RETURN_NONE;
 }
@@ -193,11 +202,15 @@ static PyObject *XPLMScheduleFlightLoopFun(PyObject *self, PyObject*args)
   PyObject *pluginSelf, *flightLoopID;
   float inInterval;
   int inRelativeToNow;
+  if(!XPLMScheduleFlightLoop_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMScheduleFlightLoop is available only in XPLM210 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "OOfi", &pluginSelf, &flightLoopID, &inInterval, &inRelativeToNow)){
     return NULL;
   }
   XPLMFlightLoopID inFlightLoopID = PyLong_AsVoidPtr(flightLoopID);
-  XPLMScheduleFlightLoop(inFlightLoopID, inInterval, inRelativeToNow);
+  XPLMScheduleFlightLoop_ptr(inFlightLoopID, inInterval, inRelativeToNow);
   Py_RETURN_NONE;
 }
 

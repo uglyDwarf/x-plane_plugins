@@ -6,18 +6,22 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sstream>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMScenery.h>
 
 #include "chk_helper.h"
 
+
+#if defined(XPLM200)
 static XPLMProbeInfo_t probe;
+#endif
 static std::string path;
 static int lighting;
 static int earth_relative;
+static double lat;
+static double lon;
+static float hdg;
 static std::vector<XPLMDrawInfo_t> locations;
 static std::list<XPLMDataRef> d;
 
@@ -70,6 +74,9 @@ void initSceneryModule()
   d.push_back(registerROAccessor("obj.lighting", lighting));
   d.push_back(registerROAccessor("obj.earth_relative", earth_relative));
   d.push_back(registerROAccessor("obj.locations", locations));
+  d.push_back(registerROAccessor("obj.latitude", lat));
+  d.push_back(registerROAccessor("obj.longitude", lon));
+  d.push_back(registerROAccessor("obj.heading", hdg));
 }
 
 void cleanupSceneryModule()
@@ -80,8 +87,11 @@ void cleanupSceneryModule()
   d.empty();
 }
 
+
+#if defined(XPLM200)
 XPLMProbeRef XPLMCreateProbe(XPLMProbeType inProbeType)
 {
+  lighting = inProbeType;
   probe.structSize = sizeof(XPLMProbeInfo_t);
   probe.normalX = rand();
   probe.normalY = rand();
@@ -120,19 +130,47 @@ XPLMProbeResult XPLMProbeTerrainXYZ(XPLMProbeRef inProbe, float inX, float inY, 
   outInfo->is_wet = probe->is_wet;
   return xplm_ProbeHitTerrain;
 }
+#endif
 
+#if defined(XPLM300)
+float XPLMGetMagneticVariation(double latitude,
+                               double longitude)
+{
+  lat = latitude;
+  lon = longitude;
+  return lat + lon * lon;
+}
+
+float XPLMDegTrueToDegMagnetic(float headingDegreesTrue)
+{
+  hdg = headingDegreesTrue;
+  return hdg * hdg * hdg;
+}
+
+float XPLMDegMagneticToDegTrue(float headingDegreesMagnetic)
+{
+  hdg = headingDegreesMagnetic;
+  return 1 / hdg;
+}
+#endif
+
+#if defined(XPLM200)
 XPLMObjectRef XPLMLoadObject(const char *inPath)
 {
   path = inPath;
   return static_cast<XPLMObjectRef>(new std::string(inPath));
 }
+#endif
 
+#if defined(XPLM210)
 void XPLMLoadObjectAsync(const char *inPath, XPLMObjectLoaded_f inCallback, void *inRefcon)
 {
   path = inPath;
   inCallback(new std::string(inPath), inRefcon);
 }
+#endif
 
+#if defined(XPLM200)
 void XPLMDrawObjects(XPLMObjectRef inObject, int inCount, XPLMDrawInfo_t *inLocations, int inLighting, int inEarth_relative)
 {
   path = *static_cast<std::string *>(inObject);
@@ -163,5 +201,6 @@ int XPLMLookupObjects(const char *inPath, float inLatitude, float inLongitude,
   enumerator((path + "2").c_str(), ref);
   return 2;
 }
+#endif
 
 

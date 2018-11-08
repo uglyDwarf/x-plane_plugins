@@ -8,6 +8,7 @@
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMPlanes.h>
 #include "utils.h"
+#include "plugin_dl.h"
 
 static intptr_t availableCntr;
 static PyObject *availableDict;
@@ -39,12 +40,16 @@ PyObject *XPLMPlaceUserAtLocationFun(PyObject *self, PyObject *args)
   (void)self;
   double latitudeDegrees, longitudeDegrees;
   float elevationMetersMSL, headingDegreesTrue, speedMetersPerSecond;
+  if(!XPLMPlaceUserAtLocation_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMPlaceUserAtLocation is available only in XPLM300 and up.\n");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "ddfff", &latitudeDegrees, &longitudeDegrees,
                        &elevationMetersMSL, &headingDegreesTrue, &speedMetersPerSecond)){
     return NULL;
   }
-  XPLMPlaceUserAtLocation(latitudeDegrees, longitudeDegrees,
-                          elevationMetersMSL, headingDegreesTrue, speedMetersPerSecond);
+  XPLMPlaceUserAtLocation_ptr(latitudeDegrees, longitudeDegrees,
+                              elevationMetersMSL, headingDegreesTrue, speedMetersPerSecond);
   Py_RETURN_NONE;
 }
 

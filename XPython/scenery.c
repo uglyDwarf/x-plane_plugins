@@ -4,9 +4,11 @@
 #include <stdbool.h>
 #define XPLM200
 #define XPLM210
+#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMScenery.h>
 #include "utils.h"
+#include "plugin_dl.h"
 
 static PyObject *XPLMCreateProbeFun(PyObject *self, PyObject *args)
 {
@@ -102,12 +104,16 @@ static void objectLoaded(XPLMObjectRef inObject, void *inRefcon)
 static PyObject *XPLMLoadObjectAsyncFun(PyObject *self, PyObject *args)
 {
   (void)self;
+  if(!XPLMLoadObjectAsync_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMLoadObjectAsync is available only in XPLM210 and up.\n");
+    return NULL;
+  }
   char *inPath = PyUnicode_AsUTF8(PySequence_GetItem(args, 1));
   void *refcon = (void *)++loaderCntr;
   PyObject *key = PyLong_FromVoidPtr(refcon);
   PyDict_SetItem(loaderDict, key, args);
   Py_DECREF(key);
-  XPLMLoadObjectAsync(inPath, objectLoaded, refcon);
+  XPLMLoadObjectAsync_ptr(inPath, objectLoaded, refcon);
   Py_RETURN_NONE;
 }
 

@@ -4,8 +4,6 @@
 #include <vector>
 #include <dlfcn.h>
 #include <string.h>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMGraphics.h>

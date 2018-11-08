@@ -7,9 +7,6 @@
 #include <stdlib.h>
 #include <sstream>
 #include <cassert>
-#define XPLM200
-#define XPLM210
-#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMMap.h>
@@ -44,6 +41,8 @@ void cleanupMapModule()
   d.empty();
 }
 
+
+#if defined(XPLM300)
 static XPLMCreateMapLayer_t layer;
 static XPLMMapCreatedCallback_f mapCreated;
 static void *mapCreatedRefcon;
@@ -155,6 +154,6 @@ float XPLMMapGetNorthHeading(XPLMMapProjectionID projection, float mapX, float m
   int0 = (intptr_t)projection;
   return 2 * mapY - mapX;
 }
-
+#endif
 
 

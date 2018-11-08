@@ -44,20 +44,20 @@ class PythonInterface(checkBase):
       self.fl1 = self.flightLoop2
       self.fl1Ref = []
 
-      interval = 16384.8192
-      XPLMRegisterFlightLoopCallback(self, self.fl0, interval, self.fl0Ref)
+      self.fl1Interval = 16384.8192
+      XPLMRegisterFlightLoopCallback(self, self.fl0, self.fl1Interval, self.fl0Ref)
       self.checkVal('XPLMRegisterFlightLoopCallback interval passed incorrectly', 
-                    XPLMGetDataf(self.flt0Dref), 1000 * interval)
-      self.checkVal('XPLMRegisterFlightLoopCallback interval passed incorrectly', XPLMGetDataf(self.flt1Dref), 2 * interval)
+                    XPLMGetDataf(self.flt0Dref), 1000 * self.fl1Interval)
+      self.checkVal('XPLMRegisterFlightLoopCallback interval passed incorrectly', XPLMGetDataf(self.flt1Dref), 2 * self.fl1Interval)
       self.checkVal('XPLMRegisterFlightLoopCallback loopback wasn\'t called', self.fl0Ref, ["FlightLoop1 called."])
       self.checkVal('FlightLoopCallback1 return value incorrect', XPLMGetDataf(self.flt2Dref), 1.0)
 
-      interval = 33.44
+      self.fl2Interval = 33.44
       relative = 32768
-      XPLMSetFlightLoopCallbackInterval(self, self.fl0, interval, relative, self.fl0Ref)
+      XPLMSetFlightLoopCallbackInterval(self, self.fl0, self.fl2Interval, relative, self.fl0Ref)
       self.checkVal('XPLMSetFlightLoopCallbackInterval callback check failed', XPLMGetDatai(self.int0Dref), 1);
       self.checkVal('XPLMSetFlightLoopCallbackInterval inInterval passed incorrectly',
-                    XPLMGetDataf(self.flt0Dref), interval);
+                    XPLMGetDataf(self.flt0Dref), self.fl2Interval);
       self.checkVal('XPLMSetFlightLoopCallbackInterval inRelativeToNow passed incorrectly',
                     XPLMGetDatai(self.int1Dref), relative);
       
@@ -67,11 +67,11 @@ class PythonInterface(checkBase):
       self.checkVal('XPLMCreateFlightLoop phase passed incorrectly',
                     XPLMGetDatai(self.int0Dref), phase);
 
-      interval = 55.77
+      self.fl2Interval = 55.77
       relative = 4096
-      XPLMScheduleFlightLoop(self, flid, interval, relative)
+      XPLMScheduleFlightLoop(self, flid, self.fl2Interval, relative)
       self.checkVal('XPLMScheduleFlightLoop inInterval passed incorrectly',
-                    XPLMGetDataf(self.flt0Dref), interval);
+                    XPLMGetDataf(self.flt0Dref), self.fl2Interval);
       self.checkVal('XPLMScheduleFlightLoop inRelativeToNow passed incorrectly',
                     XPLMGetDatai(self.int0Dref), relative);
       self.checkVal('XPLMCreateFlightLoop loopback wasn\'t called', self.fl1Ref, ["FlightLoop2 called."])
@@ -90,7 +90,7 @@ class PythonInterface(checkBase):
       self.checkVal('FlightLoopCallback1 inElapsedSinceLastCall passed incorrectly', inElapsedSinceLastCall,
                     XPLMGetDataf(self.flt0Dref))
       self.checkVal('FlightLoopCallback1 inElapsedTimeSinceLastFlightLoop passed incorrectly',
-                    inElapsedTimeSinceLastFlightLoop, XPLMGetDataf(self.flt1Dref))
+                    inElapsedTimeSinceLastFlightLoop, XPLMGetDataf(self.flt1Dref) + self.fl1Interval)
       self.checkVal('FlightLoopCallback1 inCounter passed incorrectly', inCounter, XPLMGetDatai(self.int0Dref))
       inRefcon.append('FlightLoop1 called.')
       return 1.0
@@ -99,7 +99,7 @@ class PythonInterface(checkBase):
       self.checkVal('FlightLoopCallback2 inElapsedSinceLastCall passed incorrectly', inElapsedSinceLastCall,
                     XPLMGetDataf(self.flt0Dref) * 1000)
       self.checkVal('FlightLoopCallback2 inElapsedTimeSinceLastFlightLoop passed incorrectly',
-                    inElapsedTimeSinceLastFlightLoop, XPLMGetDataf(self.flt0Dref) * 2)
+                    inElapsedTimeSinceLastFlightLoop, XPLMGetDataf(self.flt0Dref) * 2 - 42)
       self.checkVal('FlightLoopCallback2 inCounter passed incorrectly', inCounter, XPLMGetDatai(self.int0Dref))
       inRefcon.append('FlightLoop2 called.')
       return 2.0

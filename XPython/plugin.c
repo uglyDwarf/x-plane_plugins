@@ -6,6 +6,7 @@
 #include <XPLM/XPLMDefs.h>
 
 #include "utils.h"
+#include "plugin_dl.h"
 #include "chk_helper.h"
 
 PyMODINIT_FUNC PyInit_XPLMDefs(void);
@@ -30,6 +31,7 @@ PyMODINIT_FUNC PyInit_XPLMMap(void);
 
 static FILE *logFile;
 
+
 static PyObject *logWriterWrite(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -46,6 +48,7 @@ static PyObject *logWriterFlush(PyObject *self, PyObject *args)
 {
   (void) self;
   (void) args;
+  fflush(logFile);
   Py_RETURN_NONE;
 }
 
@@ -205,6 +208,7 @@ int XPluginStart(char *outName, char *outSig, char *outDesc)
   strcpy(outName, "Python Interface revival");
   strcpy(outSig, "x.y.z");
   strcpy(outDesc, "X-Plane interface for Python 3.");
+  loadAllFunctions();
   initPython("X-Plane");
 
   //Scan current directory for the plugin modules
@@ -216,7 +220,7 @@ int XPluginStart(char *outName, char *outSig, char *outDesc)
   struct dirent *de;
   while((de = readdir(dir))){
     //Check that it strts by 'PI_' and ends with '.py'
-    //  Well, regexp ould be more suitable... TODO?
+    //  Well, regexp would be more suitable... TODO?
     if((strncmp(de->d_name, "PI_", 3) == 0) && (strncmp(de->d_name + strlen(de->d_name) - 3, ".py", 3) == 0)){
       char *modName = strdup(de->d_name);
       if(modName){
