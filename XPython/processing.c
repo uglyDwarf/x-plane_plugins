@@ -143,7 +143,7 @@ static PyObject *XPLMCreateFlightLoopFun(PyObject* self, PyObject *args)
   (void)self;
   PyObject *pluginSelf, *params;
   if(!XPLMCreateFlightLoop_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMCreateFlightLoop is available only in XPLM210 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMCreateFlightLoop is available only in XPLM210 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &params)){
@@ -177,7 +177,7 @@ static PyObject *XPLMDestroyFlightLoopFun(PyObject *self, PyObject *args)
   (void)self;
   PyObject *revId, *pluginSelf;
   if(!XPLMDestroyFlightLoop_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMDestroyFlightLoop is available only in XPLM210 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMDestroyFlightLoop is available only in XPLM210 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &revId)){
@@ -203,7 +203,7 @@ static PyObject *XPLMScheduleFlightLoopFun(PyObject *self, PyObject*args)
   float inInterval;
   int inRelativeToNow;
   if(!XPLMScheduleFlightLoop_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMScheduleFlightLoop is available only in XPLM210 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMScheduleFlightLoop is available only in XPLM210 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OOfi", &pluginSelf, &flightLoopID, &inInterval, &inRelativeToNow)){

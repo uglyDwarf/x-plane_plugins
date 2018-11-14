@@ -6,6 +6,7 @@ from XPLMDefs import *
 from XPLMDataAccess import *
 from XPWidgetDefs import *
 from XPWidgets import *
+from XPLMUtilities import *
 
 class PythonInterface(checkBase):
    def __init__(self):
@@ -15,6 +16,7 @@ class PythonInterface(checkBase):
       self.Name = "Widgets regression test"
       self.Sig = "WidgetsRT"
       self.Desc = "Regression test for the XPWidgets module"
+      self.versions = XPLMGetVersions()
 
       return self.Name, self.Sig, self.Desc
    
@@ -176,6 +178,12 @@ class PythonInterface(checkBase):
       self.checkVal('XPGetWidgetWithFocus', XPGetWidgetWithFocus(), self.cust_widget)
       XPLoseKeyboardFocus(self.cust_widget)
       self.checkVal('XPLoseKeyboardFocus', XPGetWidgetWithFocus(), self.widget)
+
+      try:
+        self.checkVal('XPGetWidgetUnderlyingWindow', XPGetWidgetUnderlyingWindow(self.widget), self.widget + 333)
+      except RuntimeError as re:
+         if (self.versions[1] >= 301) or (str(re) != 'XPGetWidgetUnderlyingWindow is available only in XPLM301 and up.'):
+            raise
 
       exists = []
       self.prop = 12345

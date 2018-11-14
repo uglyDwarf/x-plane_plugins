@@ -5,6 +5,7 @@ from check_helper import *
 from XPLMDefs import *
 from XPLMDataAccess import *
 from XPLMProcessing import *
+from XPLMUtilities import *
 
 class PythonInterface(checkBase):
    def __init__(self):
@@ -14,6 +15,7 @@ class PythonInterface(checkBase):
       self.Name = "Processing regression test"
       self.Sig = "ProcessingRT"
       self.Desc = "Regression test for XPLMProcessing module"
+      self.versions = XPLMGetVersions()
 
       return self.Name, self.Sig, self.Desc
    
@@ -63,26 +65,42 @@ class PythonInterface(checkBase):
       
       phase = 65535
       params = [phase, self.fl1, self.fl1Ref]
-      flid = XPLMCreateFlightLoop(self, params)
-      self.checkVal('XPLMCreateFlightLoop phase passed incorrectly',
-                    XPLMGetDatai(self.int0Dref), phase);
+      try:
+         flid = XPLMCreateFlightLoop(self, params)
+      except RuntimeError as re:
+         if (self.versions[1] >= 210) or (str(re) != 'XPLMCreateFlightLoop is available only in XPLM210 and up.'):
+            raise
+         flid = -1
+      else:
+         self.checkVal('XPLMCreateFlightLoop phase passed incorrectly',
+                       XPLMGetDatai(self.int0Dref), phase);
 
       self.fl2Interval = 55.77
       relative = 4096
-      XPLMScheduleFlightLoop(self, flid, self.fl2Interval, relative)
-      self.checkVal('XPLMScheduleFlightLoop inInterval passed incorrectly',
-                    XPLMGetDataf(self.flt0Dref), self.fl2Interval);
-      self.checkVal('XPLMScheduleFlightLoop inRelativeToNow passed incorrectly',
-                    XPLMGetDatai(self.int0Dref), relative);
-      self.checkVal('XPLMCreateFlightLoop loopback wasn\'t called', self.fl1Ref, ["FlightLoop2 called."])
-      self.checkVal('FlightLoopCallback2 return value incorrect', XPLMGetDataf(self.flt2Dref), 3.0)
+      try:
+         XPLMScheduleFlightLoop(self, flid, self.fl2Interval, relative)
+      except RuntimeError as re:
+         if (self.versions[1] >= 210) or (str(re) != 'XPLMScheduleFlightLoop is available only in XPLM210 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMScheduleFlightLoop inInterval passed incorrectly',
+                       XPLMGetDataf(self.flt0Dref), self.fl2Interval);
+         self.checkVal('XPLMScheduleFlightLoop inRelativeToNow passed incorrectly',
+                       XPLMGetDatai(self.int0Dref), relative);
+         self.checkVal('XPLMCreateFlightLoop loopback wasn\'t called', self.fl1Ref, ["FlightLoop2 called."])
+         self.checkVal('FlightLoopCallback2 return value incorrect', XPLMGetDataf(self.flt2Dref), 3.0)
  
 
 
       XPLMUnregisterFlightLoopCallback(self, self.fl0, self.fl0Ref)
       self.checkVal('XPLMUnregisterFlightLoopCallback failed to remove flightloop', XPLMGetDatai(self.int0Dref), 1)
-      XPLMDestroyFlightLoop(self, flid)
-      self.checkVal('XPLMDestroyFlightLoop failed', XPLMGetDatai(self.int0Dref), 123456)
+      try:
+         XPLMDestroyFlightLoop(self, flid)
+      except RuntimeError as re:
+         if (self.versions[1] >= 210) or (str(re) != 'XPLMDestroyFlightLoop is available only in XPLM210 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMDestroyFlightLoop failed', XPLMGetDatai(self.int0Dref), 123456)
       
       return 
 

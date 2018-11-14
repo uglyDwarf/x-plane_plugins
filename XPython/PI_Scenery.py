@@ -5,6 +5,7 @@ from check_helper import *
 from XPLMDefs import *
 from XPLMDataAccess import *
 from XPLMScenery import *
+from XPLMUtilities import *
 
 import random
 
@@ -16,6 +17,7 @@ class PythonInterface(checkBase):
       self.Name = "Scenery regression test"
       self.Sig = "SceneryRT"
       self.Desc = "Regression test for XPLMScenery module"
+      self.versions = XPLMGetVersions()
 
       return self.Name, self.Sig, self.Desc
    
@@ -78,9 +80,14 @@ class PythonInterface(checkBase):
       self.loadCbk = self.loadCallback
       self.refcon = [tmp]
       self.checkVal('XPLMLoadObjectAsync hash already contains a reference', self.objectDict.get(tmp), None)
-      XPLMLoadObjectAsync(self, tmp, self.loadCbk, self.refcon)
-      self.checkVal('XPLMLoadObjectAsync didn\'t add a new object', len(self.objectDict), 2)
-      self.checkVal('XPLMLoadObjectAsync passed wrong path', self.getString(path), tmp)
+      try:
+         XPLMLoadObjectAsync(self, tmp, self.loadCbk, self.refcon)
+      except RuntimeError as re:
+         if (self.versions[1] >= 210) or (str(re) != 'XPLMLoadObjectAsync is available only in XPLM210 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMLoadObjectAsync didn\'t add a new object', len(self.objectDict), 2)
+         self.checkVal('XPLMLoadObjectAsync passed wrong path', self.getString(path), tmp)
 
       tmp = 7
       loc = [[1000 * random.random() for i in range(0, 6)] for j in range(0, tmp)]

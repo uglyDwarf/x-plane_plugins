@@ -175,7 +175,7 @@ static PyObject *XPLMCreateMapLayerFun(PyObject *self, PyObject *args)
   XPLMCreateMapLayer_t inParams;
 
   if(!XPLMCreateMapLayer_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMCreateMapLayer is available only in XPLM300 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMCreateMapLayer is available only in XPLM300 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &params)){
@@ -213,7 +213,7 @@ static PyObject *XPLMDestroyMapLayerFun(PyObject *self, PyObject *args)
   PyObject *pluginSelf, *layer;
 
   if(!XPLMDestroyMapLayer_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMDestroyMapLayer is available only in XPLM300 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMDestroyMapLayer is available only in XPLM300 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &layer)){
@@ -235,7 +235,7 @@ static PyObject *XPLMRegisterMapCreationHookFun(PyObject *self, PyObject *args)
 {
   (void) self;
   if(!XPLMRegisterMapCreationHook_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMRegisterMapCreationHook is available only in XPLM300 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMRegisterMapCreationHook is available only in XPLM300 and up.");
     return NULL;
   }
   void *refcon = (void *)++mapCreateCntr;
@@ -250,7 +250,7 @@ static PyObject *XPLMMapExistsFun(PyObject *self, PyObject *args)
   const char *mapIdentifier;
 
   if(!XPLMMapExists_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMMapExists is available only in XPLM300 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMMapExists is available only in XPLM300 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "s", &mapIdentifier)){
@@ -270,7 +270,7 @@ static PyObject *XPLMDrawMapIconFromSheetFun(PyObject *self, PyObject *args)
   XPLMMapOrientation orientation;
 
   if(!XPLMDrawMapIconFromSheet_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMDrawMapIconFromSheet is available only in XPLM300 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMDrawMapIconFromSheet is available only in XPLM300 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "Osiiiiffiff", &layerObj, &inPngPath, &s, &t, &ds, &dt, &mapX, &mapY,
@@ -292,7 +292,7 @@ static PyObject *XPLMDrawMapLabelFun(PyObject *self, PyObject *args)
   XPLMMapOrientation orientation;
 
   if(!XPLMDrawMapLabel_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMDrawMapLabel is available only in XPLM300 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMDrawMapLabel is available only in XPLM300 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "Osffif", &layerObj, &inText, &mapX, &mapY,
@@ -311,7 +311,7 @@ static PyObject *XPLMMapProjectFun(PyObject *self, PyObject *args)
   double latitude, longitude;
 
   if(!XPLMMapProject_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMMapProject is available only in XPLM300 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMMapProject is available only in XPLM300 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OddOO", &projectionObj, &latitude, &longitude, &outXObj, &outYObj)){
@@ -336,7 +336,7 @@ static PyObject *XPLMMapUnprojectFun(PyObject *self, PyObject *args)
   float mapX, mapY;
 
   if(!XPLMMapUnproject_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMMapUnproject is available only in XPLM300 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMMapUnproject is available only in XPLM300 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OffOO", &projectionObj, &mapX, &mapY, &outLatitudeObj, &outLongitudeObj)){
@@ -361,7 +361,7 @@ static PyObject *XPLMMapScaleMeterFun(PyObject *self, PyObject *args)
   float mapX, mapY;
 
   if(!XPLMMapScaleMeter_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMMapScaleMeter is available only in XPLM300 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMMapScaleMeter is available only in XPLM300 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "Off", &projectionObj, &mapX, &mapY)){
@@ -379,7 +379,7 @@ static PyObject *XPLMMapGetNorthHeadingFun(PyObject *self, PyObject *args)
   float mapX, mapY;
 
   if(!XPLMMapGetNorthHeading_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMMapGetNorthHeading is available only in XPLM300 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMMapGetNorthHeading is available only in XPLM300 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "Off", &projectionObj, &mapX, &mapY)){

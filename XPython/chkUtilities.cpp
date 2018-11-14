@@ -157,8 +157,11 @@ void XPLMGetVersions(int *outXPlaneVersion, int *outXPLMVersion, XPLMHostApplica
 {
   *outXPlaneVersion = 1125;
   *outXPLMVersion = 365;
-  #if defined(XPLM300)
-  *outXPlaneVersion = 1105;
+  #if defined(XPLM301)
+  *outXPlaneVersion = 1120;
+  *outXPLMVersion = 301;
+  #elif defined(XPLM300)
+  *outXPlaneVersion = 1110;
   *outXPLMVersion = 300;
   #elif defined(XPLM210)
   *outXPlaneVersion = 1060;

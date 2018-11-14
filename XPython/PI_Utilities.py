@@ -102,8 +102,14 @@ class PythonInterface(checkBase):
 
 
       XPlaneVersion, XPLMVersion, HostID = XPLMGetVersions()
-      self.checkVal('XPLMGetVersions returned unexpected X-Plane version.', XPlaneVersion, 1105)
-      self.checkVal('XPLMGetVersions returned unexpected XPLM version.', XPLMVersion, 300)
+      if XPlaneVersion == 1120:
+         self.checkVal('XPLMGetVersions returned unexpected XPLM version.', XPLMVersion, 301)
+      elif XPlaneVersion == 1110:
+         self.checkVal('XPLMGetVersions returned unexpected XPLM version.', XPLMVersion, 300)
+      elif XPlaneVersion == 1060:
+         self.checkVal('XPLMGetVersions returned unexpected XPLM version.', XPLMVersion, 210)
+      else:
+         self.checkVal('XPLMGetVersions returned unexpected XPLM version.', XPLMVersion, 200)
       self.checkVal('XPLMGetVersions returned unexpected host ID.', HostID, xplm_Host_YoungsMod)
 
 

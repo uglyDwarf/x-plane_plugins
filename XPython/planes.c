@@ -41,7 +41,7 @@ PyObject *XPLMPlaceUserAtLocationFun(PyObject *self, PyObject *args)
   double latitudeDegrees, longitudeDegrees;
   float elevationMetersMSL, headingDegreesTrue, speedMetersPerSecond;
   if(!XPLMPlaceUserAtLocation_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMPlaceUserAtLocation is available only in XPLM300 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMPlaceUserAtLocation is available only in XPLM300 and up.");
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "ddfff", &latitudeDegrees, &longitudeDegrees,

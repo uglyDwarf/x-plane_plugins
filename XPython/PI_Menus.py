@@ -17,6 +17,7 @@ class PythonInterface(checkBase):
       self.Name = "Menus regression test"
       self.Sig = "MenusRT"
       self.Desc = "Regression test for XPLMMenus module"
+      self.versions = XPLMGetVersions()
 
       return self.Name, self.Sig, self.Desc
    
@@ -54,7 +55,11 @@ class PythonInterface(checkBase):
       self.checkVal('XPLMAppendMenuItem didn\'t call the menuHandler.', self.menuRef, [1])
       self.checkVal('XPLMAppendMenuItem didn\'t call the menuHandler.', self.itemRef, [16])
 
-      self.checkVal('XPLMFindAircraftMenu', XPLMFindAircraftMenu(), 0x11223344)
+      try:
+         self.checkVal('XPLMFindAircraftMenu', XPLMFindAircraftMenu(), 0x11223344)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMFindAircraftMenu is available only in XPLM300 and up.'):
+            raise
       path = 'menu_item_test_command'
       self.cmdRef = XPLMCreateCommand(path, 'menu item command test')
       self.checkVal('XPLMFindCommand didn\'t find my new command.', XPLMFindCommand(path), self.cmdRef)
@@ -63,10 +68,15 @@ class PythonInterface(checkBase):
       self.cmdStatus = [0, 0]
       XPLMRegisterCommandHandler(self, self.cmdRef, self.cmdHandler, 1, self.cmdStatus)
       commandMenuName = 'Cmd Menu'
-      res = XPLMAppendMenuItemWithCommand(menu, commandMenuName, self.cmdRef)
-      self.checkVal('XPLMAppendMenuItemWithCommand:res', res, 2)
-      self.checkVal('XPLMAppendMenuItemWithCommand:name', self.getString(name), commandMenuName)
-      self.checkVal('XPLMAppendMenuItemWithCommand:command', self.cmdStatus, [2, 5])
+      try:
+         res = XPLMAppendMenuItemWithCommand(menu, commandMenuName, self.cmdRef)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMAppendMenuItemWithCommand is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMAppendMenuItemWithCommand:res', res, 2)
+         self.checkVal('XPLMAppendMenuItemWithCommand:name', self.getString(name), commandMenuName)
+         self.checkVal('XPLMAppendMenuItemWithCommand:command', self.cmdStatus, [2, 5])
       XPLMUnregisterCommandHandler(self, self.cmdRef, self.cmdHandler, 1, self.cmdStatus)
 
       XPLMAppendMenuSeparator(menu)
@@ -96,9 +106,14 @@ class PythonInterface(checkBase):
       self.checkVal('XPLMEnableMenuItem didn\'t pass the enabled.', XPLMGetDatai(lang), enabled)
 
       itemIndex = 448
-      XPLMRemoveMenuItem(menu, itemIndex)
-      self.checkVal('XPLMRemoveMenuItem wasn\'t called.', self.getString(name), "removed")
-      self.checkVal('XPLMRemoveMenuItem didn\'t pass the inIndex.', XPLMGetDatai(item), itemIndex)
+      try:
+         XPLMRemoveMenuItem(menu, itemIndex)
+      except RuntimeError as re:
+         if (self.versions[1] >= 210) or (str(re) != 'XPLMRemoveMenuItem is available only in XPLM210 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMRemoveMenuItem wasn\'t called.', self.getString(name), "removed")
+         self.checkVal('XPLMRemoveMenuItem didn\'t pass the inIndex.', XPLMGetDatai(item), itemIndex)
 
       XPLMDestroyMenu(menu)
       self.checkVal('XPLMDestroyMenu wasn\'t called.', self.getString(name), "destroyed")

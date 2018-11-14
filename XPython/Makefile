@@ -10,7 +10,11 @@ XPLM_CPPFLAGS=-I./SDK/CHeaders -I./SDK/CHeaders/XPLM -I./SDK/CHeaders/Widgets -D
 COV_FLAGS += 
 PY_LDFLAGS=$(shell python3-config --ldflags)
 
-all : main_200 main_210 main_300 plugin.so plugin.txt
+all : main_200 main_210 main_300 main_301 plugin.so plugin.txt
+	./main_301
+	cat XPython.log
+	cp XPython.log XPython301.log
+	echo "======================================="
 	./main_300
 	cat XPython.log
 	cp XPython.log XPython300.log
@@ -32,26 +36,16 @@ all_cov : main plugin.so
 	llvm-cov-3.8 report ./plugin.so -instr-profile=default.profdata | tee coverage.txt
 	llvm-cov-3.8 show ./plugin.so -instr-profile=default.profdata | c++filt -n >> coverage.txt
 
-#main_300 : main.cpp chkDisplay.o300 chkGraphics.o300 chk_helper.o300 chkDataAccess.o300 chkUtilities.o300 \
-#       chkScenery.o300 chkMenus.o300 chkNavigation.o300 chkPlugin.o300 chkPlanes.o300 chkProcessing.o300 \
-#       chkCamera.o300 chkWidgets.o300 chkUIGraphics.o300 chkWidgetUtils.o300 chkInstance.o300 chkMap.o300 -ldl
-
-#main : LDFLAGS+= -Wl,--export-dynamic -g 
-#main : CPPFLAGS+= ${XPLM_CPPFLAGS} -g -DXPLM200 -DXPLM210 -DXPLM300
-#main : CXXFLAGS+= ${COV_CFLAGS}
-#main : CFLAGS+= ${COV_CFLAGS}
-#main : main.cpp chkDisplay.o chkGraphics.o chk_helper.o chkDataAccess.o chkUtilities.o \
-#       chkScenery.o chkMenus.o chkNavigation.o chkPlugin.o chkPlanes.o chkProcessing.o \
-#       chkCamera.o chkWidgets.o chkUIGraphics.o chkWidgetUtils.o chkInstance.o chkMap.o -ldl
-
-#main_200 : main.cpp chkDisplay.o200 chkGraphics.o200 chk_helper.o200 chkDataAccess.o200 chkUtilities.o200 \
-#       chkScenery.o200 chkMenus.o200 chkNavigation.o200 chkPlugin.o200 chkPlanes.o200 chkProcessing.o200 \
-#       chkCamera.o200 chkWidgets.o200 chkUIGraphics.o200 chkWidgetUtils.o200 chkInstance.o200 chkMap.o200 -ldl
-#%.o200 : %.cpp
-#	$(CXX) -c $(CFLAGS) $(CXXFLAGS) $(CPPFLAGS) $< -o $@
-
-
-
+main_301 : LDFLAGS+= -Wl,--export-dynamic -g -ldl
+main_301 : CPPFLAGS+= ${XPLM_CPPFLAGS} -g -DXPLM200 -DXPLM210 -DXPLM300 -DXPLM301
+main_301 : CXXFLAGS+= ${COV_CFLAGS}
+main_301 : CFLAGS+= ${COV_CFLAGS}
+main_301 : main.cpp chkDisplay301.o chkGraphics301.o chk_helper301.o chkDataAccess301.o chkUtilities301.o \
+       chkScenery301.o chkMenus301.o chkNavigation301.o chkPlugin301.o chkPlanes301.o chkProcessing301.o \
+       chkCamera301.o chkWidgets301.o chkUIGraphics301.o chkWidgetUtils301.o chkInstance301.o chkMap301.o -ldl
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CFLAGS) $(LDFLAGS) $^ -o $@
+chk%301.o  : chk%.cpp
+	$(CXX) -c $(CFLAGS) $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
 main_300 : LDFLAGS+= -Wl,--export-dynamic -g -ldl
 main_300 : CPPFLAGS+= ${XPLM_CPPFLAGS} -g -DXPLM200 -DXPLM210 -DXPLM300
@@ -88,10 +82,9 @@ chkCamera200.o chkWidgets200.o chkUIGraphics200.o chkWidgetUtils200.o chkInstanc
 chk%200.o : chk%.cpp
 	$(CXX) -c $(CFLAGS) $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
-plugin : CFLAGS+= ${PY_CFLAGS} -fPIC -g #-fsanitize=address
-plugin : CPPFLAGS+= ${XPLM_CPPFLAGS} "-DWEAK_ATTR=__attribute__((weak))"
-plugin : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic -ldl -g #-fsanitize=address
-#plugin : plugin.c defs.c display.c utils.c graphics.c data_access.c utilities.c scenery.c menus.c
+plugin : CFLAGS+= ${PY_CFLAGS} -fPIC -g
+plugin : CPPFLAGS+= ${XPLM_CPPFLAGS}
+plugin : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic -ldl -g
 plugin : plugin.o defs.o display.o utils.o graphics.o data_access.o utilities.o scenery.o menus.o \
          navigation.o plugins.o planes.o processing.o camera.o widget_defs.o widgets.o \
          standard_widgets.o uigraphics.o widgetutils.o instance.o map.o plugin_dl.o

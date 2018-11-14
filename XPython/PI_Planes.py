@@ -5,6 +5,7 @@ from check_helper import *
 from XPLMDefs import *
 from XPLMDataAccess import *
 from XPLMPlanes import *
+from XPLMUtilities import *
 
 class PythonInterface(checkBase):
    def __init__(self):
@@ -14,7 +15,7 @@ class PythonInterface(checkBase):
       self.Name = "Planes regression test"
       self.Sig = "PlanesRT"
       self.Desc = "Regression test for XPLMPlanes module"
-
+      self.versions = XPLMGetVersions()
       return self.Name, self.Sig, self.Desc
    
    def XPluginStop(self):
@@ -62,12 +63,17 @@ class PythonInterface(checkBase):
                     self.getString(str1Dref), airport)
       (lat, lon) = (3.14, 2.72)
       (alt, hdg, spd) = (10.2, 361.0, 660.2)
-      XPLMPlaceUserAtLocation(lat, lon, alt, hdg, spd)
-      self.checkVal('XPLMPlaceUserAtLocation:latitude', XPLMGetDatad(latitudeDref), lat)
-      self.checkVal('XPLMPlaceUserAtLocation:longitude', XPLMGetDatad(longitudeDref), lon)
-      self.checkVal('XPLMPlaceUserAtLocation:elevationMetersMSL', XPLMGetDataf(inXValDref), alt)
-      self.checkVal('XPLMPlaceUserAtLocation:headingDegreesTrue', XPLMGetDataf(inYValDref), hdg)
-      self.checkVal('XPLMPlaceUserAtLocation:speedMetersPerSecond', XPLMGetDataf(inZValDref), spd)
+      try:
+         XPLMPlaceUserAtLocation(lat, lon, alt, hdg, spd)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMPlaceUserAtLocation is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMPlaceUserAtLocation:latitude', XPLMGetDatad(latitudeDref), lat)
+         self.checkVal('XPLMPlaceUserAtLocation:longitude', XPLMGetDatad(longitudeDref), lon)
+         self.checkVal('XPLMPlaceUserAtLocation:elevationMetersMSL', XPLMGetDataf(inXValDref), alt)
+         self.checkVal('XPLMPlaceUserAtLocation:headingDegreesTrue', XPLMGetDataf(inYValDref), hdg)
+         self.checkVal('XPLMPlaceUserAtLocation:speedMetersPerSecond', XPLMGetDataf(inZValDref), spd)
       
       index = 7777;
       (outFileName, outPath) = XPLMGetNthAircraftModel(index)

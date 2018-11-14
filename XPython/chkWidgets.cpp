@@ -9,6 +9,7 @@
 #include <sstream>
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDataAccess.h>
+#include <XPLM/XPLMDisplay.h>
 #include <Widgets/XPWidgetDefs.h>
 #include <Widgets/XPWidgets.h>
 
@@ -384,6 +385,11 @@ int XPGetWidgetDescriptor(XPWidgetID inWidget, char *outDescriptor, int inMaxDes
     strncpy(outDescriptor, tmp.c_str(), inMaxDescLength);
   }
   return tmp.length();
+}
+
+XPLMWindowID XPGetWidgetUnderlyingWindow(XPWidgetID inWidget)
+{
+  return (void *)((char *)inWidget + 333);
 }
 
 void XPSetWidgetProperty(XPWidgetID inWidget, XPWidgetPropertyID inProperty, intptr_t inValue)

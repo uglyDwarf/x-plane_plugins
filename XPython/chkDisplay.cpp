@@ -557,6 +557,39 @@ void XPLMSetWindowGeometryOS(XPLMWindowID inWindowID,
 }
 #endif
 
+#if defined(XPLM301)
+void XPLMGetWindowGeometryVR(XPLMWindowID inWindowID,
+                             int *        outWidthBoxels,
+                             int *        outHeightBoxels)
+{
+  windowInfo *wi;
+  if(!(wi = findWinInfo(inWindowID))){
+    return;
+  }
+  
+  if(outWidthBoxels){
+    *outWidthBoxels = wi->getRight() - wi->getLeft();
+  }
+  if(outHeightBoxels){
+    *outHeightBoxels = wi->getBottom() - wi->getTop();
+  }
+}
+
+void XPLMSetWindowGeometryVR(XPLMWindowID inWindowID,
+                             int          widthBoxels,
+                             int          heightBoxels)
+{
+  windowInfo *wi;
+  if(!(wi = findWinInfo(inWindowID))){
+    return;
+  }
+  wi->setLeft(widthBoxels - 512);
+  wi->setTop(heightBoxels - 256);
+  wi->setRight(widthBoxels + 512);
+  wi->setBottom(heightBoxels + 256);
+}
+#endif
+
 int XPLMGetWindowIsVisible(XPLMWindowID inWindowID)
 {
   windowInfo *wi;
@@ -575,6 +608,17 @@ void XPLMSetWindowIsVisible(XPLMWindowID inWindowID,
   }
   wi->setVisible(inIsVisible);
 }
+
+#if defined(XPLM301)
+int XPLMWindowIsInVR(XPLMWindowID inWindowID)
+{
+  windowInfo *wi;
+  if(!(wi = findWinInfo(inWindowID))){
+    return -1;
+  }
+  return wi->getVisible() * 8;
+}
+#endif
 
 #if defined(XPLM300)
 int XPLMWindowIsPoppedOut(XPLMWindowID inWindowID)

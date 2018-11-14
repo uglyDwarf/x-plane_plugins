@@ -1,6 +1,7 @@
 #define XPLM200
 #define XPLM210
 #define XPLM300
+#define XPLM301
 
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMProcessing.h>
@@ -10,6 +11,7 @@
 #include <XPLM/XPLMMap.h>
 #include <XPLM/XPLMDisplay.h>
 #include <XPLM/XPLMPlanes.h>
+#include <Widgets/XPWidgets.h>
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -96,6 +98,21 @@ t_fcn_info funcs300[] = {
   {NULL, NULL}
 };
 
+//XPLM301 functions
+typeof(XPGetWidgetUnderlyingWindow) *XPGetWidgetUnderlyingWindow_ptr = NULL;
+typeof(XPLMGetWindowGeometryVR) *XPLMGetWindowGeometryVR_ptr = NULL;
+typeof(XPLMSetWindowGeometryVR) *XPLMSetWindowGeometryVR_ptr = NULL;
+typeof(XPLMWindowIsInVR) *XPLMWindowIsInVR_ptr = NULL;
+t_fcn_info funcs301[] = {
+  {"XPGetWidgetUnderlyingWindow", (void *)&XPGetWidgetUnderlyingWindow_ptr},
+  {"XPLMGetWindowGeometryVR", (void *)&XPLMGetWindowGeometryVR_ptr},
+  {"XPLMSetWindowGeometryVR", (void *)&XPLMSetWindowGeometryVR_ptr},
+  {"XPLMWindowIsInVR", (void *)&XPLMWindowIsInVR_ptr},
+  {NULL, NULL}
+};
+
+ 
+
 
 
 bool loadFunctions(t_fcn_info *ptr)
@@ -129,6 +146,9 @@ bool loadAllFunctions(void)
   XPLMGetVersions(&xp_ver, &xplm_ver, &app);
 
   bool res = true;
+  if(xplm_ver >= 301){
+    res &= loadFunctions(funcs301);
+  }
   if(xplm_ver >= 300){
     res &= loadFunctions(funcs300);
   }

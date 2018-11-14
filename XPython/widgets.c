@@ -4,10 +4,14 @@
 #include <stdbool.h>
 #define XPLM200
 #define XPLM210
+#define XPLM300
+#define XPLM301
 
 #include <XPLM/XPLMDefs.h>
+#include <XPLM/XPLMDisplay.h>
 #include <Widgets/XPWidgetDefs.h>
 #include <Widgets/XPWidgets.h>
+#include "plugin_dl.h"
 
 PyObject *widgetCallbackDict;
 
@@ -358,6 +362,21 @@ static PyObject *XPGetWidgetDescriptorFun(PyObject *self, PyObject *args)
   return PyLong_FromLong(res);
 }
 
+static PyObject *XPGetWidgetUnderlyingWindowFun(PyObject *self, PyObject *args)
+{
+  (void)self;
+  PyObject *widget;
+  if(!XPGetWidgetUnderlyingWindow_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPGetWidgetUnderlyingWindow is available only in XPLM301 and up.");
+    return NULL;
+  }
+  if(!PyArg_ParseTuple(args, "O", &widget)){
+    return NULL;
+  }
+  XPLMWindowID res = XPGetWidgetUnderlyingWindow_ptr(PyLong_AsVoidPtr(widget));
+  return PyLong_FromVoidPtr((void *)res);
+}
+
 static PyObject *XPSetWidgetPropertyFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -487,6 +506,7 @@ static PyMethodDef XPWidgetsMethods[] = {
   {"XPGetWidgetExposedGeometry", XPGetWidgetExposedGeometryFun, METH_VARARGS, ""},
   {"XPSetWidgetDescriptor", XPSetWidgetDescriptorFun, METH_VARARGS, ""},
   {"XPGetWidgetDescriptor", XPGetWidgetDescriptorFun, METH_VARARGS, ""},
+  {"XPGetWidgetUnderlyingWindow", XPGetWidgetUnderlyingWindowFun, METH_VARARGS, ""},
   {"XPSetWidgetProperty", XPSetWidgetPropertyFun, METH_VARARGS, ""},
   {"XPGetWidgetProperty", XPGetWidgetPropertyFun, METH_VARARGS, ""},
   {"XPSetKeyboardFocus", XPSetKeyboardFocusFun, METH_VARARGS, ""},

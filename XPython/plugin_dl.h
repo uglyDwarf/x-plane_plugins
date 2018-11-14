@@ -5,6 +5,7 @@
 #define XPLM200
 #define XPLM210
 #define XPLM300
+#define XPLM301
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMProcessing.h>
 #include <XPLM/XPLMScenery.h>
@@ -12,6 +13,8 @@
 #include <XPLM/XPLMMap.h>
 #include <XPLM/XPLMDisplay.h>
 #include <XPLM/XPLMPlanes.h>
+#include <Widgets/XPWidgetDefs.h>
+#include <Widgets/XPWidgets.h>
 
 // Dynamicaly bound function pointers
 // XPLM210
@@ -49,6 +52,11 @@ extern typeof(XPLMSetWindowPositioningMode) *XPLMSetWindowPositioningMode_ptr;
 extern typeof(XPLMSetWindowResizingLimits) *XPLMSetWindowResizingLimits_ptr;
 extern typeof(XPLMSetWindowTitle) *XPLMSetWindowTitle_ptr;
 extern typeof(XPLMWindowIsPoppedOut) *XPLMWindowIsPoppedOut_ptr;
+//XPLM_301
+extern typeof(XPGetWidgetUnderlyingWindow) *XPGetWidgetUnderlyingWindow_ptr;
+extern typeof(XPLMGetWindowGeometryVR) *XPLMGetWindowGeometryVR_ptr;
+extern typeof(XPLMSetWindowGeometryVR) *XPLMSetWindowGeometryVR_ptr;
+extern typeof(XPLMWindowIsInVR) *XPLMWindowIsInVR_ptr;
 
 
 bool loadAllFunctions(void);

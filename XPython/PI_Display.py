@@ -5,6 +5,7 @@ from check_helper import *
 from XPLMDefs import *
 from XPLMDataAccess import *
 from XPLMDisplay import *
+from XPLMUtilities import *
 
 class PythonInterface(checkBase):
    def __init__(self):
@@ -28,6 +29,7 @@ class PythonInterface(checkBase):
       self.Name = "Display regression test"
       self.Sig = "DisplayRT"
       self.Desc = "Regression test of the XPLMDisplay module"
+      self.versions = XPLMGetVersions()
 
       return self.Name, self.Sig, self.Desc
    
@@ -42,7 +44,10 @@ class PythonInterface(checkBase):
       self.checkVal('XPLMCreateWindow callbacks were not called', self.winRefcon, [519])
 
       XPLMDestroyWindow(self, self.winIDEx)
-      self.checkVal('XPLMCreateWindowEx callbacks were not called', self.winExRefcon, [63])
+      if self.versions[1] >= 300:
+         self.checkVal('XPLMCreateWindowEx callbacks were not called', self.winExRefcon, [63])
+      else:
+         self.checkVal('XPLMCreateWindowEx callbacks were not called', self.winExRefcon, [31])
       for hk in self.hotkeys:
         XPLMUnregisterHotKey(self, hk)
 
@@ -101,8 +106,9 @@ class PythonInterface(checkBase):
              self.handleCursorFunc, self.handleMouseWheelFunc, self.winExRefcon,
              self.winExDecorate, self.winExLayer, self.handleRightClickFunc]
       self.winIDEx = XPLMCreateWindowEx(self, pok)
-      self.checkVal('XPLMCreateWindow_t decorate', XPLMGetDatai(self.int0Dref), self.winExDecorate)
-      self.checkVal('XPLMCreateWindow_t layer', XPLMGetDatai(self.int1Dref), self.winExLayer)
+      if self.versions[1] >= 300:
+         self.checkVal('XPLMCreateWindow_t decorate', XPLMGetDatai(self.int0Dref), self.winExDecorate)
+         self.checkVal('XPLMCreateWindow_t layer', XPLMGetDatai(self.int1Dref), self.winExLayer)
       self.winRefcon = [0]
       (self.winL, self.winT, self.winR, self.winB) = (111, 222, 333, 444)
       self.winVis = 1
@@ -115,16 +121,32 @@ class PythonInterface(checkBase):
       self.checkVal('XPLMGetScreenSize: ', (wl[0], wh[0]), (1920, 1080))
 
       l = []; t = []; r = []; b = []
-      XPLMGetScreenBoundsGlobal(l, t, r, b);
-      self.checkVal('XPLMGetScreenBoundsGlobal', (l[0], t[0], r[0], b[0]), (320, 480, 640, 240))
+      
+      try:
+         XPLMGetScreenBoundsGlobal(l, t, r, b);
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMGetScreenBoundsGlobal is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMGetScreenBoundsGlobal', (l[0], t[0], r[0], b[0]), (320, 480, 640, 240))
       
       bounds = []
-      XPLMGetAllMonitorBoundsGlobal(self, self.monitorCallback, bounds)
-      self.checkVal('XPLMGetAllMonitorBoundsGlobal', bounds, ((0, 5, 1030, 1285, 6), (1, 1285, 1087, 3205, 7)))
+      try:
+         XPLMGetAllMonitorBoundsGlobal(self, self.monitorCallback, bounds)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMGetAllMonitorBoundsGlobal is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMGetAllMonitorBoundsGlobal', bounds, ((0, 5, 1030, 1285, 6), (1, 1285, 1087, 3205, 7)))
 
       bounds = []
-      XPLMGetAllMonitorBoundsOS(self, self.monitorCallback, bounds)
-      self.checkVal('XPLMGetAllMonitorBoundsOS', bounds, ((0, 9, 1208, 1609, 8), (1, 1610, 491, 2250, 11)))
+      try:
+        XPLMGetAllMonitorBoundsOS(self, self.monitorCallback, bounds)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMGetAllMonitorBoundsOS is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMGetAllMonitorBoundsOS', bounds, ((0, 9, 1208, 1609, 8), (1, 1610, 491, 2250, 11)))
 
       #check mouse location
       x = []
@@ -134,8 +156,13 @@ class PythonInterface(checkBase):
       #check global mouse location
       x = []
       y = []
-      XPLMGetMouseLocationGlobal(x, y)
-      self.checkVal('XPLMGetMouseLocationGlobal', (x[0], y[0]), (1600, 1200))
+      try:
+         XPLMGetMouseLocationGlobal(x, y)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMGetMouseLocationGlobal is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMGetMouseLocationGlobal', (x[0], y[0]), (1600, 1200))
       #check initial window geometry
       l = []; t = []; r = []; b = []
       XPLMGetWindowGeometry(self.winID, l, t, r, b)
@@ -155,15 +182,46 @@ class PythonInterface(checkBase):
 
       #change window's geometry 
       (self.winL, self.winT, self.winR, self.winB) = (161, 241, 321, 121)
-      XPLMSetWindowGeometryOS(self.winID, self.winL + 1024, self.winT, self.winR + 1024, self.winB)
-      #check the change worked
-      l = []; t = []; r = []; b = []
-      XPLMGetWindowGeometry(self.winID, l, t, r, b)
-      self.checkVal('XPLMGetWindowGeometry', (l[0], t[0], r[0], b[0]), (self.winL, self.winT, self.winR, self.winB))
+      try:
+         XPLMSetWindowGeometryOS(self.winID, self.winL + 1024, self.winT, self.winR + 1024, self.winB)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMSetWindowGeometryOS is available only in XPLM300 and up.'):
+            raise
+      else:
+         #check the change worked
+         l = []; t = []; r = []; b = []
+         XPLMGetWindowGeometry(self.winID, l, t, r, b)
+         self.checkVal('XPLMGetWindowGeometry', (l[0], t[0], r[0], b[0]), (self.winL, self.winT, self.winR, self.winB))
 
       l = []; t = []; r = []; b = []
-      XPLMGetWindowGeometryOS(self.winID, l, t, r, b)
-      self.checkVal('XPLMGetWindowGeometryOS', (l[0], t[0], r[0], b[0]), (self.winL + 1024, self.winT, self.winR + 1024, self.winB))
+      try:
+         XPLMGetWindowGeometryOS(self.winID, l, t, r, b)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMGetWindowGeometryOS is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMGetWindowGeometryOS', (l[0], t[0], r[0], b[0]), (self.winL + 1024, self.winT, self.winR + 1024, self.winB))
+
+      (self.wB, self.hB) = (768, 342) 
+      try:
+         XPLMSetWindowGeometryVR(self.winID, self.wB, self.hB)
+      except RuntimeError as re:
+         if (self.versions[1] >= 301) or (str(re) != 'XPLMSetWindowGeometryVR is available only in XPLM301 and up.'):
+            raise
+      else:
+         #check the change worked
+         l = []; t = []; r = []; b = []
+         XPLMGetWindowGeometry(self.winID, l, t, r, b)
+         self.checkVal('XPLMGetWindowGeometry', (l[0], t[0], r[0], b[0]), (self.wB - 512, self.hB - 256, self.wB + 512, self.hB + 256))
+
+      cWB = []; cHB = []
+      try:
+         XPLMGetWindowGeometryVR(self.winID, cWB, cHB)
+      except RuntimeError as re:
+         if (self.versions[1] >= 301) or (str(re) != 'XPLMGetWindowGeometryVR is available only in XPLM301 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMGetWindowGeometryVR', (cWB[0], cHB[0]), (1024, 512))
 
       (self.winExL, self.winExT, self.winExR, self.winExB) = (640, 480, 1900, 1200)
       XPLMSetWindowGeometry(self.winIDEx, self.winExL, self.winExT, self.winExR, self.winExB)
@@ -173,8 +231,9 @@ class PythonInterface(checkBase):
                     XPLMGetDatai(self.int1Dref), 2222)
       self.checkVal('XPLMCreateWindowEx handleMouseWheel callback return value does not match',
                     XPLMGetDatai(self.int2Dref), 3333)
-      self.checkVal('XPLMCreateWindowEx handleRightClick callback return value does not match',
-                    XPLMGetDatai(self.int3Dref), 4444)
+      if self.versions[1] >= 300:
+         self.checkVal('XPLMCreateWindowEx handleRightClick callback return value does not match',
+                       XPLMGetDatai(self.int3Dref), 4444)
       #check the change worked
       l = []; t = []; r = []; b = []
       XPLMGetWindowGeometry(self.winIDEx, l, t, r, b)
@@ -189,36 +248,66 @@ class PythonInterface(checkBase):
       #window popped out
       self.winExVis = 55555
       XPLMSetWindowIsVisible(self.winIDEx, self.winExVis)
-      self.checkVal('XPLMWindowIsPoppedOut', XPLMWindowIsPoppedOut(self.winIDEx), 2 * self.winExVis)
+      try:
+         self.checkVal('XPLMWindowIsPoppedOut', XPLMWindowIsPoppedOut(self.winIDEx), 2 * self.winExVis)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMWindowIsPoppedOut is available only in XPLM300 and up.'):
+            raise
+
+      try:
+         self.checkVal('XPLMWindowIsInVR', XPLMWindowIsInVR(self.winIDEx), 8 * self.winExVis)
+      except RuntimeError as re:
+         if (self.versions[1] >= 301) or (str(re) != 'XPLMWindowIsInVR is available only in XPLM301 and up.'):
+            raise
 
       #window gravity
       (gL, gT, gR, gB) = (1.2, 2.3, 3.4, 4.5)
-      XPLMSetWindowGravity(self.winIDEx, gL, gT, gR, gB)
-      self.checkVal('XPLMSetWindowGravity:inWindowID', XPLMGetDatai(self.int0Dref), 3 * self.winExVis)
-      self.checkVal('XPLMSetWindowGravity:inLeftGravity', XPLMGetDataf(self.float0Dref), gL)
-      self.checkVal('XPLMSetWindowGravity:inTopGravity', XPLMGetDataf(self.float1Dref), gT)
-      self.checkVal('XPLMSetWindowGravity:inRightGravity', XPLMGetDataf(self.float2Dref), gR)
-      self.checkVal('XPLMSetWindowGravity:inBottomGravity', XPLMGetDataf(self.float3Dref), gB)
+      try:
+         XPLMSetWindowGravity(self.winIDEx, gL, gT, gR, gB)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMSetWindowGravity is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMSetWindowGravity:inWindowID', XPLMGetDatai(self.int0Dref), 3 * self.winExVis)
+         self.checkVal('XPLMSetWindowGravity:inLeftGravity', XPLMGetDataf(self.float0Dref), gL)
+         self.checkVal('XPLMSetWindowGravity:inTopGravity', XPLMGetDataf(self.float1Dref), gT)
+         self.checkVal('XPLMSetWindowGravity:inRightGravity', XPLMGetDataf(self.float2Dref), gR)
+         self.checkVal('XPLMSetWindowGravity:inBottomGravity', XPLMGetDataf(self.float3Dref), gB)
 
       #resizing limits
       (rlL, rlT, rlR, rlB) = (11, 13, 15, 17)
-      XPLMSetWindowResizingLimits(self.winIDEx, rlL, rlT, rlR, rlB)
-      self.checkVal('XPLMSetWindowResizingLimits:inWindowID+minWidthBoxels', XPLMGetDatai(self.int0Dref), 
+      try:
+         XPLMSetWindowResizingLimits(self.winIDEx, rlL, rlT, rlR, rlB)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMSetWindowResizingLimits is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMSetWindowResizingLimits:inWindowID+minWidthBoxels', XPLMGetDatai(self.int0Dref), 
                                                                              rlL + 5 * self.winExVis)
-      self.checkVal('XPLMSetWindowResizingLimits:minHeightBoxels', XPLMGetDatai(self.int1Dref), rlT)
-      self.checkVal('XPLMSetWindowResizingLimits:maxWidthBoxels', XPLMGetDatai(self.int2Dref), rlR)
-      self.checkVal('XPLMSetWindowResizingLimits:maxHeightBoxels', XPLMGetDatai(self.int3Dref), rlB)
+         self.checkVal('XPLMSetWindowResizingLimits:minHeightBoxels', XPLMGetDatai(self.int1Dref), rlT)
+         self.checkVal('XPLMSetWindowResizingLimits:maxWidthBoxels', XPLMGetDatai(self.int2Dref), rlR)
+         self.checkVal('XPLMSetWindowResizingLimits:maxHeightBoxels', XPLMGetDatai(self.int3Dref), rlB)
 
       (posMode, monIdx) = (19, 21)
-      XPLMSetWindowPositioningMode(self.winIDEx, posMode, monIdx)
-      self.checkVal('XPLMSetWindowPositioningMode:inWindowID', XPLMGetDatai(self.int0Dref), 7 * self.winExVis)
-      self.checkVal('XPLMSetWindowPositioningMode:inPositioningMode', XPLMGetDatai(self.int1Dref), posMode)
-      self.checkVal('XPLMSetWindowPositioningMode:inMonitorIndex', XPLMGetDatai(self.int2Dref), monIdx)
+      try:
+         XPLMSetWindowPositioningMode(self.winIDEx, posMode, monIdx)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMSetWindowPositioningMode is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMSetWindowPositioningMode:inWindowID', XPLMGetDatai(self.int0Dref), 7 * self.winExVis)
+         self.checkVal('XPLMSetWindowPositioningMode:inPositioningMode', XPLMGetDatai(self.int1Dref), posMode)
+         self.checkVal('XPLMSetWindowPositioningMode:inMonitorIndex', XPLMGetDatai(self.int2Dref), monIdx)
 
       title = 'The coolest title ever...'
-      XPLMSetWindowTitle(self.winIDEx, title)
-      self.checkVal('XPLMSetWindowTitle:inWindowID', XPLMGetDatai(self.int0Dref), 9 * self.winExVis)
-      self.checkVal('XPLMSetWindowPositioningMode:inWindowTitle', self.getString(self.str0Dref), title)
+      try:
+         XPLMSetWindowTitle(self.winIDEx, title)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMSetWindowTitle is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMSetWindowTitle:inWindowID', XPLMGetDatai(self.int0Dref), 9 * self.winExVis)
+         self.checkVal('XPLMSetWindowTitle:inWindowTitle', self.getString(self.str0Dref), title)
 
       #window refcon
       self.checkVal('XPLMGetWindowRefcon(winID)', XPLMGetWindowRefCon(self.winID), self.winRefcon)

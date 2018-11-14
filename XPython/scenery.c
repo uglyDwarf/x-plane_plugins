@@ -105,7 +105,7 @@ static PyObject *XPLMLoadObjectAsyncFun(PyObject *self, PyObject *args)
 {
   (void)self;
   if(!XPLMLoadObjectAsync_ptr){
-    PyErr_SetString(PyExc_RuntimeError , "XPLMLoadObjectAsync is available only in XPLM210 and up.\n");
+    PyErr_SetString(PyExc_RuntimeError , "XPLMLoadObjectAsync is available only in XPLM210 and up.");
     return NULL;
   }
   char *inPath = PyUnicode_AsUTF8(PySequence_GetItem(args, 1));

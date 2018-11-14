@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #define XPLM200
 #define XPLM210
+#define XPLM300
+#define XPLM301
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMPlugin.h>
 #include "utils.h"
@@ -264,6 +266,8 @@ PyInit_XPLMPlugin(void)
     PyModule_AddIntConstant(mod, "XPLM_MSG_PLANE_UNLOADED", XPLM_MSG_PLANE_UNLOADED);
     PyModule_AddIntConstant(mod, "XPLM_MSG_WILL_WRITE_PREFS", XPLM_MSG_WILL_WRITE_PREFS);
     PyModule_AddIntConstant(mod, "XPLM_MSG_LIVERY_LOADED", XPLM_MSG_LIVERY_LOADED);
+    PyModule_AddIntConstant(mod, "XPLM_MSG_ENTERED_VR", XPLM_MSG_ENTERED_VR);
+    PyModule_AddIntConstant(mod, "XPLM_MSG_EXITING_VR", XPLM_MSG_EXITING_VR);
   }
 
   return mod;

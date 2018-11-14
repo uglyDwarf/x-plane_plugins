@@ -5,6 +5,7 @@ from check_helper import *
 from XPLMDefs import *
 from XPLMDataAccess import *
 from XPLMMap import *
+from XPLMUtilities import *
 
 class PythonInterface(checkBase):
    def __init__(self):
@@ -14,6 +15,7 @@ class PythonInterface(checkBase):
       self.Name = "Map regression test"
       self.Sig = "MapRT"
       self.Desc = "Regression test for XPLMMap module"
+      self.versions = XPLMGetVersions()
 
       return self.Name, self.Sig, self.Desc
    
@@ -27,6 +29,9 @@ class PythonInterface(checkBase):
       return
 
    def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
+      if self.versions[1] < 300:
+         return 1.0
+
       self.str0Dref = XPLMFindDataRef('map.str0')
       self.int0Dref = XPLMFindDataRef('map.int0')
       self.int1Dref = XPLMFindDataRef('map.int1')
