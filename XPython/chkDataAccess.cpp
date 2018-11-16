@@ -29,7 +29,7 @@ class dataAccessor{
   XPLMSetDatab_f  writeData;
   void *          readRefcon;
   void *          writeRefcon;
-  bool            good;
+  int             good;
   std::vector<notificator> notificators;
 
   void notify()const;
@@ -58,10 +58,9 @@ class dataAccessor{
                 writeIntArray(inWriteIntArray), readFloatArray(inReadFloatArray),
                 writeFloatArray(inWriteFloatArray), readData(inReadData),
                 writeData(inWriteData), readRefcon(inReadRefcon), 
-                writeRefcon(inWriteRefcon), good(true){};
-  ~dataAccessor(){good = false;}
+                writeRefcon(inWriteRefcon), good(25348){};
+  ~dataAccessor(){good = 0;}
   void *get_w_refcon()const {return writeRefcon;};
-  void *get_r_refcon()const {return readRefcon;};
   int get_int()const;
   float get_float()const;
   double get_double()const;
@@ -76,7 +75,7 @@ class dataAccessor{
   void set_data(uint8_t v[], int offset, int max)const;
 
   void getName(std::string &s)const{s = name;};
-  bool is_good()const{return good;};
+  int is_good()const{return good;};
   bool is_writable()const{return isWritable;};
   XPLMDataTypeID get_data_type()const{return datatype;};
   void add_notificator(XPLMDataChanged_f inNotificationFunc,
@@ -461,8 +460,6 @@ void shdWriteData(void *inRefcon, void *inValue, int inOffset, int inCount)
   (void)inOffset;
   (void)inCount;
 }
-
-
 
 
 

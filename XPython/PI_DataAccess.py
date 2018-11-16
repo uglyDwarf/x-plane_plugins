@@ -8,6 +8,7 @@ from XPLMDataAccess import *
 class PythonInterface(checkBase):
    def __init__(self):
       checkBase.__init__(self, 'DataAccess');
+      checkBase.addRef()
    
    def XPluginStart(self):
       self.Name = "DataAccess regression test"
@@ -111,6 +112,7 @@ class PythonInterface(checkBase):
       XPLMUnshareData(self, self.shdfName, self.shdfType, self.shdCbk, self.shdfRefcon)
 
       self.check()
+      checkBase.remRef()
    
    def XPluginEnable(self):
       return 1
@@ -142,6 +144,7 @@ class PythonInterface(checkBase):
       fv = XPLMFindDataRef('test/floatVec')
       bv = XPLMFindDataRef('test/byteVec')
 
+      self.checkVal('Int dataref has should be good.', XPLMIsDataRefGood(i), 25348)
       self.checkVal('Int dataref has should be writable.', XPLMCanWriteDataRef(i), 1)
       self.checkVal('Int dataref has unexpected type.', XPLMGetDataRefTypes(i), xplmType_Int)
       newVal = XPLMGetDatai(i)

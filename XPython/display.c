@@ -837,6 +837,17 @@ static PyObject *XPLMTakeKeyboardFocusFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+static PyObject *XPLMHasKeyboardFocusFun(PyObject *self, PyObject *args)
+{
+  (void) self;
+  PyObject *win;
+  if(!PyArg_ParseTuple(args, "O", &win)){
+    return NULL;
+  }
+  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  return PyLong_FromLong(XPLMHasKeyboardFocus(inWindowID));
+}
+
 static PyObject *XPLMBringWindowToFrontFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -1043,6 +1054,7 @@ static PyMethodDef XPLMDisplayMethods[] = {
   {"XPLMGetWindowRefCon", XPLMGetWindowRefConFun, METH_VARARGS, "Get window refcon."},
   {"XPLMSetWindowRefCon", XPLMSetWindowRefConFun, METH_VARARGS, "Set window refcon."},
   {"XPLMTakeKeyboardFocus", XPLMTakeKeyboardFocusFun, METH_VARARGS, "Take keyboard focus."},
+  {"XPLMHasKeyboardFocus", XPLMHasKeyboardFocusFun, METH_VARARGS, "Check if window has keyboard focus."},
   {"XPLMBringWindowToFront", XPLMBringWindowToFrontFun, METH_VARARGS, "Bring window to front."},
   {"XPLMIsWindowInFront", XPLMIsWindowInFrontFun, METH_VARARGS, "Checks if window is the frontmost visible."},
   {"XPLMRegisterHotKey", XPLMRegisterHotKeyFun, METH_VARARGS, "Register a hotkey."},

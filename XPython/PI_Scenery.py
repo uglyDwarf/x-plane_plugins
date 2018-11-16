@@ -12,6 +12,7 @@ import random
 class PythonInterface(checkBase):
    def __init__(self):
       checkBase.__init__(self, 'Scenery');
+      checkBase.addRef()
    
    def XPluginStart(self):
       self.Name = "Scenery regression test"
@@ -23,6 +24,7 @@ class PythonInterface(checkBase):
    
    def XPluginStop(self):
       self.check()
+      checkBase.remRef()
    
    def XPluginEnable(self):
       return 1
@@ -70,6 +72,33 @@ class PythonInterface(checkBase):
 
       XPLMDestroyProbe(probe)
       self.checkVal('Probe structure size mismatch.', XPLMGetDatai(structSize), 0)
+
+      self.lat, self.lon = 4321, 6789
+      try:
+        tmp = XPLMGetMagneticVariation(self.lat, self.lon);
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMGetMagneticVariation is available only in XPLM300 and up.'):
+            raise
+      else:
+        self.checkVal('XPLMGetMagneticVariation', tmp, self.lat + self.lon**2)
+
+      self.hdg = 49152
+      try:
+        tmp = XPLMDegTrueToDegMagnetic(self.hdg);
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMDegTrueToDegMagnetic is available only in XPLM300 and up.'):
+            raise
+      else:
+        self.checkVal('XPLMDegTrueToDegMagnetic', tmp, self.hdg**3)
+
+      self.hdg = 49153
+      try:
+        tmp = XPLMDegMagneticToDegTrue(self.hdg);
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMDegMagneticToDegTrue is available only in XPLM300 and up.'):
+            raise
+      else:
+        self.checkVal('XPLMDegMagneticToDegTrue', tmp, 1 / self.hdg)
 
       tmp = 'path/to/object'
       self.objectDict = {}

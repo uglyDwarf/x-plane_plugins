@@ -14,6 +14,7 @@ class PythonInterface(checkBase):
       self.xpluginEnableCalled = 0
       self.xpluginDisableCalled = 0
       self.xpluginMessageReceived = 0
+      checkBase.addRef()
    
    def check(self):
       if not self.xpluginEnableCalled:
@@ -23,6 +24,7 @@ class PythonInterface(checkBase):
       if not self.xpluginMessageReceived:
          self.error('xpluginReceiveMessage was not called!')
       checkBase.check(self)
+      checkBase.remRef()
 
 
    def XPluginStart(self):
@@ -319,6 +321,10 @@ class PythonInterface(checkBase):
       #Keyboard focus grab check
       XPLMTakeKeyboardFocus(self.winID)
       self.checkVal('XPLMTakeKeyboardFocus', XPLMGetDatai(self.int3Dref), self.winID)
+      self.checkVal('XPLMHasKeyboardFocus 1', XPLMHasKeyboardFocus(self.winID), 1)
+      XPLMTakeKeyboardFocus(self.winIDEx)
+      self.checkVal('XPLMHasKeyboardFocus 2', XPLMHasKeyboardFocus(self.winID), 0)
+      self.checkVal('XPLMHasKeyboardFocus 3', XPLMHasKeyboardFocus(self.winIDEx), 1)
 
       #is window in front
       self.checkVal('XPLMIsWindowInFront', XPLMIsWindowInFront(self.winIDEx), 0)

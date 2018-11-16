@@ -4,12 +4,32 @@
 from XPLMDataAccess import *
 
 class checkBase(object):
-   #_all_errors
+   _all_errors = 0
+   _refs = 0
+
+   @classmethod
+   def addErrors(cls, err):
+      cls._all_errors += err
+
+   @classmethod
+   def addRef(cls):
+      cls._refs += 1
+
+   @classmethod
+   def remRef(cls):
+      cls._refs -= 1
+      if(cls._refs == 0):
+        if cls._all_errors == 0:
+           print("No errors found.")
+        else:
+           print("{} errors encountered!".format(cls._all_errors))
+
+
    def __init__(self, moduleName, expectedChecks = None):
       self._modName = moduleName
       self._errors = 0
       self._checks = 0
-      self._expected = expectedChecks;
+      self._expected = expectedChecks
 
    def check(self):
       if self._errors == 0:
@@ -20,11 +40,8 @@ class checkBase(object):
                self._modName, self._checks, self._expected))
       else:
          print('{0} module check: {1} errors found.'.format(self._modName, self._errors))
+         self.addErrors(self._errors)
 
-
-   def checkSummary(self):
-      pass
-      
    def floatEq(self, a, b):
       if (a == None) or (b == None):
          return False
@@ -36,6 +53,7 @@ class checkBase(object):
    def error(self, message):
       print(' ** ERROR ** {0}'.format(message))
       self._errors += 1
+      self._all_errors += 1
 
    def listOrTuple(self, v):
       return isinstance(v, list) or isinstance(v, tuple)

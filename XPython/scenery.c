@@ -63,6 +63,49 @@ static PyObject *XPLMProbeTerrainXYZFun(PyObject *self, PyObject *args)
   return PyLong_FromLong(res);
 }
 
+static PyObject *XPLMGetMagneticVariationFun(PyObject *self, PyObject *args)
+{
+  (void)self;
+  if(!XPLMGetMagneticVariation_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMGetMagneticVariation is available only in XPLM300 and up.");
+    return NULL;
+  }
+  double latitude, longitude;
+  if(!PyArg_ParseTuple(args, "dd", &latitude, &longitude)){
+    return NULL;
+  }
+  return PyFloat_FromDouble(XPLMGetMagneticVariation_ptr(latitude, longitude));
+}
+
+static PyObject *XPLMDegTrueToDegMagneticFun(PyObject *self, PyObject *args)
+{
+  (void)self;
+  if(!XPLMDegTrueToDegMagnetic_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMDegTrueToDegMagnetic is available only in XPLM300 and up.");
+    return NULL;
+  }
+  float headingDegreesTrue;
+  if(!PyArg_ParseTuple(args, "f", &headingDegreesTrue)){
+    return NULL;
+  }
+  return PyFloat_FromDouble(XPLMDegTrueToDegMagnetic_ptr(headingDegreesTrue));
+}
+
+static PyObject *XPLMDegMagneticToDegTrueFun(PyObject *self, PyObject *args)
+{
+  (void)self;
+  if(!XPLMDegMagneticToDegTrue_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMDegMagneticToDegTrue is available only in XPLM300 and up.");
+    return NULL;
+  }
+  float headingDegreesMagnetic;
+  if(!PyArg_ParseTuple(args, "f", &headingDegreesMagnetic)){
+    return NULL;
+  }
+  return PyFloat_FromDouble(XPLMDegMagneticToDegTrue_ptr(headingDegreesMagnetic));
+}
+
+
 static PyObject *XPLMLoadObjectFun(PyObject *self, PyObject *args)
 {
   (void)self;
@@ -100,6 +143,7 @@ static void objectLoaded(XPLMObjectRef inObject, void *inRefcon)
   Py_XDECREF(res);
   Py_XDECREF(object);
 }
+
 
 static PyObject *XPLMLoadObjectAsyncFun(PyObject *self, PyObject *args)
 {
@@ -214,11 +258,13 @@ static PyObject *cleanup(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-
 static PyMethodDef XPLMSceneryMethods[] = {
   {"XPLMCreateProbe", XPLMCreateProbeFun, METH_VARARGS, ""},
   {"XPLMDestroyProbe", XPLMDestroyProbeFun, METH_VARARGS, ""},
   {"XPLMProbeTerrainXYZ", XPLMProbeTerrainXYZFun, METH_VARARGS, ""},
+  {"XPLMDegMagneticToDegTrue", XPLMDegMagneticToDegTrueFun, METH_VARARGS, ""},
+  {"XPLMGetMagneticVariation", XPLMGetMagneticVariationFun, METH_VARARGS, ""},
+  {"XPLMDegTrueToDegMagnetic", XPLMDegTrueToDegMagneticFun, METH_VARARGS, ""},
   {"XPLMLoadObject", XPLMLoadObjectFun, METH_VARARGS, ""},
   {"XPLMLoadObjectAsync", XPLMLoadObjectAsyncFun, METH_VARARGS, ""},
   {"XPLMDrawObjects", XPLMDrawObjectsFun, METH_VARARGS, ""},

@@ -7,7 +7,6 @@
 
 #include "utils.h"
 #include "plugin_dl.h"
-#include "chk_helper.h"
 
 PyMODINIT_FUNC PyInit_XPLMDefs(void);
 PyMODINIT_FUNC PyInit_XPLMDisplay(void);

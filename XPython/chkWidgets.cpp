@@ -59,7 +59,6 @@ class widget{
   widget(int inLeft, int inTop, int inRight, int inBottom, int inVisible, std::string inDescriptor, int inIsRoot, 
          void *inContainer, int inClass = 11, XPWidgetFunc_t inCallback = NULL);
   ~widget();
-  void *getID(){return (void*)id;};
   int message(XPWidgetMessage inMessage, intptr_t inParam1, intptr_t inParam2);
   void addChild(widget *ch){children.push_back(ch);ch->setParent(this);};
   void removeChild(const widget *ch);

@@ -6,8 +6,8 @@ CXX=clang++
 CFLAGS+=-Wall -Wextra -g
 PY_CFLAGS=$(shell python3-config --cflags)
 XPLM_CPPFLAGS=-I./SDK/CHeaders -I./SDK/CHeaders/XPLM -I./SDK/CHeaders/Widgets -DIBM=0 -DAPL=0 -DLIN=1
-#COV_CFLAGS+= -fprofile-instr-generate -fcoverage-mapping
-COV_FLAGS += 
+COV_CFLAGS+= -fprofile-instr-generate -fcoverage-mapping
+#COV_FLAGS += 
 PY_LDFLAGS=$(shell python3-config --ldflags)
 
 all : main_200 main_210 main_300 main_301 plugin.so plugin.txt
@@ -30,11 +30,10 @@ all : main_200 main_210 main_300 main_301 plugin.so plugin.txt
 
 all_cov : CXXFLAGS+= ${COV_CFLAGS}
 all_cov : CFLAGS+= ${COV_CFLAGS}
-all_cov : main plugin.so
-	./main
-	llvm-profdata-3.8 merge default.profraw -o default.profdata
-	llvm-cov-3.8 report ./plugin.so -instr-profile=default.profdata | tee coverage.txt
-	llvm-cov-3.8 show ./plugin.so -instr-profile=default.profdata | c++filt -n >> coverage.txt
+all_cov : main_301 plugin.so
+	llvm-profdata-6.0 merge default.profraw -o default.profdata
+	llvm-cov-6.0 report ./main_301 -instr-profile=default.profdata | tee coverage.txt
+	llvm-cov-6.0 show ./main_301 -instr-profile=default.profdata | c++filt -n >> coverage.txt
 
 main_301 : LDFLAGS+= -Wl,--export-dynamic -g -ldl
 main_301 : CPPFLAGS+= ${XPLM_CPPFLAGS} -g -DXPLM200 -DXPLM210 -DXPLM300 -DXPLM301

@@ -40,7 +40,6 @@ static PyObject *XPLMCanWriteDataRefFun(PyObject *self, PyObject *args)
   }
 }
 
-/* DEPRECATED
 static PyObject *XPLMIsDataRefGoodFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -49,13 +48,8 @@ static PyObject *XPLMIsDataRefGoodFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMDataRef inDataRef = PyLong_AsVoidPtr(dataRef);
-  if(XPLMIsDataRefGood(inDataRef)){
-    Py_RETURN_TRUE;
-  }else{
-    Py_RETURN_FALSE;
-  }
+  return PyLong_FromLong(XPLMIsDataRefGood(inDataRef));
 }
-*/
 
 static PyObject *XPLMGetDataRefTypesFun(PyObject *self, PyObject *args)
 {
@@ -875,6 +869,7 @@ static PyObject *cleanup(PyObject *self, PyObject *args)
 static PyMethodDef XPLMDataAccessMethods[] = {
   {"XPLMFindDataRef", XPLMFindDataRefFun, METH_VARARGS, "Find a dataref"},
   {"XPLMCanWriteDataRef", XPLMCanWriteDataRefFun, METH_VARARGS, "Check dataref writeability"},
+  {"XPLMIsDataRefGood", XPLMIsDataRefGoodFun, METH_VARARGS, ""},
   {"XPLMGetDataRefTypes", XPLMGetDataRefTypesFun, METH_VARARGS, "Check dataref type"},
   {"XPLMGetDatai", XPLMGetDataiFun, METH_VARARGS, ""},
   {"XPLMSetDatai", XPLMSetDataiFun, METH_VARARGS, ""},

@@ -9,6 +9,7 @@ from XPLMInstance import *
 class PythonInterface(checkBase):
    def __init__(self):
       checkBase.__init__(self, 'Instance');
+      checkBase.addRef()
    
    def XPluginStart(self):
       self.Name = "Instance regression test"
@@ -19,6 +20,7 @@ class PythonInterface(checkBase):
    
    def XPluginStop(self):
       self.check()
+      checkBase.remRef()
    
    def XPluginEnable(self):
       return 1

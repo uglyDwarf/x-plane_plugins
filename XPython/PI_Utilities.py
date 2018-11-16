@@ -9,6 +9,7 @@ from XPLMUtilities import *
 class PythonInterface(checkBase):
    def __init__(self):
       checkBase.__init__(self, 'Utilities');
+      checkBase.addRef()
    
    def XPluginStart(self):
       self.Name = "Utilities regression test"
@@ -19,6 +20,7 @@ class PythonInterface(checkBase):
    
    def XPluginStop(self):
       self.check()
+      checkBase.remRef()
    
    def XPluginEnable(self):
       return 1
