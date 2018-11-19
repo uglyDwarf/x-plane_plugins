@@ -6,8 +6,8 @@ CXX=clang++
 CFLAGS+=-Wall -Wextra -g
 PY_CFLAGS=$(shell python3-config --cflags)
 XPLM_CPPFLAGS=-I./SDK/CHeaders -I./SDK/CHeaders/XPLM -I./SDK/CHeaders/Widgets -DIBM=0 -DAPL=0 -DLIN=1
-COV_CFLAGS+= -fprofile-instr-generate -fcoverage-mapping
-#COV_FLAGS += 
+#COV_CFLAGS+= -fprofile-instr-generate -fcoverage-mapping
+COV_FLAGS += 
 PY_LDFLAGS=$(shell python3-config --ldflags)
 
 all : main_200 main_210 main_300 main_301 plugin.so plugin.txt
@@ -35,10 +35,10 @@ all_cov : main_301 plugin.so
 	llvm-cov-6.0 report ./main_301 -instr-profile=default.profdata | tee coverage.txt
 	llvm-cov-6.0 show ./main_301 -instr-profile=default.profdata | c++filt -n >> coverage.txt
 
-main_301 : LDFLAGS+= -Wl,--export-dynamic -g -ldl
+main_301 : LDFLAGS+= -Wl,--export-dynamic -g -ldl -fsanitize=address -fno-omit-frame-pointer
 main_301 : CPPFLAGS+= ${XPLM_CPPFLAGS} -g -DXPLM200 -DXPLM210 -DXPLM300 -DXPLM301
 main_301 : CXXFLAGS+= ${COV_CFLAGS}
-main_301 : CFLAGS+= ${COV_CFLAGS}
+main_301 : CFLAGS+= ${COV_CFLAGS} -fsanitize=address
 main_301 : main.cpp chkDisplay301.o chkGraphics301.o chk_helper301.o chkDataAccess301.o chkUtilities301.o \
        chkScenery301.o chkMenus301.o chkNavigation301.o chkPlugin301.o chkPlanes301.o chkProcessing301.o \
        chkCamera301.o chkWidgets301.o chkUIGraphics301.o chkWidgetUtils301.o chkInstance301.o chkMap301.o -ldl
