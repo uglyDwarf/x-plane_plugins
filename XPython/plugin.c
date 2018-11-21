@@ -5,6 +5,9 @@
 #include <dirent.h>
 #include <XPLM/XPLMDefs.h>
 
+#include <sys/types.h>
+#include <regex.h>
+
 #include "utils.h"
 #include "plugin_dl.h"
 
@@ -200,6 +203,32 @@ bool loadPIClass(const char *fname)
   return pObj;
 }
 
+void loadModules(const char *pattern)
+{
+  //Scan current directory for the plugin modules
+  DIR *dir = opendir(".");
+  if(dir == NULL){
+    printf("Can't open '.' to scan for plugins.\n");
+    return;
+  }
+  struct dirent *de;
+  regex_t rex;
+  if(regcomp(&rex, pattern, REG_NOSUB) == 0){
+    while((de = readdir(dir))){
+      if(regexec(&rex, de->d_name, 0, NULL, 0) == 0){
+        char *modName = strdup(de->d_name);
+        if(modName){
+          modName[strlen(de->d_name) - 3] = '\0';
+        }
+        loadPIClass(modName);
+        free(modName);
+      }
+    }
+    regfree(&rex);
+    closedir(dir);
+  }
+}
+
 
 int XPluginStart(char *outName, char *outSig, char *outDesc)
 {
@@ -210,26 +239,11 @@ int XPluginStart(char *outName, char *outSig, char *outDesc)
   loadAllFunctions();
   initPython("X-Plane");
 
-  //Scan current directory for the plugin modules
-  DIR *dir = opendir(".");
-  if(dir == NULL){
-    printf("Can't open '.' to scan for plugins.\n");
-    return 0;
-  }
-  struct dirent *de;
-  while((de = readdir(dir))){
-    //Check that it strts by 'PI_' and ends with '.py'
-    //  Well, regexp would be more suitable... TODO?
-    if((strncmp(de->d_name, "PI_", 3) == 0) && (strncmp(de->d_name + strlen(de->d_name) - 3, ".py", 3) == 0)){
-      char *modName = strdup(de->d_name);
-      if(modName){
-        modName[strlen(de->d_name) - 3] = '\0';
-      }
-      loadPIClass(modName);
-      free(modName);
-    }
-  }
-  closedir(dir);
+  // Load internal stuff
+  loadModules("^I_PI_.*\\.py$");
+  // Load modules
+  loadModules("^PI_.*\\.py$");
+
   return 1;
 }
 
