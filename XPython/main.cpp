@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
   (void) argc;
   (void) argv;
   dlerror();
-  void *plugin = dlopen("./plugin.so", RTLD_NOW | RTLD_GLOBAL);
+  void *plugin = dlopen("./lin.xpl", RTLD_NOW | RTLD_GLOBAL);
   std::cout << "Plugin: " << plugin << std::endl;
   if(plugin == NULL){
     std::cout << "Can't load plugin (" << dlerror() << ")" << std::endl;

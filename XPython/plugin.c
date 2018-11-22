@@ -32,6 +32,7 @@ PyMODINIT_FUNC PyInit_XPLMInstance(void);
 PyMODINIT_FUNC PyInit_XPLMMap(void);
 
 static FILE *logFile;
+static char *logFileName;
 
 
 static PyObject *logWriterWrite(PyObject *self, PyObject *args)
@@ -75,7 +76,7 @@ static struct PyModuleDef XPythonLogWriterModule = {
 PyMODINIT_FUNC
 PyInit_XPythonLogWriter(void)
 {
-  logFile = fopen("XPython.log", "w");
+  logFile = fopen(logFileName, "w");
   PyObject *mod = PyModule_Create(&XPythonLogWriterModule);
   if(mod){
     PySys_SetObject("stdout", mod);
@@ -232,6 +233,13 @@ void loadModules(const char *pattern)
 
 int XPluginStart(char *outName, char *outSig, char *outDesc)
 {
+  logFileName = "XPython.log";
+  char *log;
+  log = getenv("XPYTHON_LOG");
+  if(log != NULL){
+    logFileName = log;
+  }
+
   printf("X-PluginStart called.\n");
   strcpy(outName, "Python Interface revival");
   strcpy(outSig, "x.y.z");
