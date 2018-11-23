@@ -304,53 +304,51 @@ PyInit_XPLMGraphics(void)
 {
   PyObject *mod = PyModule_Create(&XPLMGraphicsModule);
   if(mod){
-    // s/^[[:blank:]]\+,\?\(xplm[[:alnum:]_]\+\)[[:blank:]]\+=[[:blank:]]\+\([[:digit:]]\+\)/    PyModule_AddIntConstant(mod, "\1", \2);/
-
      /* The bitmap that contains window outlines, button outlines, fonts, etc.      */
-    PyModule_AddIntConstant(mod, "xplm_Tex_GeneralInterface", 0);
+    PyModule_AddIntConstant(mod, "xplm_Tex_GeneralInterface", xplm_Tex_GeneralInterface);
      /* The exterior paint for the user's aircraft (daytime).                       */
-    PyModule_AddIntConstant(mod, "xplm_Tex_AircraftPaint", 1);
+    PyModule_AddIntConstant(mod, "xplm_Tex_AircraftPaint", xplm_Tex_AircraftPaint);
      /* The exterior light map for the user's aircraft.                             */
-    PyModule_AddIntConstant(mod, "xplm_Tex_AircraftLiteMap", 2);
+    PyModule_AddIntConstant(mod, "xplm_Tex_AircraftLiteMap", xplm_Tex_AircraftLiteMap);
 
      /* Mono-spaced font for user interface.  Available in all versions of the SDK. */
-    PyModule_AddIntConstant(mod, "xplmFont_Basic", 0);
+    PyModule_AddIntConstant(mod, "xplmFont_Basic", xplmFont_Basic);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_Menus", 1);
+    PyModule_AddIntConstant(mod, "xplmFont_Menus", xplmFont_Menus);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_Metal", 2);
+    PyModule_AddIntConstant(mod, "xplmFont_Metal", xplmFont_Metal);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_Led", 3);
+    PyModule_AddIntConstant(mod, "xplmFont_Led", xplmFont_Led);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_LedWide", 4);
+    PyModule_AddIntConstant(mod, "xplmFont_LedWide", xplmFont_LedWide);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_PanelHUD", 5);
+    PyModule_AddIntConstant(mod, "xplmFont_PanelHUD", xplmFont_PanelHUD);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_PanelEFIS", 6);
+    PyModule_AddIntConstant(mod, "xplmFont_PanelEFIS", xplmFont_PanelEFIS);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_PanelGPS", 7);
+    PyModule_AddIntConstant(mod, "xplmFont_PanelGPS", xplmFont_PanelGPS);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_RadiosGA", 8);
+    PyModule_AddIntConstant(mod, "xplmFont_RadiosGA", xplmFont_RadiosGA);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_RadiosBC", 9);
+    PyModule_AddIntConstant(mod, "xplmFont_RadiosBC", xplmFont_RadiosBC);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_RadiosHM", 10);
+    PyModule_AddIntConstant(mod, "xplmFont_RadiosHM", xplmFont_RadiosHM);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_RadiosGANarrow", 11);
+    PyModule_AddIntConstant(mod, "xplmFont_RadiosGANarrow", xplmFont_RadiosGANarrow);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_RadiosBCNarrow", 12);
+    PyModule_AddIntConstant(mod, "xplmFont_RadiosBCNarrow", xplmFont_RadiosBCNarrow);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_RadiosHMNarrow", 13);
+    PyModule_AddIntConstant(mod, "xplmFont_RadiosHMNarrow", xplmFont_RadiosHMNarrow);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_Timer", 14);
+    PyModule_AddIntConstant(mod, "xplmFont_Timer", xplmFont_Timer);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_FullRound", 15);
+    PyModule_AddIntConstant(mod, "xplmFont_FullRound", xplmFont_FullRound);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_SmallRound", 16);
+    PyModule_AddIntConstant(mod, "xplmFont_SmallRound", xplmFont_SmallRound);
      /* Deprecated, do not use.                                                     */
-    PyModule_AddIntConstant(mod, "xplmFont_Menus_Localized", 17);
+    PyModule_AddIntConstant(mod, "xplmFont_Menus_Localized", xplmFont_Menus_Localized);
      /* Proportional UI font.                                                       */
-    PyModule_AddIntConstant(mod, "xplmFont_Proportional", 18);
+    PyModule_AddIntConstant(mod, "xplmFont_Proportional", xplmFont_Proportional);
   }
 
   return mod;

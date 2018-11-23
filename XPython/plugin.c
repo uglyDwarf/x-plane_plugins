@@ -76,7 +76,6 @@ static struct PyModuleDef XPythonLogWriterModule = {
 PyMODINIT_FUNC
 PyInit_XPythonLogWriter(void)
 {
-  logFile = fopen(logFileName, "w");
   PyObject *mod = PyModule_Create(&XPythonLogWriterModule);
   if(mod){
     PySys_SetObject("stdout", mod);
@@ -95,7 +94,7 @@ static PyObject *moduleDict;
 int initPython(const char *programName){
   program = Py_DecodeLocale(programName, NULL);
   if(program == NULL){
-    printf("Can't decode programName.\n");
+    fprintf(logFile, "Can't decode programName.\n");
     return -1;
   }
   Py_SetProgramName(program);
@@ -123,7 +122,7 @@ int initPython(const char *programName){
 
   Py_Initialize();
   if(!Py_IsInitialized()){
-    printf("Failed to initialize Python.\n");
+    fprintf(logFile, "Failed to initialize Python.\n");
     return -1;
   }
 
@@ -144,7 +143,7 @@ bool loadPIClass(const char *fname)
 
   pName = PyUnicode_DecodeFSDefault(fname);
   if(pName == NULL){
-    printf("Problem decoding the filename.\n");
+    fprintf(logFile, "Problem decoding the filename.\n");
     goto cleanup;
   }
   pModule = PyImport_Import(pName);
@@ -183,10 +182,10 @@ bool loadPIClass(const char *fname)
   u2 = PyUnicode_AsUTF8String(PyTuple_GetItem(pRes, 1));
   u3 = PyUnicode_AsUTF8String(PyTuple_GetItem(pRes, 2));
   if(u1 && u2 && u3){
-    printf("%s initialized:", fname);
-    printf(" Name: %s", PyBytes_AsString(u1));
-    printf(" Sig: %s", PyBytes_AsString(u2));
-    printf(" Desc: %s\n", PyBytes_AsString(u3));
+    fprintf(logFile, "%s initialized:", fname);
+    fprintf(logFile, " Name: %s", PyBytes_AsString(u1));
+    fprintf(logFile, " Sig: %s", PyBytes_AsString(u2));
+    fprintf(logFile, " Desc: %s\n", PyBytes_AsString(u3));
   }
   Py_XDECREF(u1);
   Py_XDECREF(u2);
@@ -209,7 +208,7 @@ void loadModules(const char *pattern)
   //Scan current directory for the plugin modules
   DIR *dir = opendir(".");
   if(dir == NULL){
-    printf("Can't open '.' to scan for plugins.\n");
+    fprintf(logFile, "Can't open '.' to scan for plugins.\n");
     return;
   }
   struct dirent *de;
@@ -239,8 +238,12 @@ int XPluginStart(char *outName, char *outSig, char *outDesc)
   if(log != NULL){
     logFileName = log;
   }
+  logFile = fopen(logFileName, "w");
+  if(logFile == NULL){
+    logFile = stdout;
+  }
 
-  printf("X-PluginStart called.\n");
+  fprintf(logFile, "X-PluginStart called.\n");
   strcpy(outName, "Python Interface revival");
   strcpy(outSig, "x.y.z");
   strcpy(outDesc, "X-Plane interface for Python 3.");
@@ -265,7 +268,7 @@ void XPluginStop(void)
     PyObject_CallMethod(pVal, "XPluginStop", NULL);
     PyObject *err = PyErr_Occurred();
     if(err){
-      printf("Error occured during the XPluginStop call:\n");
+      fprintf(logFile, "Error occured during the XPluginStop call:\n");
       PyErr_Print();
     }
   }
@@ -323,14 +326,14 @@ int XPluginEnable(void)
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
     pRes = PyObject_CallMethod(pVal, "XPluginEnable", NULL);
     if(!(pRes && PyLong_Check(pRes))){
-      printf("XPluginEnable didn't return integer.\n");
+      fprintf(logFile, "XPluginEnable didn't return integer.\n");
     }else{
       //printf("XPluginEnable returned %ld\n", PyLong_AsLong(pRes));
     }
     Py_XDECREF(pRes);
     PyObject *err = PyErr_Occurred();
     if(err){
-      printf("Error occured during the XPluginEnable call:\n");
+      fprintf(logFile, "Error occured during the XPluginEnable call:\n");
       PyErr_Print();
     }
   }
@@ -347,7 +350,7 @@ void XPluginDisable(void)
     PyObject_CallMethod(pVal, "XPluginDisable", NULL);
     PyObject *err = PyErr_Occurred();
     if(err){
-      printf("Error occured during the XPluginDisable call:\n");
+      fprintf(logFile, "Error occured during the XPluginDisable call:\n");
       PyErr_Print();
     }
   }
@@ -366,7 +369,7 @@ void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, void *inParam
     PyObject_CallMethod(pVal, "XPluginReceiveMessage", "ilO", inFromWho, inMessage, param);
     PyObject *err = PyErr_Occurred();
     if(err){
-      printf("Error occured during the XPluginReceiveMessage call:\n");
+      fprintf(logFile, "Error occured during the XPluginReceiveMessage call:\n");
       PyErr_Print();
     }
   }

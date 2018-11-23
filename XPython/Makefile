@@ -17,17 +17,10 @@ all : lin.xpl
 
 test : main_200 main_210 main_300 main_301 lin.xpl
 	XPYTHON_LOG=XPython301.log ./main_301
-	cat XPython301.log
-	echo "======================================="
 	XPYTHON_LOG=XPython300.log ./main_300
-	cat XPython300.log
-	echo "======================================="
 	XPYTHON_LOG=XPython210.log ./main_210
-	cat XPython210.log
-	echo "======================================="
 	XPYTHON_LOG=XPython200.log ./main_200
-	cat XPython200.log
-	echo "======================================="
+	tail -n1 XPython*.log
 
 all_cov : CXXFLAGS+= ${COV_CFLAGS}
 all_cov : CFLAGS+= ${COV_CFLAGS}
@@ -50,16 +43,16 @@ CHK_OBJ =  mainXXX.o chkDisplayXXX.o chkGraphicsXXX.o chk_helperXXX.o chkDataAcc
            chkCameraXXX.o chkWidgetsXXX.o chkUIGraphicsXXX.o chkWidgetUtilsXXX.o chkInstanceXXX.o chkMapXXX.o
 
 main_301 : $(subst XXX,301,$(CHK_OBJ))
-	$(CXX) $(CXXFLAGS) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 main_300 : $(subst XXX,300,$(CHK_OBJ))
-	$(CXX) $(CXXFLAGS) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 main_210 : $(subst XXX,210,$(CHK_OBJ))
-	$(CXX) $(CXXFLAGS) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 main_200 : $(subst XXX,200,$(CHK_OBJ))
-	$(CXX) $(CXXFLAGS) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 
 lin.xpl : CFLAGS+= ${PY_CFLAGS} -fpic -fPIC -g
@@ -68,7 +61,7 @@ lin.xpl : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic -ldl -g
 lin.xpl : plugin.o defs.o display.o utils.o graphics.o data_access.o utilities.o scenery.o menus.o \
           navigation.o plugins.o planes.o processing.o camera.o widget_defs.o widgets.o \
           standard_widgets.o uigraphics.o widgetutils.o instance.o map.o plugin_dl.o
-	$(CC) $(CXXFLAGS) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $(CXXFLAGS) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 valgrind : main_301 lin.xpl
 	valgrind --tool=memcheck --suppressions=valgrind-python.supp --leak-check=full ./main_301

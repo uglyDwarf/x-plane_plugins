@@ -919,31 +919,26 @@ PyInit_XPLMDataAccess(void)
       return NULL;
     }
 
-    // s/^[[:blank:]]\+,\?\(xplm[[:alnum:]_]\+\)[[:blank:]]\+=[[:blank:]]\+\([[:digit:]]\+\)/    PyModule_AddIntConstant(mod, "\1", \2);/
-    // s/ \/\* /#/
-    // s/\*\///
-    // s/[[:blank:]]\+$//
-
     /* Data of a type the current XPLM doesn't do.                                 */
-    PyModule_AddIntConstant(mod, "xplmType_Unknown", 0);
+    PyModule_AddIntConstant(mod, "xplmType_Unknown", xplmType_Unknown);
 
     /* A single 4-byte integer, native endian.                                     */
-    PyModule_AddIntConstant(mod, "xplmType_Int", 1);
+    PyModule_AddIntConstant(mod, "xplmType_Int", xplmType_Int);
 
     /* A single 4-byte float, native endian.                                       */
-    PyModule_AddIntConstant(mod, "xplmType_Float", 2);
+    PyModule_AddIntConstant(mod, "xplmType_Float", xplmType_Float);
 
     /* A single 8-byte double, native endian.                                      */
-    PyModule_AddIntConstant(mod, "xplmType_Double", 4);
+    PyModule_AddIntConstant(mod, "xplmType_Double", xplmType_Double);
 
     /* An array of 4-byte floats, native endian.                                   */
-    PyModule_AddIntConstant(mod, "xplmType_FloatArray", 8);
+    PyModule_AddIntConstant(mod, "xplmType_FloatArray", xplmType_FloatArray);
 
     /* An array of 4-byte integers, native endian.                                 */
-    PyModule_AddIntConstant(mod, "xplmType_IntArray", 16);
+    PyModule_AddIntConstant(mod, "xplmType_IntArray", xplmType_IntArray);
 
     /* A variable block of data.                                                   */
-    PyModule_AddIntConstant(mod, "xplmType_Data", 32);
+    PyModule_AddIntConstant(mod, "xplmType_Data", xplmType_Data);
   }
 
   return mod;
