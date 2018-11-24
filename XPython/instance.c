@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #define XPLM200
 #define XPLM210
+#include "plugin_dl.h"
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMScenery.h>
 #include <XPLM/XPLMInstance.h>
@@ -13,6 +14,10 @@ static PyObject *XPLMCreateInstanceFun(PyObject *self, PyObject *args)
 {
   (void) self;
   PyObject *obj, *drefList;
+  if(!XPLMCreateInstance_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMCreateInstance is available only in XPLM300 and up.");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "OO", &obj, &drefList)){
     return NULL;
   }
@@ -33,7 +38,7 @@ static PyObject *XPLMCreateInstanceFun(PyObject *self, PyObject *args)
 
   XPLMObjectRef inObj = PyLong_AsVoidPtr(obj);
 
-  XPLMInstanceRef res = XPLMCreateInstance(inObj, datarefs);
+  XPLMInstanceRef res = XPLMCreateInstance_ptr(inObj, datarefs);
   free(datarefs);
   return PyLong_FromVoidPtr(res);
 }
@@ -43,10 +48,14 @@ static PyObject *XPLMDestroyInstanceFun(PyObject *self, PyObject *args)
   (void) self;
   (void) args;
   PyObject *instance;
+  if(!XPLMDestroyInstance_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMDestroyInstance is available only in XPLM300 and up.");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "O", &instance)){
     return NULL;
   }
-  XPLMDestroyInstance(PyLong_AsVoidPtr(instance));
+  XPLMDestroyInstance_ptr(PyLong_AsVoidPtr(instance));
   Py_RETURN_NONE;
 }
 
@@ -62,6 +71,10 @@ static PyObject *XPLMInstanceSetPositionFun(PyObject *self, PyObject *args)
 {
   (void) self;
   PyObject *instance, *new_position, *data;
+  if(!XPLMInstanceSetPosition_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMInstanceSetPosition is available only in XPLM300 and up.");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "OOO", &instance, &new_position, &data)){
     return NULL;
   }
@@ -84,7 +97,7 @@ static PyObject *XPLMInstanceSetPositionFun(PyObject *self, PyObject *args)
   for(i = 0; i < len; ++i){
     inData[i] = getFloat(data, i);
   }
-  XPLMInstanceSetPosition(PyLong_AsVoidPtr(instance), &inNewPosition, inData);
+  XPLMInstanceSetPosition_ptr(PyLong_AsVoidPtr(instance), &inNewPosition, inData);
   Py_RETURN_NONE;
 }
 

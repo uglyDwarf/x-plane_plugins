@@ -130,7 +130,7 @@ int initPython(const char *programName){
   PyRun_SimpleString("import XPythonLogger\n"
                      "print('Adding the \".\" to path')\n"
                      "import sys\n"
-                     "sys.path.append('.')");
+                     "sys.path.append('./Resources/plugins/XPythonRevival')");
   moduleDict = PyDict_New();
   return 0;
 }
@@ -206,9 +206,9 @@ bool loadPIClass(const char *fname)
 void loadModules(const char *pattern)
 {
   //Scan current directory for the plugin modules
-  DIR *dir = opendir(".");
+  DIR *dir = opendir("./Resources/plugins/XPythonRevival");
   if(dir == NULL){
-    fprintf(logFile, "Can't open '.' to scan for plugins.\n");
+    fprintf(logFile, "Can't open './Resources/plugins/XPythonRevival' to scan for plugins.\n");
     return;
   }
   struct dirent *de;
@@ -245,7 +245,7 @@ int XPluginStart(char *outName, char *outSig, char *outDesc)
 
   fprintf(logFile, "X-PluginStart called.\n");
   strcpy(outName, "Python Interface revival");
-  strcpy(outSig, "x.y.z");
+  strcpy(outSig, "XPythonRevival.0.0");
   strcpy(outDesc, "X-Plane interface for Python 3.");
   loadAllFunctions();
   initPython("X-Plane");

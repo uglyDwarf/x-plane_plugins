@@ -10,6 +10,7 @@
 #include <XPLM/XPLMProcessing.h>
 #include <XPLM/XPLMScenery.h>
 #include <XPLM/XPLMMenus.h>
+#include <XPLM/XPLMInstance.h>
 #include <XPLM/XPLMMap.h>
 #include <XPLM/XPLMDisplay.h>
 #include <XPLM/XPLMPlanes.h>
@@ -52,6 +53,10 @@ extern typeof(XPLMSetWindowPositioningMode) *XPLMSetWindowPositioningMode_ptr;
 extern typeof(XPLMSetWindowResizingLimits) *XPLMSetWindowResizingLimits_ptr;
 extern typeof(XPLMSetWindowTitle) *XPLMSetWindowTitle_ptr;
 extern typeof(XPLMWindowIsPoppedOut) *XPLMWindowIsPoppedOut_ptr;
+extern typeof(XPLMHasKeyboardFocus) *XPLMHasKeyboardFocus_ptr;
+extern typeof(XPLMCreateInstance) *XPLMCreateInstance_ptr;
+extern typeof(XPLMDestroyInstance) *XPLMDestroyInstance_ptr;
+extern typeof(XPLMInstanceSetPosition) *XPLMInstanceSetPosition_ptr;
 //XPLM_301
 extern typeof(XPGetWidgetUnderlyingWindow) *XPGetWidgetUnderlyingWindow_ptr;
 extern typeof(XPLMGetWindowGeometryVR) *XPLMGetWindowGeometryVR_ptr;
