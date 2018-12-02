@@ -30,6 +30,7 @@ PyMODINIT_FUNC PyInit_XPUIGraphics(void);
 PyMODINIT_FUNC PyInit_XPWidgetUtils(void);
 PyMODINIT_FUNC PyInit_XPLMInstance(void);
 PyMODINIT_FUNC PyInit_XPLMMap(void);
+PyMODINIT_FUNC PyInit_SBU(void);
 
 static FILE *logFile;
 static char *logFileName;
@@ -44,6 +45,7 @@ static PyObject *logWriterWrite(PyObject *self, PyObject *args)
   }
   //printf("%s", msg);
   fprintf(logFile, "%s", msg);
+  fflush(logFile);
   Py_RETURN_NONE;
 }
 
@@ -119,6 +121,7 @@ int initPython(const char *programName){
   PyImport_AppendInittab("XPLMInstance", PyInit_XPLMInstance);
   PyImport_AppendInittab("XPLMMap", PyInit_XPLMMap);
   PyImport_AppendInittab("XPythonLogger", PyInit_XPythonLogWriter);
+  PyImport_AppendInittab("SandyBarbourUtilities", PyInit_SBU);
 
   Py_Initialize();
   if(!Py_IsInitialized()){
@@ -312,6 +315,8 @@ void XPluginStop(void)
                      "XPLMMap.cleanup()\n"
                      "import XPLMDataAccess\n"
                      "XPLMDataAccess.cleanup()\n"
+                     "import SandyBarbourUtilities\n"
+                     "SandyBarbourUtilities.cleanup()\n"
   );
   Py_Finalize();
   PyMem_RawFree(program);
