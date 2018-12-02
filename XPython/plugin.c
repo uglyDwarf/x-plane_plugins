@@ -35,6 +35,8 @@ PyMODINIT_FUNC PyInit_SBU(void);
 static FILE *logFile;
 static char *logFileName;
 
+static const char *pluginsPath = "./Resources/plugins/PythonPlugins";
+static const char *internalPluginsPath = "./Resources/plugins/XPythonRevival";
 
 static PyObject *logWriterWrite(PyObject *self, PyObject *args)
 {
@@ -129,11 +131,11 @@ int initPython(const char *programName){
     return -1;
   }
 
-  //get "." into the python's path 
+  //get the plugin diractory into the python's path 
   PyRun_SimpleString("import XPythonLogger\n"
-                     "print('Adding the \".\" to path')\n"
+                     "print('Adding the \"./Resources/plugins/PythonPlugins\" to path')\n"
                      "import sys\n"
-                     "sys.path.append('./Resources/plugins/XPythonRevival')");
+                     "sys.path.append('./Resources/plugins/PythonPlugins')");
   moduleDict = PyDict_New();
   return 0;
 }
@@ -185,10 +187,10 @@ bool loadPIClass(const char *fname)
   u2 = PyUnicode_AsUTF8String(PyTuple_GetItem(pRes, 1));
   u3 = PyUnicode_AsUTF8String(PyTuple_GetItem(pRes, 2));
   if(u1 && u2 && u3){
-    fprintf(logFile, "%s initialized:", fname);
-    fprintf(logFile, " Name: %s", PyBytes_AsString(u1));
-    fprintf(logFile, " Sig: %s", PyBytes_AsString(u2));
-    fprintf(logFile, " Desc: %s\n", PyBytes_AsString(u3));
+    fprintf(logFile, "%s initialized.\n", fname);
+    fprintf(logFile, "  Name: %s\n", PyBytes_AsString(u1));
+    fprintf(logFile, "  Sig:  %s\n", PyBytes_AsString(u2));
+    fprintf(logFile, "  Desc: %s\n", PyBytes_AsString(u3));
   }
   Py_XDECREF(u1);
   Py_XDECREF(u2);
@@ -206,12 +208,12 @@ bool loadPIClass(const char *fname)
   return pObj;
 }
 
-void loadModules(const char *pattern)
+void loadModules(const char *path, const char *pattern)
 {
   //Scan current directory for the plugin modules
-  DIR *dir = opendir("./Resources/plugins/XPythonRevival");
+  DIR *dir = opendir(path);
   if(dir == NULL){
-    fprintf(logFile, "Can't open './Resources/plugins/XPythonRevival' to scan for plugins.\n");
+    fprintf(logFile, "Can't open '%s' to scan for plugins.\n", path);
     return;
   }
   struct dirent *de;
@@ -233,7 +235,7 @@ void loadModules(const char *pattern)
 }
 
 
-int XPluginStart(char *outName, char *outSig, char *outDesc)
+PLUGIN_API int XPluginStart(char *outName, char *outSig, char *outDesc)
 {
   logFileName = "XPython.log";
   char *log;
@@ -254,15 +256,15 @@ int XPluginStart(char *outName, char *outSig, char *outDesc)
   initPython("X-Plane");
 
   // Load internal stuff
-  loadModules("^I_PI_.*\\.py$");
+  loadModules(internalPluginsPath, "^I_PI_.*\\.py$");
   // Load modules
-  loadModules("^PI_.*\\.py$");
+  loadModules(pluginsPath, "^PI_.*\\.py$");
 
   return 1;
 }
 
 
-void XPluginStop(void)
+PLUGIN_API void XPluginStop(void)
 {
   PyObject *pKey, *pVal;
   Py_ssize_t pos = 0;
@@ -323,7 +325,7 @@ void XPluginStop(void)
   //printf("XPluginStop finished.\n");
 }
 
-int XPluginEnable(void)
+PLUGIN_API int XPluginEnable(void)
 {
   PyObject *pKey, *pVal, *pRes;
   Py_ssize_t pos = 0;
@@ -346,7 +348,7 @@ int XPluginEnable(void)
   return 1;
 }
 
-void XPluginDisable(void)
+PLUGIN_API void XPluginDisable(void)
 {
   PyObject *pKey, *pVal;
   Py_ssize_t pos = 0;
@@ -362,7 +364,7 @@ void XPluginDisable(void)
 
 }
 
-void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, void *inParam)
+PLUGIN_API void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, void *inParam)
 {
   PyObject *pKey, *pVal;
   Py_ssize_t pos = 0;

@@ -15,7 +15,6 @@
 
 static std::string str0;
 static int int0;
-static int inst;
 static float x, y, z, pitch, heading, roll, float0;
 
 static std::list<XPLMDataRef> d;
@@ -41,6 +40,8 @@ void cleanupInstanceModule()
   d.empty();
 }
 
+#if defined(XPLM300)
+static int inst;
 XPLMInstanceRef XPLMCreateInstance(XPLMObjectRef obj, const char **datarefs)
 {
   int0 = (intptr_t)obj;
@@ -76,5 +77,5 @@ void XPLMInstanceSetPosition(XPLMInstanceRef instance, const XPLMDrawInfo_t *new
     float0 += data[i];
   }
 }
-
+#endif
 

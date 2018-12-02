@@ -15,6 +15,7 @@ class PythonInterface(checkBase):
       self.Name = "Instance regression test"
       self.Sig = "InstanceRT"
       self.Desc = "Regression test for XPLMInstance module"
+      self.versions = XPLMGetVersions()
 
       return self.Name, self.Sig, self.Desc
    
@@ -29,6 +30,9 @@ class PythonInterface(checkBase):
       return
 
    def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
+      if self.versions[1] < 300:
+         return 1.0
+
       self.str0Dref = XPLMFindDataRef('instance.str')
       self.int0Dref = XPLMFindDataRef('instance.int0')
       self.float0Dref = XPLMFindDataRef('instance.float0')

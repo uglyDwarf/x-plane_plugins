@@ -709,6 +709,7 @@ void XPLMTakeKeyboardFocus(XPLMWindowID inWindowID)
   int3 = (intptr_t)winInFocus;
 }
 
+#if defined(XPLM300)
 int XPLMHasKeyboardFocus(XPLMWindowID inWindowID)
 {
   windowInfo *wi;
@@ -720,6 +721,7 @@ int XPLMHasKeyboardFocus(XPLMWindowID inWindowID)
   }
   return 0;
 }
+#endif
 
 void XPLMBringWindowToFront(XPLMWindowID inWindowID)
 {

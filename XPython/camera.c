@@ -21,7 +21,21 @@ static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosing
     printf("Couldn't find cameraControl callback with id = %p.", inRefcon); 
     return 0;
   }
-  PyObject *pos = PyList_New(0);
+
+  PyObject *pos;
+  if(!inIsLosingControl){
+    pos = PyList_New(7);
+    PyList_SetItem(pos, 0, PyFloat_FromDouble(outCameraPosition->x));
+    PyList_SetItem(pos, 1, PyFloat_FromDouble(outCameraPosition->y));
+    PyList_SetItem(pos, 2, PyFloat_FromDouble(outCameraPosition->z));
+    PyList_SetItem(pos, 3, PyFloat_FromDouble(outCameraPosition->pitch));
+    PyList_SetItem(pos, 4, PyFloat_FromDouble(outCameraPosition->heading));
+    PyList_SetItem(pos, 5, PyFloat_FromDouble(outCameraPosition->roll));
+    PyList_SetItem(pos, 6, PyFloat_FromDouble(outCameraPosition->zoom));
+  }else{
+    pos = Py_None;
+  }
+
   PyObject *resObj = PyObject_CallFunction(PySequence_GetItem(callbackInfo, 2), "OiO", pos, inIsLosingControl,
                                         PySequence_GetItem(callbackInfo, 3));
   if(outCameraPosition != NULL){

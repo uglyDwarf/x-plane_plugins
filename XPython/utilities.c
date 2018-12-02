@@ -90,11 +90,10 @@ static PyObject *XPLMCommandButtonReleaseFun(PyObject *self, PyObject *args)
 static PyObject *XPLMGetVirtualKeyDescriptionFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  const char *inVirtualKeyStr;
-  if(!PyArg_ParseTuple(args, "s", &inVirtualKeyStr)){
+  int inVirtualKey;
+  if(!PyArg_ParseTuple(args, "i", &inVirtualKey)){
     return NULL;
   }
-  char inVirtualKey = inVirtualKeyStr[0];
   const char *res = XPLMGetVirtualKeyDescription(inVirtualKey);
   return PyUnicode_DecodeUTF8(res, strlen(res), NULL);
 }
