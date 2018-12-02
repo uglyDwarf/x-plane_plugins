@@ -841,11 +841,15 @@ static PyObject *XPLMHasKeyboardFocusFun(PyObject *self, PyObject *args)
 {
   (void) self;
   PyObject *win;
+  if(!XPLMHasKeyboardFocus_ptr){
+    PyErr_SetString(PyExc_RuntimeError , "XPLMHasKeyboardFocus is available only in XPLM300 and up.");
+    return NULL;
+  }
   if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
   XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
-  return PyLong_FromLong(XPLMHasKeyboardFocus(inWindowID));
+  return PyLong_FromLong(XPLMHasKeyboardFocus_ptr(inWindowID));
 }
 
 static PyObject *XPLMBringWindowToFrontFun(PyObject *self, PyObject *args)

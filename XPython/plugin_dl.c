@@ -8,6 +8,7 @@
 #include <XPLM/XPLMScenery.h>
 #include <XPLM/XPLMMenus.h>
 
+#include <XPLM/XPLMInstance.h>
 #include <XPLM/XPLMMap.h>
 #include <XPLM/XPLMDisplay.h>
 #include <XPLM/XPLMPlanes.h>
@@ -66,6 +67,11 @@ typeof(XPLMSetWindowPositioningMode) *XPLMSetWindowPositioningMode_ptr = NULL;
 typeof(XPLMSetWindowResizingLimits) *XPLMSetWindowResizingLimits_ptr = NULL;
 typeof(XPLMSetWindowTitle) *XPLMSetWindowTitle_ptr = NULL;
 typeof(XPLMWindowIsPoppedOut) *XPLMWindowIsPoppedOut_ptr = NULL;
+typeof(XPLMHasKeyboardFocus) *XPLMHasKeyboardFocus_ptr = NULL;
+typeof(XPLMCreateInstance) *XPLMCreateInstance_ptr = NULL;
+typeof(XPLMDestroyInstance) *XPLMDestroyInstance_ptr = NULL;
+typeof(XPLMInstanceSetPosition) *XPLMInstanceSetPosition_ptr = NULL;
+
 
 t_fcn_info funcs300[] = {
   {"XPLMAppendMenuItemWithCommand", (void *)&XPLMAppendMenuItemWithCommand_ptr},
@@ -95,6 +101,10 @@ t_fcn_info funcs300[] = {
   {"XPLMSetWindowResizingLimits", (void *)&XPLMSetWindowResizingLimits_ptr},
   {"XPLMSetWindowTitle", (void *)&XPLMSetWindowTitle_ptr},
   {"XPLMWindowIsPoppedOut", (void *)&XPLMWindowIsPoppedOut_ptr},
+  {"XPLMHasKeyboardFocus", (void *)&XPLMHasKeyboardFocus_ptr},
+  {"XPLMCreateInstance", (void *)&XPLMCreateInstance_ptr},
+  {"XPLMDestroyInstance", (void *)&XPLMDestroyInstance_ptr},
+  {"XPLMInstanceSetPosition", (void *)&XPLMInstanceSetPosition_ptr},
   {NULL, NULL}
 };
 
@@ -103,6 +113,7 @@ typeof(XPGetWidgetUnderlyingWindow) *XPGetWidgetUnderlyingWindow_ptr = NULL;
 typeof(XPLMGetWindowGeometryVR) *XPLMGetWindowGeometryVR_ptr = NULL;
 typeof(XPLMSetWindowGeometryVR) *XPLMSetWindowGeometryVR_ptr = NULL;
 typeof(XPLMWindowIsInVR) *XPLMWindowIsInVR_ptr = NULL;
+
 t_fcn_info funcs301[] = {
   {"XPGetWidgetUnderlyingWindow", (void *)&XPGetWidgetUnderlyingWindow_ptr},
   {"XPLMGetWindowGeometryVR", (void *)&XPLMGetWindowGeometryVR_ptr},
