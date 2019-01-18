@@ -5,6 +5,7 @@ from check_helper import *
 from XPLMDefs import *
 from XPLMDataAccess import *
 from XPLMInstance import *
+from XPLMUtilities import *
 
 class PythonInterface(checkBase):
    def __init__(self):
