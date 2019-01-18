@@ -168,13 +168,15 @@ static PyObject *XPLMGetDataviFun(PyObject *self, PyObject *args)
   
   int res = XPLMGetDatavi(inDataRef, outValues, inOffset, inMax);
   if(outValues != NULL){
-    if(PySequence_Length(outValuesObj) > 0){
-      PySequence_DelSlice(outValuesObj, 0, PySequence_Length(outValuesObj));
+    if(PyList_Size(outValuesObj) > 0){
+      PySequence_DelSlice(outValuesObj, 0, PyList_Size(outValuesObj));
     }
     //If res < inMax, copy only res elements;
     //  if inMax < res, copy only inMax elements
     for(int i = 0; i < (res < inMax ? res : inMax); ++i){
-      PyList_Append(outValuesObj, PyLong_FromLong(outValues[i]));
+      PyObject *tmp = PyLong_FromLong(outValues[i]);
+      PyList_Append(outValuesObj, tmp);
+      Py_DECREF(tmp);
     }
     free(outValues);
   }
@@ -202,7 +204,10 @@ static PyObject *XPLMSetDataviFun(PyObject *self, PyObject *args)
   }
   inValues = (int *)malloc(inCount * sizeof(int));
   for(int i = 0; i < inCount; ++i){
-    PyObject *tmp = PyNumber_Long(PySequence_GetItem(inValuesObj, i));
+    PyObject *tmp, *tmp1;
+    tmp1 = PySequence_GetItem(inValuesObj, i);
+    tmp = PyNumber_Long(tmp1);
+    Py_DECREF(tmp1);
     inValues[i] = PyLong_AsLong(tmp);
     Py_DECREF(tmp);
   }
@@ -222,7 +227,7 @@ static PyObject *XPLMGetDatavfFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OOii", &drefObj, &outValuesObj, &inOffset, &inMax)){
     return NULL;
   }
-  XPLMDataRef inDataRef= drefFromObj(drefObj);
+  XPLMDataRef inDataRef = drefFromObj(drefObj);
   if(outValuesObj && (outValuesObj != Py_None)){
     if(!PyList_Check(outValuesObj)){
       PyErr_SetString(PyExc_TypeError, "XPLMGetDatavf expects list or None as the outValues parameter.");
@@ -239,13 +244,15 @@ static PyObject *XPLMGetDatavfFun(PyObject *self, PyObject *args)
   int res = XPLMGetDatavf(inDataRef, outValues, inOffset, inMax);
   
   if(outValues != NULL){
-    if(PySequence_Length(outValuesObj) > 0){
-      PySequence_DelSlice(outValuesObj, 0, PySequence_Length(outValuesObj));
+    if(PyList_Size(outValuesObj) > 0){
+      PySequence_DelSlice(outValuesObj, 0, PyList_Size(outValuesObj));
     }
     //If res < inMax, copy only res elements;
     //  if inMax < res, copy only inMax elements
     for(int i = 0; i < (res < inMax ? res : inMax); ++i){
-      PyList_Append(outValuesObj, PyFloat_FromDouble(outValues[i]));
+      PyObject *tmp = PyFloat_FromDouble(outValues[i]);
+      PyList_Append(outValuesObj, tmp);
+      Py_DECREF(tmp);
     }
   }
   free(outValues);
@@ -262,7 +269,7 @@ static PyObject *XPLMSetDatavfFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OOii", &drefObj, &inValuesObj, &inOffset, &inCount)){
     return NULL;
   }
-  XPLMDataRef inDataRef= drefFromObj(drefObj);
+  XPLMDataRef inDataRef = drefFromObj(drefObj);
   if(!PySequence_Check(inValuesObj)){
     PyErr_SetString(PyExc_TypeError, "XPLMSetDatavf expects list as the inValues parameter.");
     return NULL;
@@ -310,13 +317,14 @@ static PyObject *XPLMGetDatabFun(PyObject *self, PyObject *args)
   
   int res = XPLMGetDatab(inDataRef, outValues, inOffset, inMax);
   if(outValues != NULL){
-    if(PySequence_Length(outValuesObj) > 0){
-      PySequence_DelSlice(outValuesObj, 0, PySequence_Length(outValuesObj));
+    if(PyList_Size(outValuesObj) > 0){
+      PySequence_DelSlice(outValuesObj, 0, PyList_Size(outValuesObj));
     }
     //If res < inMax, copy only res elements;
     //  if inMax < res, copy only inMax elements
     for(int i = 0; i < (res < inMax ? res : inMax); ++i){
-      PyList_Append(outValuesObj, PyLong_FromLong(outValues[i]));
+      PyObject *tmp = PyLong_FromLong(outValues[i]);
+      PyList_Append(outValuesObj, tmp);
     }
     free(outValues);
   }
@@ -344,7 +352,9 @@ static PyObject *XPLMSetDatabFun(PyObject *self, PyObject *args)
   }
   inValues = (uint8_t *)malloc(inCount * sizeof(uint8_t));
   for(int i = 0; i < inCount; ++i){
-    PyObject *tmp = PyNumber_Long(PySequence_GetItem(inValuesObj, i));
+    PyObject *tmp1 = PySequence_GetItem(inValuesObj, i);
+    PyObject *tmp = PyNumber_Long(tmp1);
+    Py_DECREF(tmp1);
     inValues[i] = PyLong_AsLong(tmp);
     Py_DECREF(tmp);
   }
@@ -364,12 +374,15 @@ static int getDatai(void *inRefcon)
     printf("Unknown dataAccessor refCon passed to getDatai (%p).\n", inRefcon);
     return -1;
   }
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 4), "(O)",
-                                        PySequence_GetItem(pCbks, 16));
+  PyObject *oFun = PySequence_GetItem(pCbks, 4);
+  PyObject *oArg = PySequence_GetItem(pCbks, 16);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(oFun, oArg, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
+  Py_DECREF(oFun);
+  Py_DECREF(oArg);
   Py_DECREF(pID);
   PyObject *tmp = PyNumber_Long(oRes);
   int res = PyLong_AsLong(tmp);
@@ -390,12 +403,17 @@ static void setDatai(void *inRefcon, int inValue)
     printf("Unknown dataAccessor refCon passed to setDatai (%p).\n", inRefcon);
     return;
   }
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 5), "(Oi)",
-                                        PySequence_GetItem(pCbks, 17), inValue);
+  PyObject *oFun = PySequence_GetItem(pCbks, 5);
+  PyObject *oArg1 = PySequence_GetItem(pCbks, 17);
+  PyObject *oArg2 = PyLong_FromLong(inValue);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(oFun, oArg1, oArg2, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
+  Py_DECREF(oFun);
+  Py_DECREF(oArg1);
+  Py_DECREF(oArg2);
   Py_DECREF(pID);
   Py_DECREF(oRes);
   return;
@@ -409,13 +427,17 @@ static float getDataf(void *inRefcon)
     printf("Unknown dataAccessor refCon passed to getDataf (%p).\n", inRefcon);
     return -1;
   }
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 6), "(O)",
-                                        PySequence_GetItem(pCbks, 16));
+  PyObject *oFun = PySequence_GetItem(pCbks, 6);
+  PyObject *oArg1 = PySequence_GetItem(pCbks, 16);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(oFun, oArg1, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
+  Py_DECREF(oFun);
+  Py_DECREF(oArg1);
   Py_DECREF(pID);
+
   PyObject *tmp = PyNumber_Float(oRes);
   float res = PyFloat_AsDouble(tmp);
   Py_DECREF(tmp);
@@ -435,12 +457,17 @@ static void setDataf(void *inRefcon, float inValue)
     printf("Unknown dataAccessor refCon passed to setDataf (%p).\n", inRefcon);
     return;
   }
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 7), "(Of)",
-                                        PySequence_GetItem(pCbks, 17), inValue);
+  PyObject *oFun = PySequence_GetItem(pCbks, 7);
+  PyObject *oArg1 = PySequence_GetItem(pCbks, 17);
+  PyObject *oArg2 = PyFloat_FromDouble((double)inValue);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(oFun, oArg1, oArg2, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
+  Py_DECREF(oFun);
+  Py_DECREF(oArg1);
+  Py_DECREF(oArg2);
   Py_DECREF(pID);
   Py_DECREF(oRes);
   return;
@@ -454,12 +481,15 @@ static double getDatad(void *inRefcon)
     printf("Unknown dataAccessor refCon passed to getDatad (%p).\n", inRefcon);
     return -1;
   }
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 8), "(O)",
-                                        PySequence_GetItem(pCbks, 16));
+  PyObject *oFun = PySequence_GetItem(pCbks, 8);
+  PyObject *oArg = PySequence_GetItem(pCbks, 16);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(oFun, oArg, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
+  Py_DECREF(oFun);
+  Py_DECREF(oArg);
   Py_DECREF(pID);
   PyObject *tmp = PyNumber_Float(oRes);
   double res = PyFloat_AsDouble(tmp);
@@ -480,12 +510,17 @@ static void setDatad(void *inRefcon, double inValue)
     printf("Unknown dataAccessor refCon passed to setDatad (%p).\n", inRefcon);
     return;
   }
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 9), "(Od)",
-                                        PySequence_GetItem(pCbks, 17), inValue);
+  PyObject *oFun = PySequence_GetItem(pCbks, 9);
+  PyObject *oArg1 = PySequence_GetItem(pCbks, 17);
+  PyObject *oArg2 = PyFloat_FromDouble(inValue);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(oFun, oArg1, oArg2, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
+  Py_DECREF(oFun);
+  Py_DECREF(oArg1);
+  Py_DECREF(oArg2);
   Py_DECREF(pID);
   Py_DECREF(oRes);
   return;
@@ -506,13 +541,20 @@ static int getDatavi(void *inRefcon, int *outValues, int inOffset, int inMax)
     outValuesObj = Py_None;
   }
 
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 10), "(OOii)",
-                                        PySequence_GetItem(pCbks, 16), outValuesObj, inOffset, inMax);
+  PyObject *oFun = PySequence_GetItem(pCbks, 10);
+  PyObject *oArg1 = PySequence_GetItem(pCbks, 16);
+  PyObject *oArg2 = PyLong_FromLong(inOffset);
+  PyObject *oArg3 = PyLong_FromLong(inMax);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(oFun, oArg1, outValuesObj, oArg2, oArg3, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
   Py_DECREF(pID);
+  Py_DECREF(oFun);
+  Py_DECREF(oArg1);
+  Py_DECREF(oArg2);
+  Py_DECREF(oArg3);
   PyObject *tmp = PyNumber_Long(oRes);
   int res = PyLong_AsLong(tmp);
   Py_DECREF(tmp);
@@ -523,7 +565,7 @@ static int getDatavi(void *inRefcon, int *outValues, int inOffset, int inMax)
   }else{
     if(outValues){
       for(int i = 0; i < res; ++i){
-        PyObject *tmp = PyNumber_Long(PySequence_GetItem(outValuesObj, i));
+        PyObject *tmp = PyNumber_Long(PyList_GetItem(outValuesObj, i));
         outValues[i] = PyLong_AsLong(tmp);
         Py_DECREF(tmp);
       }
@@ -544,15 +586,24 @@ static void setDatavi(void *inRefcon, int *inValues, int inOffset, int inCount)
   }
   PyObject *inValuesObj = PyList_New(0);
   for(int i = 0; i < inCount; ++i){
-    PyList_Append(inValuesObj, PyLong_FromLong(inValues[i]));
+    PyObject *tmp = PyLong_FromLong(inValues[i]);
+    PyList_Append(inValuesObj, tmp);
+    Py_DECREF(tmp);
   }
 
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 11), "(OOii)",
-                                        PySequence_GetItem(pCbks, 17), inValuesObj, inOffset, inCount);
+  PyObject *oFun = PySequence_GetItem(pCbks, 11);
+  PyObject *oArg1 = PySequence_GetItem(pCbks, 17);
+  PyObject *oArg2 = PyLong_FromLong(inOffset);
+  PyObject *oArg3 = PyLong_FromLong(inCount);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(oFun, oArg1, inValuesObj, oArg2, oArg3, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
+  Py_DECREF(oFun);
+  Py_DECREF(oArg1);
+  Py_DECREF(oArg2);
+  Py_DECREF(oArg3);
   Py_DECREF(pID);
   Py_DECREF(inValuesObj);
   Py_DECREF(oRes);
@@ -574,13 +625,20 @@ static int getDatavf(void *inRefcon, float *outValues, int inOffset, int inMax)
     outValuesObj = Py_None;
   }
 
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 12), "(OOii)",
-                                        PySequence_GetItem(pCbks, 16), outValuesObj, inOffset, inMax);
+  PyObject *oFun = PySequence_GetItem(pCbks, 12);
+  PyObject *oArg1 = PySequence_GetItem(pCbks, 16);
+  PyObject *oArg2 = PyLong_FromLong(inOffset);
+  PyObject *oArg3 = PyLong_FromLong(inMax);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(oFun, oArg1, outValuesObj, oArg2, oArg3, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
   Py_DECREF(pID);
+    Py_DECREF(oFun);
+  Py_DECREF(oArg1);
+  Py_DECREF(oArg2);
+  Py_DECREF(oArg3);
   PyObject *tmp = PyNumber_Long(oRes);
   int res = PyLong_AsLong(tmp);
   Py_DECREF(tmp);
@@ -591,7 +649,7 @@ static int getDatavf(void *inRefcon, float *outValues, int inOffset, int inMax)
   }else{
     if(outValues){
       for(int i = 0; i < res; ++i){
-        PyObject *tmp = PyNumber_Float(PySequence_GetItem(outValuesObj, i));
+        PyObject *tmp = PyNumber_Float(PyList_GetItem(outValuesObj, i));
         outValues[i] = PyFloat_AsDouble(tmp);
         Py_DECREF(tmp);
       }
@@ -612,15 +670,24 @@ static void setDatavf(void *inRefcon, float *inValues, int inOffset, int inCount
   }
   PyObject *inValuesObj = PyList_New(0);
   for(int i = 0; i < inCount; ++i){
-    PyList_Append(inValuesObj, PyFloat_FromDouble(inValues[i]));
+    PyObject *tmp = PyFloat_FromDouble(inValues[i]);
+    PyList_Append(inValuesObj, tmp);
+    Py_DECREF(tmp);
   }
 
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 13), "(OOii)",
-                                        PySequence_GetItem(pCbks, 17), inValuesObj, inOffset, inCount);
+  PyObject *oFun = PySequence_GetItem(pCbks, 13);
+  PyObject *oArg1 = PySequence_GetItem(pCbks, 17);
+  PyObject *oArg2 = PyLong_FromLong(inOffset);
+  PyObject *oArg3 = PyLong_FromLong(inCount);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(oFun, oArg1, inValuesObj, oArg2, oArg3, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
+  Py_DECREF(oFun);
+  Py_DECREF(oArg1);
+  Py_DECREF(oArg2);
+  Py_DECREF(oArg3);
   Py_DECREF(pID);
   Py_DECREF(inValuesObj);
   Py_DECREF(oRes);
@@ -642,13 +709,20 @@ static int getDatab(void *inRefcon, void *outValue, int inOffset, int inMax)
     outValuesObj = Py_None;
   }
 
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 14), "(OOii)",
-                                        PySequence_GetItem(pCbks, 16), outValuesObj, inOffset, inMax);
+  PyObject *oFun = PySequence_GetItem(pCbks, 14);
+  PyObject *oArg1 = PySequence_GetItem(pCbks, 16);
+  PyObject *oArg2 = PyLong_FromLong(inOffset);
+  PyObject *oArg3 = PyLong_FromLong(inMax);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(oFun, oArg1, outValuesObj, oArg2, oArg3, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
   Py_DECREF(pID);
+  Py_DECREF(oFun);
+  Py_DECREF(oArg1);
+  Py_DECREF(oArg2);
+  Py_DECREF(oArg3);
   PyObject *tmp = PyNumber_Long(oRes);
   int res = PyLong_AsLong(tmp);
   Py_DECREF(tmp);
@@ -660,7 +734,7 @@ static int getDatab(void *inRefcon, void *outValue, int inOffset, int inMax)
     if(outValue){
       uint8_t *pOutValue = (uint8_t *)outValue;
       for(int i = 0; i < res; ++i){
-        PyObject *tmp = PyNumber_Long(PySequence_GetItem(outValuesObj, i));
+        PyObject *tmp = PyNumber_Long(PyList_GetItem(outValuesObj, i));
         pOutValue[i] = PyLong_AsLong(tmp);
         Py_DECREF(tmp);
       }
@@ -682,15 +756,24 @@ static void setDatab(void *inRefcon, void *inValue, int inOffset, int inCount)
   PyObject *inValuesObj = PyList_New(0);
   uint8_t *pInValue = (uint8_t *)inValue;
   for(int i = 0; i < inCount; ++i){
-    PyList_Append(inValuesObj, PyLong_FromLong(pInValue[i]));
+    PyObject *tmp = PyLong_FromLong(pInValue[i]);
+    PyList_Append(inValuesObj, tmp);
+    Py_DECREF(tmp);
   }
 
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbks, 15), "(OOii)",
-                                        PySequence_GetItem(pCbks, 17), inValuesObj, inOffset, inCount);
+  PyObject *oFun = PySequence_GetItem(pCbks, 15);
+  PyObject *oArg1 = PySequence_GetItem(pCbks, 17);
+  PyObject *oArg2 = PyLong_FromLong(inOffset);
+  PyObject *oArg3 = PyLong_FromLong(inCount);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(oFun, oArg1, inValuesObj, oArg2, oArg3, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
+  Py_DECREF(oFun);
+  Py_DECREF(oArg1);
+  Py_DECREF(oArg2);
+  Py_DECREF(oArg3);
   Py_DECREF(pID);
   Py_DECREF(inValuesObj);
   Py_DECREF(oRes);
@@ -751,11 +834,13 @@ static PyObject *XPLMUnregisterDataAccessorFun(PyObject *self, PyObject *args)
     printf("XPLMUnregisterDataref: No such refcon registered!\n");
     Py_RETURN_NONE;
   }
-  PyObject *registerer = PySequence_GetItem(accessor, 0); 
-  if(PySequence_GetItem(args, 0) != registerer){
+  PyObject *registerer = PySequence_GetItem(accessor, 0);
+  if(pluginSelf != registerer){
+    Py_DECREF(registerer);
     printf("XPLMUnregisterDataref: Don't unregister dataref you didn't register!!\n");
     Py_RETURN_NONE;
   }
+  Py_DECREF(registerer);
   if(PyDict_DelItem(accessorDict, refconObj)){
     printf("XPLMUnregisterDataref: Couldn't remove the refcon.\n");
   }
@@ -770,18 +855,23 @@ static PyObject *XPLMUnregisterDataAccessorFun(PyObject *self, PyObject *args)
 
 static void dataChanged(void *inRefcon)
 {
-  PyObject *sharedObj = PyDict_GetItem(sharedDict, PyLong_FromVoidPtr(inRefcon));
+  PyObject *refconObj = PyLong_FromVoidPtr(inRefcon);
+  PyObject *sharedObj = PyDict_GetItem(sharedDict, refconObj);
+  Py_DECREF(refconObj);
   if(sharedObj == NULL){
     printf("Shared data callback called with wrong inRefcon: %p\n", inRefcon);
     return;
   }
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(sharedObj, 3), "(O)",
-                                        PySequence_GetItem(sharedObj, 4));
+  PyObject *fun = PySequence_GetItem(sharedObj, 3);
+  PyObject *arg = PySequence_GetItem(sharedObj, 4);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(fun, arg, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
   Py_DECREF(oRes);
+  Py_DECREF(arg);
+  Py_DECREF(fun);
 }
 
 static PyObject *XPLMShareDataFun(PyObject *self, PyObject *args)
@@ -799,7 +889,9 @@ static PyObject *XPLMShareDataFun(PyObject *self, PyObject *args)
   if(res != 1){
     return PyLong_FromLong(res);
   }
-  PyDict_SetItem(sharedDict, PyLong_FromVoidPtr(refcon), args);
+  PyObject *refconObj =  PyLong_FromVoidPtr(refcon);
+  PyDict_SetItem(sharedDict,refconObj, args);
+  Py_DECREF(refconObj);
   return PyLong_FromLong(res);
 }
 
@@ -818,31 +910,44 @@ static PyObject *XPLMUnshareDataFun(PyObject *self, PyObject *args)
     return NULL;
   }
   inDataType = (int)tmpInDataType;
+  PyObject *tmp, *tmp1, *target;
+  target = NULL;
   while(PyDict_Next(sharedDict, &cnt, &pKey, &pVal)){
-    if(PySequence_GetItem(pVal, 0) != selfObj){
+    tmp = PyTuple_GetItem(pVal, 0);
+    if(tmp != selfObj){
       continue;
     }
-    if(strcmp(inDataName, PyUnicode_AsUTF8(PyObject_Str(PySequence_GetItem(pVal, 1)))) != 0){
+    tmp = PyTuple_GetItem(pVal, 1);
+    tmp1 = PyObject_Str(tmp);
+    if(strcmp(inDataName, PyUnicode_AsUTF8(tmp1)) != 0){
+      Py_DECREF(tmp1);
       continue;
     }
-    PyObject *tmp = PyNumber_Long(PySequence_GetItem(pVal, 2));
+    Py_DECREF(tmp1);
+    tmp = PyTuple_GetItem(pVal, 2);
+    tmp1 = PyNumber_Long(tmp);
     if(PyLong_AsLong(tmp) != inDataType){
-      Py_DECREF(tmp);
+      Py_DECREF(tmp1);
       continue;
     }
-    Py_DECREF(tmp);
-    if(PySequence_GetItem(pVal, 3) != callbackObj){
+    Py_DECREF(tmp1);
+    if(PyTuple_GetItem(pVal, 3) != callbackObj){
       continue;
     }
-    if(PySequence_GetItem(pVal, 4) != refconObj){
+    if(PyTuple_GetItem(pVal, 4) != refconObj){
       continue;
     }
-    PyDict_DelItem(sharedDict, pKey);
-    int res = XPLMUnshareData(inDataName, inDataType, dataChanged, PyLong_AsVoidPtr(pKey));
-    return PyLong_FromLong(res);
+    target = pKey;
+    break;
   }
-  printf("Couldn't find the right shared data...\n");
-  return PyLong_FromLong(0);
+  if(target){
+    int res = XPLMUnshareData(inDataName, inDataType, dataChanged, PyLong_AsVoidPtr(target));
+    PyDict_DelItem(sharedDict, target);
+    return PyLong_FromLong(res);
+  }else{
+    printf("Couldn't find the right shared data...\n");
+    return PyLong_FromLong(0);
+  }
 }
 
 
