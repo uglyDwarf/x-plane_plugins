@@ -22,35 +22,47 @@ static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosing
     return 0;
   }
   PyObject *pos = PyList_New(0);
-  PyObject *resObj = PyObject_CallFunction(PySequence_GetItem(callbackInfo, 2), "OiO", pos, inIsLosingControl,
-                                        PySequence_GetItem(callbackInfo, 3));
+  PyObject *fun = PyTuple_GetItem(callbackInfo, 2);
+  PyObject *lc = PyLong_FromLong(inIsLosingControl);
+  PyObject *refcon = PyTuple_GetItem(callbackInfo, 3);
+  PyObject *resObj = PyObject_CallFunctionObjArgs(fun, pos, lc, refcon, NULL);
+  Py_DECREF(lc);
   if(outCameraPosition != NULL){
+    PyObject *elem;
     if(PyList_Size(pos) != 7){
       PyErr_SetString(PyExc_RuntimeError ,"outCameraPosition must contain 7 floats.\n");
       return -1;
     }
-    tmp = PyNumber_Float(PySequence_GetItem(pos, 0));
+    elem = PyList_GetItem(pos, 0);
+    tmp = PyNumber_Float(elem);
     outCameraPosition->x = PyFloat_AsDouble(tmp);
     Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(pos, 1));
+    elem = PyList_GetItem(pos, 1);
+    tmp = PyNumber_Float(elem);
     outCameraPosition->y = PyFloat_AsDouble(tmp);
     Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(pos, 2));
+    elem = PyList_GetItem(pos, 2);
+    tmp = PyNumber_Float(elem);
     outCameraPosition->z = PyFloat_AsDouble(tmp);
     Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(pos, 3));
+    elem = PyList_GetItem(pos, 3);
+    tmp = PyNumber_Float(elem);
     outCameraPosition->pitch = PyFloat_AsDouble(tmp);
     Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(pos, 4));
+    elem = PyList_GetItem(pos, 4);
+    tmp = PyNumber_Float(elem);
     outCameraPosition->heading = PyFloat_AsDouble(tmp);
     Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(pos, 5));
+    elem = PyList_GetItem(pos, 5);
+    tmp = PyNumber_Float(elem);
     outCameraPosition->roll = PyFloat_AsDouble(tmp);
     Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(pos, 6));
+    elem = PyList_GetItem(pos, 6);
+    tmp = PyNumber_Float(elem);
     outCameraPosition->zoom = PyFloat_AsDouble(tmp);
     Py_DECREF(tmp);
   }
+  Py_DECREF(pos);
   tmp = PyNumber_Long(resObj);
   int res = PyLong_AsLong(tmp);
   Py_DECREF(tmp);
@@ -104,13 +116,35 @@ static PyObject *XPLMReadCameraPositionFun(PyObject *self, PyObject *args)
   }
   XPLMCameraPosition_t pos;
   XPLMReadCameraPosition(&pos);
-  PyList_Append(resArray, PyFloat_FromDouble(pos.x));
-  PyList_Append(resArray, PyFloat_FromDouble(pos.y));
-  PyList_Append(resArray, PyFloat_FromDouble(pos.z));
-  PyList_Append(resArray, PyFloat_FromDouble(pos.pitch));
-  PyList_Append(resArray, PyFloat_FromDouble(pos.heading));
-  PyList_Append(resArray, PyFloat_FromDouble(pos.roll));
-  PyList_Append(resArray, PyFloat_FromDouble(pos.zoom));
+  PyObject *tmp;
+  tmp = PyFloat_FromDouble(pos.x);
+  PyList_Append(resArray, tmp);
+  Py_DECREF(tmp);
+  
+  tmp = PyFloat_FromDouble(pos.y);
+  PyList_Append(resArray, tmp);
+  Py_DECREF(tmp);
+  
+  tmp = PyFloat_FromDouble(pos.z);
+  PyList_Append(resArray, tmp);
+  Py_DECREF(tmp);
+  
+  tmp = PyFloat_FromDouble(pos.pitch);
+  PyList_Append(resArray, tmp);
+  Py_DECREF(tmp);
+  
+  tmp = PyFloat_FromDouble(pos.heading);
+  PyList_Append(resArray, tmp);
+  Py_DECREF(tmp);
+  
+  tmp = PyFloat_FromDouble(pos.roll);
+  PyList_Append(resArray, tmp);
+  Py_DECREF(tmp);
+  
+  tmp = PyFloat_FromDouble(pos.zoom);
+  PyList_Append(resArray, tmp);
+  Py_DECREF(tmp);
+
   Py_RETURN_NONE;
 }
 
