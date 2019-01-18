@@ -321,10 +321,23 @@ class PythonInterface(checkBase):
       #Keyboard focus grab check
       XPLMTakeKeyboardFocus(self.winID)
       self.checkVal('XPLMTakeKeyboardFocus', XPLMGetDatai(self.int3Dref), self.winID)
-      self.checkVal('XPLMHasKeyboardFocus 1', XPLMHasKeyboardFocus(self.winID), 1)
+      try:
+         tmp = XPLMHasKeyboardFocus(self.winID)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMHasKeyboardFocus is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMHasKeyboardFocus 1', tmp, 1)
       XPLMTakeKeyboardFocus(self.winIDEx)
-      self.checkVal('XPLMHasKeyboardFocus 2', XPLMHasKeyboardFocus(self.winID), 0)
-      self.checkVal('XPLMHasKeyboardFocus 3', XPLMHasKeyboardFocus(self.winIDEx), 1)
+      try:
+         tmp = XPLMHasKeyboardFocus(self.winID)
+         tmp_ex = XPLMHasKeyboardFocus(self.winIDEx)
+      except RuntimeError as re:
+         if (self.versions[1] >= 300) or (str(re) != 'XPLMHasKeyboardFocus is available only in XPLM300 and up.'):
+            raise
+      else:
+         self.checkVal('XPLMHasKeyboardFocus 2', tmp, 0)
+         self.checkVal('XPLMHasKeyboardFocus 3', tmp_ex, 1)
 
       #is window in front
       self.checkVal('XPLMIsWindowInFront', XPLMIsWindowInFront(self.winIDEx), 0)
