@@ -70,9 +70,11 @@ static PyObject *XPLMGenerateTextureNumbersFun(PyObject *self, PyObject *args)
         printf("Problem setting item!\n");
       }
     }else{
-      if(PyList_Append(outTextureIDs, PyLong_FromLong(array[i]))){
+      PyObject *tmp = PyLong_FromLong(array[i]);
+      if(PyList_Append(outTextureIDs, tmp)){
         printf("Problem appending item!\n");
       }
+      Py_DECREF(tmp);
     }
   }
   free(array);
@@ -164,16 +166,18 @@ static PyObject *XPLMDrawStringFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_TypeError , "inColourRGB must have 3 items");
     return NULL;
   }
+  PyObject *rgbTuple = PySequence_Tuple(rgbList);
   PyObject *r, *g, *b;
-  r = PyNumber_Float(PySequence_GetItem(rgbList, 0));
-  g = PyNumber_Float(PySequence_GetItem(rgbList, 1));
-  b = PyNumber_Float(PySequence_GetItem(rgbList, 2));
+  r = PyNumber_Float(PyTuple_GetItem(rgbTuple, 0));
+  g = PyNumber_Float(PyTuple_GetItem(rgbTuple, 1));
+  b = PyNumber_Float(PyTuple_GetItem(rgbTuple, 2));
   float inColorRGB[3] = {PyFloat_AsDouble(r),
                          PyFloat_AsDouble(g),
                          PyFloat_AsDouble(b)};
   Py_DECREF(r);
   Py_DECREF(g);
   Py_DECREF(b);
+  Py_DECREF(rgbTuple);
   if(wordWrapWidthObj != Py_None){
     PyObject *tmp = PyNumber_Long(wordWrapWidthObj);
     wordWrapWidth = PyLong_AsLong(tmp);
@@ -208,16 +212,18 @@ static PyObject *XPLMDrawNumberFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_TypeError , "inColourRGB must have 3 items");
     return NULL;
   }
+  PyObject *rgbTuple = PySequence_Tuple(rgbList);
   PyObject *r, *g, *b;
-  r = PyNumber_Float(PySequence_GetItem(rgbList, 0));
-  g = PyNumber_Float(PySequence_GetItem(rgbList, 1));
-  b = PyNumber_Float(PySequence_GetItem(rgbList, 2));
+  r = PyNumber_Float(PyTuple_GetItem(rgbTuple, 0));
+  g = PyNumber_Float(PyTuple_GetItem(rgbTuple, 1));
+  b = PyNumber_Float(PyTuple_GetItem(rgbTuple, 2));
   float inColorRGB[3] = {PyFloat_AsDouble(r),
                          PyFloat_AsDouble(g),
                          PyFloat_AsDouble(b)};
   Py_DECREF(r);
   Py_DECREF(g);
   Py_DECREF(b);
+  Py_DECREF(rgbTuple);
 
   XPLMDrawNumber(inColorRGB, inXOffset, inYOffset, inValue, inDigits, inDecimals, inShowSign, inFontID);
 
@@ -237,13 +243,13 @@ static PyObject *XPLMGetFontDimensionsFun(PyObject *self, PyObject *args)
 
   XPLMGetFontDimensions(inFontID, &outCharWidth, &outCharHeight, &outDigitsOnly);
   if(PyList_Check(charWidth)){
-    PyList_Append(charWidth, PyLong_FromLong(outCharWidth));
+    PyList_SetItem(charWidth, 0, PyLong_FromLong(outCharWidth));
   }
   if(PyList_Check(charHeight)){
-    PyList_Append(charHeight, PyLong_FromLong(outCharHeight));
+    PyList_SetItem(charHeight, 0, PyLong_FromLong(outCharHeight));
   }
   if(PyList_Check(digitsOnly)){
-    PyList_Append(digitsOnly, PyLong_FromLong(outDigitsOnly));
+    PyList_SetItem(digitsOnly, 0, PyLong_FromLong(outDigitsOnly));
   }
 
   Py_RETURN_NONE;
