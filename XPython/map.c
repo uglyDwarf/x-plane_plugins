@@ -30,17 +30,21 @@ static inline void mapCallback(int inCallbackIndex, XPLMMapLayerID inLayer, cons
 
   layerObj = PyLong_FromVoidPtr(inLayer);
   projectionObj = PyLong_FromVoidPtr(projection);
-  refconObj = PySequence_GetItem(callbackInfo, 9);
-  callback = PySequence_GetItem(callbackInfo, inCallbackIndex);
+  refconObj = PyTuple_GetItem(callbackInfo, 9);
+  callback = PyTuple_GetItem(callbackInfo, inCallbackIndex);
   
   boundsObj = PyTuple_New(4);
+  //Steals the ref!
   PyTuple_SET_ITEM(boundsObj, 0, PyFloat_FromDouble((double)inMapBoundsLeftTopRightBottom[0]));
   PyTuple_SET_ITEM(boundsObj, 1, PyFloat_FromDouble((double)inMapBoundsLeftTopRightBottom[1]));
   PyTuple_SET_ITEM(boundsObj, 2, PyFloat_FromDouble((double)inMapBoundsLeftTopRightBottom[2]));
   PyTuple_SET_ITEM(boundsObj, 3, PyFloat_FromDouble((double)inMapBoundsLeftTopRightBottom[3]));
 
-  PyObject *pRes = PyObject_CallFunction(callback, "(OOffiOO)", layerObj, boundsObj, zoomRatio,
-                                         mapUnitsPerUserInterfaceUnit, mapStyle, projectionObj, refconObj);
+  PyObject *zoomRatioObj = PyFloat_FromDouble(zoomRatio);
+  PyObject *mapUnitsPerUserInterfaceUnitObj = PyFloat_FromDouble(mapUnitsPerUserInterfaceUnit);
+  PyObject *mapStyleObj = PyFloat_FromDouble(mapStyle);
+  PyObject *pRes = PyObject_CallFunctionObjArgs(callback, layerObj, boundsObj, zoomRatioObj,
+                                         mapUnitsPerUserInterfaceUnitObj, mapStyleObj, projectionObj, refconObj,NULL);
   if(!pRes){
     printf("MapCallback callback failed.\n");
     PyObject *err = PyErr_Occurred();
@@ -48,6 +52,9 @@ static inline void mapCallback(int inCallbackIndex, XPLMMapLayerID inLayer, cons
       PyErr_Print();
     }
   }
+  Py_DECREF(zoomRatioObj);
+  Py_DECREF(mapUnitsPerUserInterfaceUnitObj);
+  Py_DECREF(mapStyleObj);
   Py_DECREF(boundsObj);
   Py_DECREF(layerObj);
   Py_DECREF(projectionObj);
@@ -68,8 +75,8 @@ static inline void mapPrepareCacheCallback(XPLMMapLayerID inLayer, const float *
 
   layerObj = PyLong_FromVoidPtr(inLayer);
   projectionObj = PyLong_FromVoidPtr(projection);
-  refconObj = PySequence_GetItem(callbackInfo, 9);
-  callback = PySequence_GetItem(callbackInfo, 3);
+  refconObj = PyTuple_GetItem(callbackInfo, 9);
+  callback = PyTuple_GetItem(callbackInfo, 3);
   
   boundsObj = PyTuple_New(4);
   PyTuple_SET_ITEM(boundsObj, 0, PyFloat_FromDouble((double)inMapBoundsLeftTopRightBottom[0]));
@@ -77,7 +84,7 @@ static inline void mapPrepareCacheCallback(XPLMMapLayerID inLayer, const float *
   PyTuple_SET_ITEM(boundsObj, 2, PyFloat_FromDouble((double)inMapBoundsLeftTopRightBottom[2]));
   PyTuple_SET_ITEM(boundsObj, 3, PyFloat_FromDouble((double)inMapBoundsLeftTopRightBottom[3]));
 
-  PyObject *pRes = PyObject_CallFunction(callback, "(OOOO)", layerObj, boundsObj, projectionObj, refconObj);
+  PyObject *pRes = PyObject_CallFunctionObjArgs(callback, layerObj, boundsObj, projectionObj, refconObj, NULL);
   if(!pRes){
     printf("MapPrepareCacheCallback callback failed.\n");
     PyObject *err = PyErr_Occurred();
@@ -103,10 +110,10 @@ static inline void mapWillBeDeletedCallback(XPLMMapLayerID inLayer, void *inRefc
   }
 
   layerObj = PyLong_FromVoidPtr(inLayer);
-  refconObj = PySequence_GetItem(callbackInfo, 9);
-  callback = PySequence_GetItem(callbackInfo, 2);
+  refconObj = PyTuple_GetItem(callbackInfo, 9);
+  callback = PyTuple_GetItem(callbackInfo, 2);
   
-  PyObject *pRes = PyObject_CallFunction(callback, "(OO)", layerObj, refconObj);
+  PyObject *pRes = PyObject_CallFunctionObjArgs(callback, layerObj, refconObj, NULL);
   if(!pRes){
     printf("MapWillBeDeletedCallback callback failed.\n");
     PyObject *err = PyErr_Occurred();
@@ -129,10 +136,10 @@ static inline void mapCreatedCallback(const char *mapIdentifier, void *inRefcon)
     return;
   }
   mapIdentifierObj = PyUnicode_DecodeUTF8(mapIdentifier, strlen(mapIdentifier), NULL);
-  callback = PySequence_GetItem(callbackInfo, 0);
-  refconObj = PySequence_GetItem(callbackInfo, 1);
+  callback = PyTuple_GetItem(callbackInfo, 0);
+  refconObj = PyTuple_GetItem(callbackInfo, 1);
   
-  PyObject *pRes = PyObject_CallFunction(callback, "(OO)", mapIdentifierObj, refconObj);
+  PyObject *pRes = PyObject_CallFunctionObjArgs(callback, mapIdentifierObj, refconObj, NULL);
   if(!pRes){
     printf("mapCreatedCallback callback failed.\n");
     PyObject *err = PyErr_Occurred();
@@ -182,17 +189,19 @@ static PyObject *XPLMCreateMapLayerFun(PyObject *self, PyObject *args)
     return NULL;
   }
 
+  PyObject *paramsTuple = PySequence_Tuple(params);
+
   void *ref = (void *)++mapCntr;
   inParams.structSize = sizeof(inParams);
-  inParams.mapToCreateLayerIn = PyUnicode_AsUTF8(PySequence_GetItem(params, 0));
-  inParams.layerType = PyLong_AsLong(PySequence_GetItem(params, 1));
+  inParams.mapToCreateLayerIn = PyUnicode_AsUTF8(PyTuple_GetItem(paramsTuple, 0));
+  inParams.layerType = PyLong_AsLong(PyTuple_GetItem(paramsTuple, 1));
   inParams.willBeDeletedCallback = mapWillBeDeletedCallback;
   inParams.prepCacheCallback = mapPrepareCacheCallback;
   inParams.drawCallback = mapDrawingCallback;
   inParams.iconCallback = mapIconDrawingCallback;
   inParams.labelCallback = mapLabelDrawingCallback;
-  inParams.showUiToggle = PyLong_AsLong(PySequence_GetItem(params, 7));
-  inParams.layerName = PyUnicode_AsUTF8(PySequence_GetItem(params, 8));
+  inParams.showUiToggle = PyLong_AsLong(PyTuple_GetItem(paramsTuple, 7));
+  inParams.layerName = PyUnicode_AsUTF8(PyTuple_GetItem(paramsTuple, 8));
   inParams.refcon = ref;
 
   XPLMMapLayerID res = XPLMCreateMapLayer_ptr(&inParams);
@@ -201,9 +210,10 @@ static PyObject *XPLMCreateMapLayerFun(PyObject *self, PyObject *args)
   }
   PyObject *resObj = PyLong_FromVoidPtr(res);
   PyObject *refObj = PyLong_FromVoidPtr(ref);
-  PyDict_SetItem(mapDict, refObj, params);
+  PyDict_SetItem(mapDict, refObj, paramsTuple);
   PyDict_SetItem(mapRefDict, resObj, refObj);
-
+  Py_DECREF(paramsTuple);
+  Py_DECREF(refObj);
   return resObj;
 }
 
@@ -239,7 +249,9 @@ static PyObject *XPLMRegisterMapCreationHookFun(PyObject *self, PyObject *args)
     return NULL;
   }
   void *refcon = (void *)++mapCreateCntr;
-  PyDict_SetItem(mapCreateDict, PyLong_FromVoidPtr(refcon), args);
+  PyObject *refconObj = PyLong_FromVoidPtr(refcon);
+  PyDict_SetItem(mapCreateDict, refconObj, args);
+  Py_DECREF(refconObj);
   XPLMRegisterMapCreationHook_ptr(mapCreatedCallback, refcon);
   Py_RETURN_NONE;
 }
@@ -321,10 +333,10 @@ static PyObject *XPLMMapProjectFun(PyObject *self, PyObject *args)
   float outX, outY;
   XPLMMapProject_ptr(projection, latitude, longitude, &outX, &outY);
   if(outXObj != Py_None){
-    PyList_Append(outXObj, PyFloat_FromDouble(outX));
+    PyList_SetItem(outXObj, 0, PyFloat_FromDouble(outX));
   }
   if(outYObj != Py_None){
-    PyList_Append(outYObj, PyFloat_FromDouble(outY));
+    PyList_SetItem(outYObj, 0, PyFloat_FromDouble(outY));
   }
   Py_RETURN_NONE;
 }
@@ -346,10 +358,10 @@ static PyObject *XPLMMapUnprojectFun(PyObject *self, PyObject *args)
   double outLongitude, outLatitude;
   XPLMMapUnproject_ptr(projection, mapX, mapY, &outLatitude, &outLongitude);
   if(outLatitudeObj != Py_None){
-    PyList_Append(outLatitudeObj, PyFloat_FromDouble(outLatitude));
+    PyList_SetItem(outLatitudeObj, 0, PyFloat_FromDouble(outLatitude));
   }
   if(outLongitudeObj != Py_None){
-    PyList_Append(outLongitudeObj, PyFloat_FromDouble(outLongitude));
+    PyList_SetItem(outLongitudeObj, 0, PyFloat_FromDouble(outLongitude));
   }
   Py_RETURN_NONE;
 }
