@@ -154,7 +154,7 @@ static PyObject *XPLMDrawStringFun(PyObject *self, PyObject *args)
   char *inChar;
   PyObject *wordWrapWidthObj;
   int wordWrapWidth;
-  int *inWordWrapWidth;
+  int *inWordWrapWidth = NULL;
   int inFontID;
 
   if(!PyArg_ParseTuple(args, "OiisOi", &rgbList, &inXOffset, &inYOffset, &inCharC, &wordWrapWidthObj, &inFontID)){
@@ -174,13 +174,13 @@ static PyObject *XPLMDrawStringFun(PyObject *self, PyObject *args)
   Py_DECREF(r);
   Py_DECREF(g);
   Py_DECREF(b);
-  if(wordWrapWidthObj == Py_None){
-    inWordWrapWidth = NULL;
-  }else{
-    inWordWrapWidth = &wordWrapWidth;
+  if(wordWrapWidthObj != Py_None){
     PyObject *tmp = PyNumber_Long(wordWrapWidthObj);
     wordWrapWidth = PyLong_AsLong(tmp);
     Py_DECREF(tmp);
+    if(wordWrapWidth != 0){
+      inWordWrapWidth = &wordWrapWidth;
+    }
   }
   inChar = strdup(inCharC);
   XPLMDrawString(inColorRGB, inXOffset, inYOffset, inChar, inWordWrapWidth, inFontID);
