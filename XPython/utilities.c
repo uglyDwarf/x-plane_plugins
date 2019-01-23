@@ -20,15 +20,16 @@ static void error_callback(const char *inMessage)
   // for now, pass to all registered
   Py_ssize_t cnt = 0;
   PyObject *pKey = NULL, *pVal = NULL;
+  PyObject *msg = PyUnicode_DecodeUTF8(inMessage, strlen(inMessage), NULL);
   while(PyDict_Next(errCallbacks, &cnt, &pKey, &pVal)){
-    PyObject *oRes = PyObject_CallFunction(pVal, "s",
-                                        inMessage);
+    PyObject *oRes = PyObject_CallFunctionObjArgs(pVal, msg, NULL);
     PyObject *err = PyErr_Occurred();
     if(err){
       PyErr_Print();
     }
     Py_XDECREF(oRes);
   }
+  Py_DECREF(msg);
 }
 
 
@@ -137,6 +138,7 @@ static PyObject *XPLMGetDirectorySeparatorFun(PyObject *self, PyObject *args)
   return PyUnicode_DecodeUTF8(res, 1, NULL);
 }
 
+
 static PyObject *XPLMExtractFileAndPathFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -171,9 +173,12 @@ static PyObject *XPLMGetDirectoryContentsFun(PyObject *self, PyObject *args)
                                      outIndices, inIndexCount, &outTotalFiles, &outReturnedFiles);
   
   PyObject *namesList = PyList_New(0);
+  PyObject *tmp;
   for(int i = 0; i < outReturnedFiles; ++i){
     if(outIndices[i] != NULL){
-      PyList_Append(namesList, PyUnicode_DecodeUTF8(outIndices[i], strlen(outIndices[i]), NULL));
+      tmp = PyUnicode_DecodeUTF8(outIndices[i], strlen(outIndices[i]), NULL);
+      PyList_Append(namesList, tmp);
+      Py_DECREF(tmp);
     }else{
       break;
     }
@@ -294,8 +299,11 @@ static int commandCallback(XPLMCommandRef inCommand, XPLMCommandPhase inPhase, v
     return -1;
   }
   //0 - self, 1 - callback, 2 - refcon
-  PyObject *oRes = PyObject_CallFunction(PySequence_GetItem(pCbk, 2), "(OiO)",
-                                        PyLong_FromVoidPtr(inCommand), inPhase, PySequence_GetItem(pCbk, 4));
+  PyObject *arg1 = PyLong_FromVoidPtr(inCommand);
+  PyObject *arg2 = PyLong_FromLong(inPhase);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(PyTuple_GetItem(pCbk, 2), arg1, arg2, PyTuple_GetItem(pCbk, 4), NULL);
+  Py_DECREF(arg1);
+  Py_DECREF(arg2);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
@@ -380,8 +388,12 @@ static PyObject *XPLMRegisterCommandHandlerFun(PyObject *self, PyObject *args)
   }
   intptr_t refcon = commandCallbackCntr++;
   XPLMRegisterCommandHandler(PyLong_AsVoidPtr(inCommand), commandCallback, inBefore, (void *)refcon);
-  PyDict_SetItem(commandRefcons, PyLong_FromVoidPtr((void *)inRefcon), PyLong_FromVoidPtr((void *)refcon));
-  PyDict_SetItem(commandCallbacks, PyLong_FromVoidPtr((void *)refcon), args);
+  PyObject *rc = PyLong_FromVoidPtr((void *)refcon);
+  PyObject *irc = PyLong_FromVoidPtr((void *)inRefcon);
+  PyDict_SetItem(commandRefcons, irc, rc);
+  PyDict_SetItem(commandCallbacks, rc, args);
+  Py_DECREF(rc);
+  Py_DECREF(irc);
   Py_RETURN_NONE;
 }
 
