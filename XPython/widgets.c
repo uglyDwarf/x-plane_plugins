@@ -24,6 +24,9 @@ int widgetCallback(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inPa
   PyObject *callbackList = PyDict_GetItem(widgetCallbackDict, widget);
   if(callbackList == NULL){
     printf("Couldn't find the callback list for widget ID %p.\n", inWidget);
+    Py_DECREF(widget);
+    Py_DECREF(param1);
+    Py_DECREF(param2);
     return 0;
   }
 
@@ -38,7 +41,9 @@ int widgetCallback(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inPa
       XPWidgetFunc_t cFunc = (XPWidgetFunc_t)PyLong_AsVoidPtr(callback);
       res = cFunc(inMessage, inWidget, inParam1, inParam2);
     }else{
-      PyObject *resObj = PyObject_CallFunction(callback, "iOOO", inMessage, widget, param1, param2);
+      PyObject *inMessageObj = PyLong_FromLong(inMessage);
+      PyObject *resObj = PyObject_CallFunctionObjArgs(callback, inMessageObj, widget, param1, param2, NULL);
+      Py_DECREF(inMessageObj);
       if(!resObj){
         PyErr_Print();
         break;
@@ -112,6 +117,10 @@ static PyObject *XPDestroyWidgetFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPDestroyWidget(PyLong_AsVoidPtr(widget), inDestroyChildren);
+  PyObject *w = PyDict_GetItem(widgetCallbackDict, widget);
+  if(w){
+    PyDict_DelItem(widgetCallbackDict, widget);
+  }
   Py_RETURN_NONE;
 }
 
@@ -247,7 +256,7 @@ static PyObject *XPGetWidgetGeometryFun(PyObject *self, PyObject *args)
   (void) self;
   PyObject *widget, *left, *top, *right, *bottom;
   bool lists;
-  if(PySequence_Size(args) > 1){
+  if(PyTuple_Size(args) > 1){
     lists = true;
     if(!PyArg_ParseTuple(args, "OOOOO", &widget, &left, &top, &right, &bottom)){
       return NULL;
@@ -262,16 +271,16 @@ static PyObject *XPGetWidgetGeometryFun(PyObject *self, PyObject *args)
   XPGetWidgetGeometry(PyLong_AsVoidPtr(widget), &outLeft, &outTop, &outRight, &outBottom);
   if(lists){
       if(left != Py_None){
-        PyList_Append(left, PyLong_FromLong(outLeft));
+        PyList_SetItem(left, 0, PyLong_FromLong(outLeft));
       }
       if(top != Py_None){
-        PyList_Append(top, PyLong_FromLong(outTop));
+        PyList_SetItem(top, 0, PyLong_FromLong(outTop));
       }
       if(right != Py_None){
-        PyList_Append(right, PyLong_FromLong(outRight));
+        PyList_SetItem(right, 0, PyLong_FromLong(outRight));
       }
       if(bottom != Py_None){
-        PyList_Append(bottom, PyLong_FromLong(outBottom));
+        PyList_SetItem(bottom, 0, PyLong_FromLong(outBottom));
       }
       Py_RETURN_NONE;
   }else{
@@ -318,16 +327,16 @@ static PyObject *XPGetWidgetExposedGeometryFun(PyObject *self, PyObject *args)
   int outLeft, outTop, outRight, outBottom;
   XPGetWidgetExposedGeometry(PyLong_AsVoidPtr(widget), &outLeft, &outTop, &outRight, &outBottom);
   if(left != Py_None){
-    PyList_Append(left, PyLong_FromLong(outLeft));
+    PyList_SetItem(left, 0, PyLong_FromLong(outLeft));
   }
   if(top != Py_None){
-    PyList_Append(top, PyLong_FromLong(outTop));
+    PyList_SetItem(top, 0, PyLong_FromLong(outTop));
   }
   if(right != Py_None){
-    PyList_Append(right, PyLong_FromLong(outRight));
+    PyList_SetItem(right, 0, PyLong_FromLong(outRight));
   }
   if(bottom != Py_None){
-    PyList_Append(bottom, PyLong_FromLong(outBottom));
+    PyList_SetItem(bottom, 0, PyLong_FromLong(outBottom));
   }
   Py_RETURN_NONE;
 }
@@ -455,7 +464,7 @@ static PyObject *XPAddWidgetCallbackFun(PyObject *self, PyObject *args)
   PyObject *current = PyDict_GetItem(widgetCallbackDict, widget);
   if(current == NULL){
     current = PyList_New(0);
-    PyList_Insert(current, 0, callback);
+    PyList_Append(current, callback);
     PyDict_SetItem(widgetCallbackDict, widget, current);
     //register only the first time
     XPAddWidgetCallback(PyLong_AsVoidPtr(widget), widgetCallback);
