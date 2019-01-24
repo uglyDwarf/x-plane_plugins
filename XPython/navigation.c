@@ -72,7 +72,9 @@ static PyObject *XPLMFindNavAidFun(PyObject *self, PyObject *args)
     inLon = &lon;
   }
   if(objFreq != Py_None){
-    frequency = PyLong_AsLong(PyNumber_Long(objFreq));
+    tmp = PyNumber_Long(objFreq);
+    frequency = PyLong_AsLong(tmp);
+    Py_DECREF(tmp);
     inFrequency = &frequency;
   }
   return PyLong_FromLong(XPLMFindNavAid(inNameFragment, inIDFragment, inLat, inLon, inFrequency, inType));
@@ -104,31 +106,31 @@ static PyObject *XPLMGetNavAidInfoFun(PyObject *self, PyObject *args)
   XPLMGetNavAidInfo(inRef, &outType, &outLatitude, &outLongitude, &outHeight, &outFrequency, &outHeading, 
                     outID, outName, outReg);
   if(type != Py_None){
-    PyList_Append(type, PyLong_FromLong(outType));
+    PyList_SetItem(type, 0, PyLong_FromLong(outType));
   }
   if(latitude != Py_None){
-    PyList_Append(latitude, PyFloat_FromDouble(outLatitude));
+    PyList_SetItem(latitude, 0, PyFloat_FromDouble(outLatitude));
   }
   if(longitude != Py_None){
-    PyList_Append(longitude, PyFloat_FromDouble(outLongitude));
+    PyList_SetItem(longitude, 0, PyFloat_FromDouble(outLongitude));
   }
   if(height != Py_None){
-    PyList_Append(height, PyFloat_FromDouble(outHeight));
+    PyList_SetItem(height, 0, PyFloat_FromDouble(outHeight));
   }
   if(frequency != Py_None){
-    PyList_Append(frequency, PyLong_FromLong(outFrequency));
+    PyList_SetItem(frequency, 0, PyLong_FromLong(outFrequency));
   }
   if(heading != Py_None){
-    PyList_Append(heading, PyFloat_FromDouble(outHeading));
+    PyList_SetItem(heading, 0, PyFloat_FromDouble(outHeading));
   }
   if(id != Py_None){
-    PyList_Append(id, PyUnicode_DecodeUTF8(outID, strlen(outID), NULL));
+    PyList_SetItem(id, 0, PyUnicode_DecodeUTF8(outID, strlen(outID), NULL));
   }
   if(name != Py_None){
-    PyList_Append(name, PyUnicode_DecodeUTF8(outName, strlen(outName), NULL));
+    PyList_SetItem(name, 0, PyUnicode_DecodeUTF8(outName, strlen(outName), NULL));
   }
   if(reg != Py_None){
-    PyList_Append(reg, PyUnicode_DecodeUTF8(outReg, strlen(outReg), NULL));
+    PyList_SetItem(reg, 0, PyUnicode_DecodeUTF8(outReg, strlen(outReg), NULL));
   }
   Py_RETURN_NONE;
 }
@@ -197,22 +199,22 @@ static PyObject *XPLMGetFMSEntryInfoFun(PyObject *self, PyObject *args)
 
   XPLMGetFMSEntryInfo(inIndex, &outType, outID, &outRef, &outAltitude, &outLat, &outLon);
   if(type != Py_None){
-    PyList_Append(type, PyLong_FromLong(outType));
+    PyList_SetItem(type, 0, PyLong_FromLong(outType));
   }
   if(id != Py_None){
-    PyList_Append(id, PyUnicode_DecodeUTF8(outID, strlen(outID), NULL));
+    PyList_SetItem(id, 0, PyUnicode_DecodeUTF8(outID, strlen(outID), NULL));
   }
   if(ref != Py_None){
-    PyList_Append(ref, PyLong_FromLong(outRef));
+    PyList_SetItem(ref, 0, PyLong_FromLong(outRef));
   }
   if(altitude != Py_None){
-    PyList_Append(altitude, PyLong_FromLong(outAltitude));
+    PyList_SetItem(altitude, 0, PyLong_FromLong(outAltitude));
   }
   if(lat != Py_None){
-    PyList_Append(lat, PyFloat_FromDouble(outLat));
+    PyList_SetItem(lat, 0, PyFloat_FromDouble(outLat));
   }
   if(lon != Py_None){
-    PyList_Append(lon, PyFloat_FromDouble(outLon));
+    PyList_SetItem(lon, 0, PyFloat_FromDouble(outLon));
   }
   Py_RETURN_NONE;
 }
@@ -330,8 +332,6 @@ PyInit_XPLMNavigation(void)
     PyModule_AddIntConstant(mod, "xplm_Nav_LatLon", xplm_Nav_LatLon);
     
     PyModule_AddIntConstant(mod, "XPLM_NAV_NOT_FOUND", XPLM_NAV_NOT_FOUND);
-
-
   }
 
   return mod;
