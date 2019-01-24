@@ -350,35 +350,37 @@ PLUGIN_API int XPluginEnable(void)
 
 PLUGIN_API void XPluginDisable(void)
 {
-  PyObject *pKey, *pVal;
+  PyObject *pKey, *pVal, *pRes;
   Py_ssize_t pos = 0;
 
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
-    PyObject_CallMethod(pVal, "XPluginDisable", NULL);
+    pRes = PyObject_CallMethod(pVal, "XPluginDisable", NULL);
     PyObject *err = PyErr_Occurred();
     if(err){
       fprintf(logFile, "Error occured during the XPluginDisable call:\n");
       PyErr_Print();
     }
+    Py_XDECREF(pRes);
   }
 
 }
 
 PLUGIN_API void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, void *inParam)
 {
-  PyObject *pKey, *pVal;
+  PyObject *pKey, *pVal, *pRes;
   Py_ssize_t pos = 0;
   PyObject *param = Py_None;
   if(inParam != NULL){
     param = (PyObject *)inParam;
   }
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
-    PyObject_CallMethod(pVal, "XPluginReceiveMessage", "ilO", inFromWho, inMessage, param);
+    pRes = PyObject_CallMethod(pVal, "XPluginReceiveMessage", "ilO", inFromWho, inMessage, param);
     PyObject *err = PyErr_Occurred();
     if(err){
       fprintf(logFile, "Error occured during the XPluginReceiveMessage call:\n");
       PyErr_Print();
     }
+    Py_XDECREF(pRes);
   }
 }
 
