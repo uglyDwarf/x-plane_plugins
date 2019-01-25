@@ -12,6 +12,7 @@
 #include <Widgets/XPWidgetDefs.h>
 #include <Widgets/XPWidgets.h>
 #include "plugin_dl.h"
+#include "utils.h"
 
 PyObject *widgetCallbackDict;
 
@@ -270,18 +271,10 @@ static PyObject *XPGetWidgetGeometryFun(PyObject *self, PyObject *args)
   int outLeft, outTop, outRight, outBottom;
   XPGetWidgetGeometry(PyLong_AsVoidPtr(widget), &outLeft, &outTop, &outRight, &outBottom);
   if(lists){
-      if(left != Py_None){
-        PyList_SetItem(left, 0, PyLong_FromLong(outLeft));
-      }
-      if(top != Py_None){
-        PyList_SetItem(top, 0, PyLong_FromLong(outTop));
-      }
-      if(right != Py_None){
-        PyList_SetItem(right, 0, PyLong_FromLong(outRight));
-      }
-      if(bottom != Py_None){
-        PyList_SetItem(bottom, 0, PyLong_FromLong(outBottom));
-      }
+      objToList(PyLong_FromLong(outLeft), left);
+      objToList(PyLong_FromLong(outTop), top);
+      objToList(PyLong_FromLong(outRight), right);
+      objToList(PyLong_FromLong(outBottom), bottom);
       Py_RETURN_NONE;
   }else{
     PyObject *res = PyList_New(4);
@@ -326,18 +319,10 @@ static PyObject *XPGetWidgetExposedGeometryFun(PyObject *self, PyObject *args)
   }
   int outLeft, outTop, outRight, outBottom;
   XPGetWidgetExposedGeometry(PyLong_AsVoidPtr(widget), &outLeft, &outTop, &outRight, &outBottom);
-  if(left != Py_None){
-    PyList_SetItem(left, 0, PyLong_FromLong(outLeft));
-  }
-  if(top != Py_None){
-    PyList_SetItem(top, 0, PyLong_FromLong(outTop));
-  }
-  if(right != Py_None){
-    PyList_SetItem(right, 0, PyLong_FromLong(outRight));
-  }
-  if(bottom != Py_None){
-    PyList_SetItem(bottom, 0, PyLong_FromLong(outBottom));
-  }
+  objToList(PyLong_FromLong(outLeft), left);
+  objToList(PyLong_FromLong(outTop), top);
+  objToList(PyLong_FromLong(outRight), right);
+  objToList(PyLong_FromLong(outBottom), bottom);
   Py_RETURN_NONE;
 }
 
