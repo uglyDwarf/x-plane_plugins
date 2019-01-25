@@ -58,7 +58,7 @@ class PythonInterface(checkBase):
       self.checkVal('XPLMCommandButtonRelease state doesn\'t seem be passed correctly.', XPLMGetDatai(state), 0)
 
       tmp = "C"
-      res = XPLMGetVirtualKeyDescription(tmp)
+      res = XPLMGetVirtualKeyDescription(ord(tmp))
       self.checkVal('XPLMGetVirtualKeyDescription doesn\'t pass the string correctly.',
                     self.getString(string), "VK{0}".format(ord(tmp[0])))
 

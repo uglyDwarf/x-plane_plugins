@@ -332,12 +332,8 @@ static PyObject *XPLMMapProjectFun(PyObject *self, PyObject *args)
   XPLMMapProjectionID projection = PyLong_AsVoidPtr(projectionObj);
   float outX, outY;
   XPLMMapProject_ptr(projection, latitude, longitude, &outX, &outY);
-  if(outXObj != Py_None){
-    PyList_SetItem(outXObj, 0, PyFloat_FromDouble(outX));
-  }
-  if(outYObj != Py_None){
-    PyList_SetItem(outYObj, 0, PyFloat_FromDouble(outY));
-  }
+  objToList(PyFloat_FromDouble(outX), outXObj);
+  objToList(PyFloat_FromDouble(outY), outYObj);
   Py_RETURN_NONE;
 }
 
@@ -357,12 +353,8 @@ static PyObject *XPLMMapUnprojectFun(PyObject *self, PyObject *args)
   XPLMMapProjectionID projection = PyLong_AsVoidPtr(projectionObj);
   double outLongitude, outLatitude;
   XPLMMapUnproject_ptr(projection, mapX, mapY, &outLatitude, &outLongitude);
-  if(outLatitudeObj != Py_None){
-    PyList_SetItem(outLatitudeObj, 0, PyFloat_FromDouble(outLatitude));
-  }
-  if(outLongitudeObj != Py_None){
-    PyList_SetItem(outLongitudeObj, 0, PyFloat_FromDouble(outLongitude));
-  }
+  objToList(PyFloat_FromDouble(outLatitude), outLatitudeObj);
+  objToList(PyFloat_FromDouble(outLongitude), outLongitudeObj);
   Py_RETURN_NONE;
 }
 
