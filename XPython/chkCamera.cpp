@@ -36,7 +36,7 @@ void XPLMControlCamera(XPLMCameraControlDuration inHowLong, XPLMCameraControl_f 
 {
   XPLMCameraPosition_t pos;
   duration = inHowLong;
-  int0 = inControlFunc(&pos, inHowLong, inRefcon);
+  int0 = inControlFunc(&pos, 0, inRefcon);
   x = pos.x;
   y = pos.y;
   z = pos.z;
@@ -44,6 +44,7 @@ void XPLMControlCamera(XPLMCameraControlDuration inHowLong, XPLMCameraControl_f 
   heading = pos.heading;
   roll = pos.roll;
   zoom = pos.zoom;
+  int0 = inControlFunc(NULL, inHowLong, inRefcon);
 }
 
 void XPLMDontControlCamera(void)

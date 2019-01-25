@@ -41,8 +41,12 @@ static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosing
   PyObject *refcon = PyTuple_GetItem(callbackInfo, 3);
   PyObject *resObj = PyObject_CallFunctionObjArgs(fun, pos, lc, refcon, NULL);
   Py_DECREF(lc);
+    PyObject *err = PyErr_Occurred();
+    if(err){
+      PyErr_Print();
+    }
 
-  if(outCameraPosition != NULL){
+  if((outCameraPosition != NULL) && !inIsLosingControl){
     PyObject *elem;
     if(PyList_Size(pos) != 7){
       PyErr_SetString(PyExc_RuntimeError ,"outCameraPosition must contain 7 floats.\n");
@@ -80,7 +84,7 @@ static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosing
   Py_DECREF(pos);
   tmp = PyNumber_Long(resObj);
   int res = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
+  Py_XDECREF(tmp);
   Py_XDECREF(resObj);
   return res;
 }

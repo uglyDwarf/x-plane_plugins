@@ -37,7 +37,7 @@ class PythonInterface(checkBase):
       self.pos = [1517, 1518, 1519, 1520, 1521, 1522, 1523]
       self.cbkRetVal = 1524
       XPLMControlCamera(self, self.howLong, self.camCbk, self.pos)
-      self.checkVal('Camera callback not called', self.cbkCalled, 1)
+      self.checkVal('Camera callback not called', self.cbkCalled, 3)
       self.checkVal('Camera callback return value incorrect', XPLMGetDatai(self.int0Dref), self.cbkRetVal)
 
       XPLMDontControlCamera()
@@ -55,9 +55,12 @@ class PythonInterface(checkBase):
       return 1.0
 
    def cameraCallback(self, outCameraPosition, inIsLosingControl, inRefcon):
-      self.cbkCalled = 1;
-      outCameraPosition[:] = inRefcon;
-      self.checkVal('cameraCallback\'s inIsLosingControl is not passed correctly', inIsLosingControl, self.howLong)
+      self.cbkCalled |= 1;
+      if not inIsLosingControl:
+         self.cbkCalled |= 2;
+         outCameraPosition[:] = inRefcon
+      else:
+         self.checkVal('cameraCallback\'s inIsLosingControl is not passed correctly', inIsLosingControl, self.howLong)
       return self.cbkRetVal
 
  
