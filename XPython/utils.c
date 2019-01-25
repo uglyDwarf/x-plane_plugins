@@ -14,4 +14,18 @@ void dbg(const char *msg){
   }
 }
 
+bool objToList(PyObject *item, PyObject *list)
+{
+  if(!PyList_Check(list)){
+    return false;
+  }
+  if(PyList_Size(list) > 0){
+    PyList_SetItem(list, 0, item);
+  }else{
+    PyList_Append(list, item);
+    Py_DECREF(item);
+  }
+  return true;
+}
+
 

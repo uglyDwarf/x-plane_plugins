@@ -60,7 +60,7 @@ lin.xpl : CPPFLAGS+= ${XPLM_CPPFLAGS}
 lin.xpl : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic -ldl -g -fvisibility=hidden
 lin.xpl : plugin.o defs.o display.o utils.o graphics.o data_access.o utilities.o scenery.o menus.o \
           navigation.o plugins.o planes.o processing.o camera.o widget_defs.o widgets.o \
-          standard_widgets.o uigraphics.o widgetutils.o instance.o map.o plugin_dl.o sb.o
+          standard_widgets.o uigraphics.o widgetutils.o instance.o map.o plugin_dl.o sb.o utils.o
 	$(CC) $(CXXFLAGS) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 valgrind : main_301 lin.xpl
