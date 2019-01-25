@@ -242,15 +242,9 @@ static PyObject *XPLMGetFontDimensionsFun(PyObject *self, PyObject *args)
   int outCharWidth, outCharHeight, outDigitsOnly;
 
   XPLMGetFontDimensions(inFontID, &outCharWidth, &outCharHeight, &outDigitsOnly);
-  if(PyList_Check(charWidth)){
-    PyList_SetItem(charWidth, 0, PyLong_FromLong(outCharWidth));
-  }
-  if(PyList_Check(charHeight)){
-    PyList_SetItem(charHeight, 0, PyLong_FromLong(outCharHeight));
-  }
-  if(PyList_Check(digitsOnly)){
-    PyList_SetItem(digitsOnly, 0, PyLong_FromLong(outDigitsOnly));
-  }
+  objToList(PyLong_FromLong(outCharWidth), charWidth);
+  objToList(PyLong_FromLong(outCharHeight), charHeight);
+  objToList(PyLong_FromLong(outDigitsOnly), digitsOnly);
 
   Py_RETURN_NONE;
 }
