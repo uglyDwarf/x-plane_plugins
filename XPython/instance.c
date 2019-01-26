@@ -30,12 +30,13 @@ static PyObject *XPLMCreateInstanceFun(PyObject *self, PyObject *args)
   datarefs[len] = NULL;
 
   Py_ssize_t i;
+  PyObject *drefListTuple = PySequence_Tuple(drefList);
   for(i = 0; i < len; ++i){
-    PyObject *s = PyObject_Str(PySequence_GetItem(drefList, i));
+    PyObject *s = PyObject_Str(PyTuple_GetItem(drefList, i));
     datarefs[i] = PyUnicode_AsUTF8(s);
     Py_DECREF(s);
   }
-
+  Py_DECREF(drefListTuple);
   XPLMObjectRef inObj = PyLong_AsVoidPtr(obj);
 
   XPLMInstanceRef res = XPLMCreateInstance_ptr(inObj, datarefs);
@@ -61,7 +62,7 @@ static PyObject *XPLMDestroyInstanceFun(PyObject *self, PyObject *args)
 
 inline static float getFloat(PyObject *seq, Py_ssize_t i)
 {
-  PyObject *tmp = PyNumber_Float(PySequence_GetItem(seq, i));
+  PyObject *tmp = PyNumber_Float(PyTuple_GetItem(seq, i));
   float val = PyFloat_AsDouble(tmp);
   Py_DECREF(tmp);
   return val;
@@ -70,23 +71,23 @@ inline static float getFloat(PyObject *seq, Py_ssize_t i)
 static PyObject *XPLMInstanceSetPositionFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  PyObject *instance, *new_position, *data;
+  PyObject *instance, *newPositionSeq, *data;
   if(!XPLMInstanceSetPosition_ptr){
     PyErr_SetString(PyExc_RuntimeError , "XPLMInstanceSetPosition is available only in XPLM300 and up.");
     return NULL;
   }
-  if(!PyArg_ParseTuple(args, "OOO", &instance, &new_position, &data)){
+  if(!PyArg_ParseTuple(args, "OOO", &instance, &newPositionSeq, &data)){
     return NULL;
   }
-
+  PyObject *newPosition = PySequence_Tuple(newPositionSeq);
   XPLMDrawInfo_t inNewPosition;
   inNewPosition.structSize = sizeof(XPLMDrawInfo_t);
-  inNewPosition.x = getFloat(new_position, 0);
-  inNewPosition.y = getFloat(new_position, 1);
-  inNewPosition.z = getFloat(new_position, 2);
-  inNewPosition.pitch = getFloat(new_position, 3);
-  inNewPosition.heading = getFloat(new_position, 4);
-  inNewPosition.roll = getFloat(new_position, 5);
+  inNewPosition.x = getFloat(newPosition, 0);
+  inNewPosition.y = getFloat(newPosition, 1);
+  inNewPosition.z = getFloat(newPosition, 2);
+  inNewPosition.pitch = getFloat(newPosition, 3);
+  inNewPosition.heading = getFloat(newPosition, 4);
+  inNewPosition.roll = getFloat(newPosition, 5);
 
   Py_ssize_t len = PySequence_Length(data);
   float *inData = malloc(sizeof(float) * len);
