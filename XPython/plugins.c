@@ -70,18 +70,10 @@ PyObject *XPLMGetPluginInfoFun(PyObject *self, PyObject *args)
   char outSignature[512];
   char outDescription[512];
   XPLMGetPluginInfo(inPlugin, outName, outFilePath, outSignature, outDescription);
-  if(outNameObj != Py_None){
-    PyList_Append(outNameObj, PyUnicode_DecodeUTF8(outName, strlen(outName), NULL));
-  }
-  if(outFilePathObj != Py_None){
-    PyList_Append(outFilePathObj, PyUnicode_DecodeUTF8(outFilePath, strlen(outFilePath), NULL));
-  }
-  if(outSignatureObj != Py_None){
-    PyList_Append(outSignatureObj, PyUnicode_DecodeUTF8(outSignature, strlen(outSignature), NULL));
-  }
-  if(outDescriptionObj != Py_None){
-    PyList_Append(outDescriptionObj, PyUnicode_DecodeUTF8(outDescription, strlen(outDescription), NULL));
-  }
+  objToList(PyUnicode_DecodeUTF8(outName, strlen(outName), NULL), outNameObj);
+  objToList(PyUnicode_DecodeUTF8(outFilePath, strlen(outFilePath), NULL), outFilePathObj);
+  objToList(PyUnicode_DecodeUTF8(outSignature, strlen(outSignature), NULL), outSignatureObj);
+  objToList(PyUnicode_DecodeUTF8(outDescription, strlen(outDescription), NULL), outDescriptionObj);
   Py_RETURN_NONE;
 }
 
@@ -176,14 +168,16 @@ static void featureEnumerator(const char *inFeature, void *inRef)
 {
   PyObject *key = PyLong_FromVoidPtr(inRef);
   PyObject *callbackInfo = PyDict_GetItem(feDict, key);
-  Py_XDECREF(key);
+  Py_DECREF(key);
   if(callbackInfo == NULL){
     printf("Unknown feature enumeration callback requested! (inFeature = '%s' inRef = %p)\n", inFeature, inRef);
     return;
   }
-  PyObject *res = PyObject_CallFunction(PySequence_GetItem(callbackInfo, 1), "(sO)",
-                                        inFeature, PySequence_GetItem(callbackInfo, 2));
+  PyObject *inFeatureObj = PyUnicode_FromString(inFeature);
+  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(callbackInfo, 1),
+                                        inFeatureObj, PyTuple_GetItem(callbackInfo, 2), NULL);
   PyObject *err = PyErr_Occurred();
+  Py_DECREF(inFeatureObj);
   if(err){
     printf("Error occured during the feature enumeration callback(inFeature = '%s' inRef = %p):\n", inFeature, inRef);
     PyErr_Print();
