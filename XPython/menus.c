@@ -18,13 +18,13 @@ static void menuHandler(void * inMenuRef, void * inItemRef)
 {
   PyObject *pID = PyLong_FromVoidPtr(inMenuRef);
   PyObject *menuCallbackInfo = PyDict_GetItem(menuDict, pID);
-  Py_XDECREF(pID);
+  Py_DECREF(pID);
   if(menuCallbackInfo == NULL){
     printf("Unknown callback requested in menuHandler(%p).\n", inMenuRef);
     return;
   }
-  PyObject *res = PyObject_CallFunction(PySequence_GetItem(menuCallbackInfo, 4), "(OO)",
-                                        PySequence_GetItem(menuCallbackInfo, 5), (PyObject*)inItemRef);
+  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(menuCallbackInfo, 4),
+                                        PyTuple_GetItem(menuCallbackInfo, 5), (PyObject*)inItemRef, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     printf("Error occured during the menuHandler callback(inMenuRef = %p):\n", inMenuRef);
@@ -66,6 +66,7 @@ static PyObject *XPLMCreateMenuFun(PyObject *self, PyObject *args)
   PyObject *menuID = PyLong_FromVoidPtr(XPLMCreateMenu(inName, PyLong_AsVoidPtr(parentMenu),
                                         inParentItem, menuHandler, inMenuRef));
   PyDict_SetItem(menuRefDict, menuID, menuRef);
+  Py_DECREF(menuRef);
   return menuID;
 }
 
