@@ -8,6 +8,7 @@
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMMap.h>
 #include "plugin_dl.h"
+#include "utils.h"
 
 PyObject *mapDict;
 intptr_t mapCntr;
