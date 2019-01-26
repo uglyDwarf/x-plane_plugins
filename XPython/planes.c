@@ -87,8 +87,7 @@ void planesAvailable(void *inRefcon)
     printf("Unknown callback (%p) requested in planesAvailable.", inRefcon);
     return;
   }
-  PyObject *res = PyObject_CallFunction(PySequence_GetItem(callback, 2), "(O)",
-                                        PySequence_GetItem(callback, 3));
+  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(callback, 2), PyTuple_GetItem(callback, 3), NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     printf("Error occured during the planesAvailable callback(inRefcon = %p):\n", inRefcon);
@@ -108,6 +107,7 @@ PyObject *XPLMAcquirePlanesFun(PyObject *self, PyObject *args)
   void *refcon = (void*)++availableCntr;
   PyObject *refObj = PyLong_FromVoidPtr(refcon);
   PyDict_SetItem(availableDict, refObj, args);
+  Py_DECREF(refObj);
   if(aircraft == Py_None){
     res = XPLMAcquirePlanes(NULL, planesAvailable, refcon);
   }else{
@@ -115,7 +115,11 @@ PyObject *XPLMAcquirePlanesFun(PyObject *self, PyObject *args)
     char **inAircraft = (char **)malloc((len + 1) * sizeof(char *));
     Py_ssize_t i;
     for(i = 0; i < len; ++i){
-      char *tmp = PyUnicode_AsUTF8(PyObject_Str(PySequence_GetItem(aircraft, i)));
+      PyObject *tmpItem = PySequence_GetItem(aircraft, i);
+      PyObject *tmpStr = PyObject_Str(tmpItem);
+      char *tmp = PyUnicode_AsUTF8(tmpStr);
+      Py_DECREF(tmpStr);
+      Py_DECREF(tmpItem);
       if(tmp[0] == '\0'){
         break;
       }else{
@@ -182,41 +186,42 @@ PyObject *XPLMDrawAircraftFun(PyObject *self, PyObject *args)
   (void)self;
   int inPlaneIndex, inFullDraw;
   float inX, inY, inZ, inPitch, inRoll, inYaw;
-  PyObject *drawStateInfo, *tmp;
+  PyObject *drawStateInfoSeq, *tmp;
   XPLMPlaneDrawState_t inDrawStateInfo;
   if(!PyArg_ParseTuple(args, "iffffffiO", &inPlaneIndex, &inX, &inY, &inZ, &inPitch,
-                                          &inRoll, &inYaw, &inFullDraw, &drawStateInfo)){
+                                          &inRoll, &inYaw, &inFullDraw, &drawStateInfoSeq)){
     return NULL;
   }
+  PyObject *drawStateInfo = PySequence_Tuple(drawStateInfoSeq);
   inDrawStateInfo.structSize = sizeof(XPLMPlaneDrawState_t);
-  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 1));
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 1));
   inDrawStateInfo.gearPosition = PyFloat_AsDouble(tmp);
   Py_DECREF(tmp);
-  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 2));
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 2));
   inDrawStateInfo.flapRatio = PyFloat_AsDouble(tmp);
   Py_DECREF(tmp);
-  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 3));
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 3));
   inDrawStateInfo.spoilerRatio = PyFloat_AsDouble(tmp);
   Py_DECREF(tmp);
-  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 4));
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 4));
   inDrawStateInfo.speedBrakeRatio = PyFloat_AsDouble(tmp);
   Py_DECREF(tmp);
-  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 5));
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 5));
   inDrawStateInfo.slatRatio = PyFloat_AsDouble(tmp);
   Py_DECREF(tmp);
-  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 6));
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 6));
   inDrawStateInfo.wingSweep = PyFloat_AsDouble(tmp);
   Py_DECREF(tmp);
-  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 7));
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 7));
   inDrawStateInfo.thrust = PyFloat_AsDouble(tmp);
   Py_DECREF(tmp);
-  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 8));
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 8));
   inDrawStateInfo.yokePitch = PyFloat_AsDouble(tmp);
   Py_DECREF(tmp);
-  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 9));
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 9));
   inDrawStateInfo.yokeHeading = PyFloat_AsDouble(tmp);
   Py_DECREF(tmp);
-  tmp = PyNumber_Float(PySequence_GetItem(drawStateInfo, 10));
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 10));
   inDrawStateInfo.yokeRoll = PyFloat_AsDouble(tmp);
   Py_DECREF(tmp);
 
