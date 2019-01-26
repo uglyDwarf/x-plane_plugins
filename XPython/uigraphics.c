@@ -8,6 +8,7 @@
 #include <XPLM/XPLMDefs.h>
 #include <Widgets/XPWidgetDefs.h>
 #include <Widgets/XPUIGraphics.h>
+#include "utils.h"
 
 static PyObject *XPDrawWindowFun(PyObject *self, PyObject *args)
 {
@@ -29,14 +30,8 @@ static PyObject *XPGetWindowDefaultDimensionsFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPGetWindowDefaultDimensions(inStyle, &outWidth, &outHeight);
-
-  if(PyList_Check(width)){
-    PyList_Append(width, PyLong_FromLong(outWidth));
-  }
-
-  if(PyList_Check(height)){
-    PyList_Append(height, PyLong_FromLong(outHeight));
-  }
+  objToList(PyLong_FromLong(outWidth), width);
+  objToList( PyLong_FromLong(outHeight), height);
 
   Py_RETURN_NONE;
 }
@@ -61,18 +56,9 @@ static PyObject *XPGetElementDefaultDimensionsFun(PyObject *self, PyObject *args
     return NULL;
   }
   XPGetElementDefaultDimensions(inStyle, &outWidth, &outHeight, &outCanBeLit);
-
-  if(PyList_Check(width)){
-    PyList_Append(width, PyLong_FromLong(outWidth));
-  }
-
-  if(PyList_Check(height)){
-    PyList_Append(height, PyLong_FromLong(outHeight));
-  }
-
-  if(PyList_Check(canBeLit)){
-    PyList_Append(canBeLit, PyLong_FromLong(outCanBeLit));
-  }
+  objToList(PyLong_FromLong(outWidth), width);
+  objToList(PyLong_FromLong(outHeight), height);
+  objToList(PyLong_FromLong(outCanBeLit), canBeLit);
 
   Py_RETURN_NONE;
 }
@@ -98,14 +84,8 @@ static PyObject *XPGetTrackDefaultDimensionsFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPGetTrackDefaultDimensions(inStyle, &outWidth, &outCanBeLit);
-
-  if(PyList_Check(width)){
-    PyList_Append(width, PyLong_FromLong(outWidth));
-  }
-
-  if(PyList_Check(canBeLit)){
-    PyList_Append(canBeLit, PyLong_FromLong(outCanBeLit));
-  }
+  objToList(PyLong_FromLong(outWidth), width);
+  objToList(PyLong_FromLong(outCanBeLit), canBeLit);
 
   Py_RETURN_NONE;
 }
@@ -124,30 +104,12 @@ static PyObject *XPGetTrackMetricsFun(PyObject *self, PyObject *args)
   }
   XPGetTrackMetrics(inX1, inY1, inX2, inY2, inMin, inMax, inValue, inStyle, &outIsVertical, &outDownBtnSize,
                     &outDownPageSize, &outThumbSize, &outUpPageSize, &outUpBtnSize);
-
-  if(PyList_Check(isVertical)){
-    PyList_Append(isVertical, PyLong_FromLong(outIsVertical));
-  }
-
-  if(PyList_Check(downBtnSize)){
-    PyList_Append(downBtnSize, PyLong_FromLong(outDownBtnSize));
-  }
-
-  if(PyList_Check(downPageSize)){
-    PyList_Append(downPageSize, PyLong_FromLong(outDownPageSize));
-  }
-
-  if(PyList_Check(thumbSize)){
-    PyList_Append(thumbSize, PyLong_FromLong(outThumbSize));
-  }
-
-  if(PyList_Check(upPageSize)){
-    PyList_Append(upPageSize, PyLong_FromLong(outUpPageSize));
-  }
-
-  if(PyList_Check(upBtnSize)){
-    PyList_Append(upBtnSize, PyLong_FromLong(outUpBtnSize));
-  }
+  objToList(PyLong_FromLong(outIsVertical), isVertical);
+  objToList(PyLong_FromLong(outDownBtnSize), downBtnSize);
+  objToList(PyLong_FromLong(outDownPageSize), downPageSize);
+  objToList(PyLong_FromLong(outThumbSize), thumbSize);
+  objToList(PyLong_FromLong(outUpPageSize), upPageSize);
+  objToList(PyLong_FromLong(outUpBtnSize), upBtnSize);
 
   Py_RETURN_NONE;
 }

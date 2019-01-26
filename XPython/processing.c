@@ -33,11 +33,17 @@ static float flightLoopCallback(float inElapsedSinceLastCall, float inElapsedTim
     printf("Unknown flightLoop callback requested! (inRefcon = %p)\n", inRefcon);
     return 0.0;
   }
-  PyObject *res = PyObject_CallFunction(PySequence_GetItem(callbackInfo, 1), "(ffiO)",
-                                        inElapsedSinceLastCall, inElapsedTimeSinceLastFlightLoop,
-                                        counter, PySequence_GetItem(callbackInfo, 3));
+  PyObject *inElapsedSinceLastCallObj = PyFloat_FromDouble(inElapsedSinceLastCall);
+  PyObject *inElapsedTimeSinceLastFlightLoopObj = PyFloat_FromDouble(inElapsedTimeSinceLastFlightLoop);
+  PyObject *counterObj = PyLong_FromLong(counter);
+  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(callbackInfo, 1), inElapsedSinceLastCallObj,
+                                               inElapsedTimeSinceLastFlightLoopObj, counterObj,
+                                               PyTuple_GetItem(callbackInfo, 3), NULL);
   float tmp;
   PyObject *err = PyErr_Occurred();
+  Py_DECREF(inElapsedSinceLastCallObj);
+  Py_DECREF(inElapsedTimeSinceLastFlightLoopObj);
+  Py_DECREF(counterObj);
   if(err){
     printf("Error occured during the flightLoop callback(inRefcon = %p):\n", inRefcon);
     PyErr_Print();
@@ -45,7 +51,7 @@ static float flightLoopCallback(float inElapsedSinceLastCall, float inElapsedTim
   }else{
     PyObject *f = PyNumber_Float(res);
     tmp = PyFloat_AsDouble(f);
-    Py_XDECREF(f);
+    Py_DECREF(f);
   }
   Py_XDECREF(res);
   return tmp;
@@ -88,6 +94,7 @@ static PyObject *XPLMRegisterFlightLoopCallbackFun(PyObject* self, PyObject *arg
   PyDict_SetItem(flRevDict, revId, id);
   Py_XDECREF(revId);
   Py_XDECREF(id);
+  Py_DECREF(refconAddr);
   XPLMRegisterFlightLoopCallback(flightLoopCallback, inInterval, inRefcon);
   Py_RETURN_NONE;
 }
@@ -101,6 +108,7 @@ static PyObject *XPLMUnregisterFlightLoopCallbackFun(PyObject *self, PyObject *a
   }
   PyObject *refconAddr = PyLong_FromVoidPtr(refcon);
   PyObject *revId = Py_BuildValue("(OOO)", pluginSelf, callback, refconAddr);
+  Py_DECREF(refconAddr);
   PyObject *id = PyDict_GetItem(flRevDict, revId);
   if(id == NULL){
     Py_XDECREF(id);
@@ -127,6 +135,7 @@ static PyObject *XPLMSetFlightLoopCallbackIntervalFun(PyObject *self, PyObject *
   }
   PyObject *refconAddr = PyLong_FromVoidPtr(refcon);
   PyObject *revId = Py_BuildValue("(OOO)", pluginSelf, callback, refconAddr);
+  Py_DECREF(refconAddr);
   PyObject *id = PyDict_GetItem(flRevDict, revId);
   if(id == NULL){
     printf("Couldn't find the id of the requested callback.\n");
@@ -141,18 +150,18 @@ static PyObject *XPLMSetFlightLoopCallbackIntervalFun(PyObject *self, PyObject *
 static PyObject *XPLMCreateFlightLoopFun(PyObject* self, PyObject *args)
 {
   (void)self;
-  PyObject *pluginSelf, *params;
+  PyObject *pluginSelf, *param_seq;
   if(!XPLMCreateFlightLoop_ptr){
     PyErr_SetString(PyExc_RuntimeError , "XPLMCreateFlightLoop is available only in XPLM210 and up.");
     return NULL;
   }
-  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &params)){
+  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &param_seq)){
     return NULL;
   }
-
+  PyObject *params = PySequence_Tuple(param_seq);
   XPLMCreateFlightLoop_t fl;
   fl.structSize = sizeof(fl);
-  PyObject *tmp = PyNumber_Long(PySequence_GetItem(params, 0));
+  PyObject *tmp = PyNumber_Long(PyTuple_GetItem(params, 0));
   fl.phase = PyLong_AsLong(tmp);
   Py_DECREF(tmp);
   fl.callbackFunc = flightLoopCallback;
@@ -161,8 +170,8 @@ static PyObject *XPLMCreateFlightLoopFun(PyObject* self, PyObject *args)
   XPLMFlightLoopID res = XPLMCreateFlightLoop_ptr(&fl);
 
   PyObject *id = PyLong_FromVoidPtr(fl.refcon);
-  PyObject *argObj = Py_BuildValue("(OOfO)", pluginSelf, PySequence_GetItem(params, 1),
-                                             -1.0, PySequence_GetItem(params, 2));
+  PyObject *argObj = Py_BuildValue("(OOfO)", pluginSelf, PyTuple_GetItem(params, 1),
+                                             -1.0, PyTuple_GetItem(params, 2));
   PyDict_SetItem(flDict, id, argObj);
   Py_XDECREF(argObj);
   //we need to uniquely identify the id of the callback based on the caller and inRefcon
