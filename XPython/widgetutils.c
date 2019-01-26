@@ -41,7 +41,9 @@ static PyObject *XPUCreateWidgetsFun(PyObject *self, PyObject *args)
   XPUCreateWidgets(defs, inCount, inParamParent, ioWidgets);
 
   for(i = 0; i < inCount; ++i){
-    PyList_Append(widgets, PyLong_FromVoidPtr(ioWidgets[i]));
+    PyObject *tmp = PyLong_FromVoidPtr(ioWidgets[i]);
+    PyList_Append(widgets, tmp);
+    Py_DECREF(tmp);
   }
   free(ioWidgets);
   free(defs);
