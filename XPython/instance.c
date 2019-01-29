@@ -32,7 +32,7 @@ static PyObject *XPLMCreateInstanceFun(PyObject *self, PyObject *args)
   Py_ssize_t i;
   PyObject *drefListTuple = PySequence_Tuple(drefList);
   for(i = 0; i < len; ++i){
-    PyObject *s = PyObject_Str(PyTuple_GetItem(drefList, i));
+    PyObject *s = PyObject_Str(PyTuple_GetItem(drefListTuple, i));
     datarefs[i] = PyUnicode_AsUTF8(s);
     Py_DECREF(s);
   }
@@ -88,7 +88,7 @@ static PyObject *XPLMInstanceSetPositionFun(PyObject *self, PyObject *args)
   inNewPosition.pitch = getFloat(newPosition, 3);
   inNewPosition.heading = getFloat(newPosition, 4);
   inNewPosition.roll = getFloat(newPosition, 5);
-
+  Py_DECREF(newPosition);
   Py_ssize_t len = PySequence_Length(data);
   float *inData = malloc(sizeof(float) * len);
   if(inData == NULL){
@@ -99,6 +99,7 @@ static PyObject *XPLMInstanceSetPositionFun(PyObject *self, PyObject *args)
     inData[i] = getFloat(data, i);
   }
   XPLMInstanceSetPosition_ptr(PyLong_AsVoidPtr(instance), &inNewPosition, inData);
+  free(inData);
   Py_RETURN_NONE;
 }
 
