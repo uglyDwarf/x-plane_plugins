@@ -270,8 +270,9 @@ PLUGIN_API void XPluginStop(void)
   Py_ssize_t pos = 0;
 
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
-    PyObject_CallMethod(pVal, "XPluginStop", NULL);
+    PyObject *res = PyObject_CallMethod(pVal, "XPluginStop", NULL);
     PyObject *err = PyErr_Occurred();
+    Py_DECREF(res);
     if(err){
       fprintf(logFile, "Error occured during the XPluginStop call:\n");
       PyErr_Print();
