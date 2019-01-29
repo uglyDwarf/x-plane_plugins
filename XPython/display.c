@@ -963,8 +963,9 @@ void hotkeyCallback(void *inRefcon)
     printf("Unknown refcon passed to hotkeyCallback (%p).\n", inRefcon);
     return;
   }
-  PyObject_CallFunctionObjArgs(PyTuple_GetItem(pCbk, 0), PyTuple_GetItem(pCbk, 1), NULL);
+  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(pCbk, 0), PyTuple_GetItem(pCbk, 1), NULL);
   PyObject *err = PyErr_Occurred();
+  Py_DECREF(res);
   if(err){
     PyErr_Print();
   }
