@@ -34,6 +34,7 @@ static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosing
     PyList_SetItem(pos, 6, PyFloat_FromDouble(outCameraPosition->zoom));
   }else{
     pos = Py_None;
+    Py_INCREF(pos);
   }
 
   PyObject *fun = PyTuple_GetItem(callbackInfo, 2);
