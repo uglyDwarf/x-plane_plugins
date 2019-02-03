@@ -49,12 +49,13 @@ class PythonInterface(checkBase):
       self.fl1Ref = []
 
       self.fl1Interval = 16384.8192
+      current = XPLMGetDataf(self.flt2Dref)
       XPLMRegisterFlightLoopCallback(self, self.fl0, self.fl1Interval, self.fl0Ref)
       self.checkVal('XPLMRegisterFlightLoopCallback interval passed incorrectly', 
                     XPLMGetDataf(self.flt0Dref), 1000 * self.fl1Interval)
       self.checkVal('XPLMRegisterFlightLoopCallback interval passed incorrectly', XPLMGetDataf(self.flt1Dref), 2 * self.fl1Interval)
       self.checkVal('XPLMRegisterFlightLoopCallback loopback wasn\'t called', self.fl0Ref, ["FlightLoop1 called."])
-      self.checkVal('FlightLoopCallback1 return value incorrect', XPLMGetDataf(self.flt2Dref), 1.0)
+      self.checkVal('FlightLoopCallback1 return value incorrect', XPLMGetDataf(self.flt2Dref), current + 1.0)
 
       self.fl2Interval = 33.44
       relative = 32768
@@ -90,7 +91,7 @@ class PythonInterface(checkBase):
          self.checkVal('XPLMScheduleFlightLoop inRelativeToNow passed incorrectly',
                        XPLMGetDatai(self.int0Dref), relative);
          self.checkVal('XPLMCreateFlightLoop loopback wasn\'t called', self.fl1Ref, ["FlightLoop2 called."])
-         self.checkVal('FlightLoopCallback2 return value incorrect', XPLMGetDataf(self.flt2Dref), 3.0)
+         self.checkVal('FlightLoopCallback2 return value incorrect', XPLMGetDataf(self.flt2Dref), current + 3.0)
  
 
 

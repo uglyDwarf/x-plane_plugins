@@ -30,9 +30,11 @@ class PythonInterface(checkBase):
       return
    
    def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
+      if inMessage == 104:
+         return
       self.checkVal('XPluginReceiveMessage: Unexpected inFromWho', inFromWho, 5)
       self.checkVal('XPluginReceiveMessage: Unexpected inMessage', inMessage, 103)
-      self.checkVal('XPluginReceiveMessage: Unexpected inParam', inParam[0], 42)
+      self.checkVal('XPluginReceiveMessage: Unexpected inParam', inParam, 333)
    
       enableFogDref = XPLMFindDataRef("enableFog")
       numTexUnitsDref = XPLMFindDataRef("numTexUnits")

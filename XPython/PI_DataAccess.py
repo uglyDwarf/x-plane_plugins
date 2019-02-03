@@ -15,6 +15,26 @@ class PythonInterface(checkBase):
       self.Sig = "DataAccessRT"
       self.Desc = "Regression test for XPLMDataAccess module"
 
+      self.msgCounter = 0
+      return self.Name, self.Sig, self.Desc
+   
+   def XPluginStop(self):
+      self.check()
+      checkBase.remRef()
+   
+   def XPluginEnable(self):
+      return 1
+   
+   def XPluginDisable(self):
+      return
+
+   def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
+      if inMessage == 104:
+         return
+      self.checkVal('XPluginReceiveMessage: Unexpected inFromWho', inFromWho, 5)
+      self.checkVal('XPluginReceiveMessage: Unexpected inMessage', inMessage, 103)
+      self.checkVal('XPluginReceiveMessage: Unexpected inParam', inParam, 333)
+
       self.getInt = self.getDatai; self.getIntRefcon = 44444444; self.intVal = 234;
       self.setInt = self.setDatai; self.setIntRefcon = 55555555;
       self.getFloat = self.getDataf; self.getFloatRefcon = 66666666; self.floatVal = 4.567;
@@ -87,56 +107,31 @@ class PythonInterface(checkBase):
       self.shdiName = 'test/intShd'
       self.shdiType = xplmType_Int
       self.shdCbk = self.sharedDataCallback
-      self.shdiCbkCalled = [0]
+      self.shdiCbkCalled = [self.msgCounter]
       self.shdiRefcon = self.shdiCbkCalled
       shdRes = XPLMShareData(self, self.shdiName, self.shdiType, self.shdCbk, self.shdiRefcon)
       self.checkVal('XPLMShareData failed', shdRes, 1)
       
       self.shdfName = 'test/floatShd'
       self.shdfType = xplmType_Float
-      self.shdfCbkCalled = [0]
+      self.shdfCbkCalled = [self.msgCounter+10]
       self.shdfRefcon = self.shdfCbkCalled
       shdRes = XPLMShareData(self, self.shdfName, self.shdfType, self.shdCbk, self.shdfRefcon)
       self.checkVal('XPLMShareData failed', shdRes, 1)
 
-      return self.Name, self.Sig, self.Desc
-   
-   def XPluginStop(self):
-      XPLMUnregisterDataAccessor(self, self.intDataref)
-      XPLMUnregisterDataAccessor(self, self.floatDataref)
-      XPLMUnregisterDataAccessor(self, self.doubleDataref)
-      XPLMUnregisterDataAccessor(self, self.intVecDataref)
-      XPLMUnregisterDataAccessor(self, self.floatVecDataref)
-      XPLMUnregisterDataAccessor(self, self.byteVecDataref)
-      XPLMUnshareData(self, self.shdiName, self.shdiType, self.shdCbk, self.shdiRefcon)
-      XPLMUnshareData(self, self.shdfName, self.shdfType, self.shdCbk, self.shdfRefcon)
-
-      self.check()
-      checkBase.remRef()
-   
-   def XPluginEnable(self):
-      return 1
-   
-   def XPluginDisable(self):
-      return
-
-   def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
-      self.checkVal('XPluginReceiveMessage: Unexpected inFromWho', inFromWho, 5)
-      self.checkVal('XPluginReceiveMessage: Unexpected inMessage', inMessage, 103)
-      self.checkVal('XPluginReceiveMessage: Unexpected inParam', inParam[0], 42)
-
       #Test shared data
       shdi = XPLMFindDataRef(self.shdiName)
-      self.checkVal('Int shared data callback called prematurely.', self.shdiCbkCalled, [0])
+      self.checkVal('Int shared data callback called prematurely.', self.shdiCbkCalled, [self.msgCounter])
       shdf = XPLMFindDataRef(self.shdfName)
-      self.checkVal('Float shared data callback called prematurely.', self.shdfCbkCalled, [0])
+      self.checkVal('Float shared data callback called prematurely.', self.shdfCbkCalled, [self.msgCounter + 10])
+      self.msgCounter += 1
       XPLMSetDatai(shdi, 16)
-      self.checkVal('Int shared data callback call number wrong.', self.shdiCbkCalled, [1])
+      self.checkVal('Int shared data callback call number wrong.', self.shdiCbkCalled, [self.msgCounter])
       self.checkVal('Int shared data value doesn\'t match.', XPLMGetDatai(shdi), 16)
       XPLMSetDataf(shdf, 444.444)
-      self.checkVal('Float shared data callback call number wrong.', self.shdfCbkCalled, [1])
+      self.checkVal('Float shared data callback call number wrong.', self.shdfCbkCalled, [self.msgCounter +10])
       self.checkVal('Float shared data value doesn\'t match.', XPLMGetDataf(shdf), 444.444)
-
+      
       i = XPLMFindDataRef('test/int')
       f = XPLMFindDataRef('test/float')
       d = XPLMFindDataRef('test/double')
@@ -283,6 +278,15 @@ class PythonInterface(checkBase):
       newVec = [99, 100, 101, 102, 103]
       XPLMSetDatab(bv, newVec, 1, len(newVec))
       self.checkVal('Byte array dataref data doesn\'t match (too much data + offset)', newVec[:4], self.byteVecVal[1:])
+
+      XPLMUnregisterDataAccessor(self, self.intDataref)
+      XPLMUnregisterDataAccessor(self, self.floatDataref)
+      XPLMUnregisterDataAccessor(self, self.doubleDataref)
+      XPLMUnregisterDataAccessor(self, self.intVecDataref)
+      XPLMUnregisterDataAccessor(self, self.floatVecDataref)
+      XPLMUnregisterDataAccessor(self, self.byteVecDataref)
+      XPLMUnshareData(self, self.shdiName, self.shdiType, self.shdCbk, self.shdiRefcon)
+      XPLMUnshareData(self, self.shdfName, self.shdfType, self.shdCbk, self.shdfRefcon)
 
    def sharedDataCallback(self, inRefcon):
       inRefcon[0] += 1

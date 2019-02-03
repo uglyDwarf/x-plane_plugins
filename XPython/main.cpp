@@ -98,12 +98,16 @@ int main(int argc, char *argv[])
   std::cout << "Y-Plane loaded plugin " << outName << "(" << res << ")" << std::endl;
   std::cout << "  Signature: " << outSig << std::endl;
   std::cout << "  Description:" << outDesc << std::endl;
-  //XPluginReceiveMessage(5, 103, (void*)333);
+  
+  for(int c = 0; c < 1000; ++c){
+    std::cout << c << std::endl;
 
-  XPluginDisable();
-  XPluginEnable();
-  std::cout << "===============================================" << std::endl;
+    XPluginReceiveMessage(5, 103, (void*)333);
+    XPluginDisable();
+    XPluginEnable();
+  }
   XPluginStop();
+  std::cout << "===============================================" << std::endl;
 
   cleanupUtilitiesModule();
   cleanupSceneryModule();

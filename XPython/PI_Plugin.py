@@ -16,11 +16,10 @@ class PythonInterface(checkBase):
       self.Sig = "PluginRT"
       self.Desc = "Regression test for XPLMPlugin module"
 
-      self.msgParam = [42]
-      # to set the id (XPLMGetMyID, ... in chkPlugin.cpp)
       self.id = 4
+      # to set the id (XPLMGetMyID, ... in chkPlugin.cpp)
       XPLMIsPluginEnabled(self.id)
-
+      self.msgCntr = 43
       return self.Name, self.Sig, self.Desc
    
    def XPluginStop(self):
@@ -28,17 +27,23 @@ class PythonInterface(checkBase):
       checkBase.remRef()
    
    def XPluginEnable(self):
-      XPLMSendMessageToPlugin(XPLMGetMyID(), 103, self.msgParam)
-      self.checkVal('XPLMSendMessageToPlugin didn\'t pass the inParam', self.msgParam, [42, 43])
+      current = self.msgCntr
+      XPLMSendMessageToPlugin(XPLMGetMyID(), 104, current)
+      self.checkVal('XPLMSendMessageToPlugin didn\'t pass the inParam', self.msgCntr, current + 42)
       return 1
    
    def XPluginDisable(self):
       return
 
    def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
-      inParam.append(43)
-      self.checkVal('XPlugin Receive message passed incorrect inFromWho', inFromWho, XPLMGetMyID())
-      self.checkVal('XPlugin Receive message passed incorrect inMessage', inMessage, 103)
+      self.id = 4
+      XPLMIsPluginEnabled(self.id)
+      self.checkVal('XPlugin Receive message passed incorrect inFromWho', inFromWho, 5)
+      if inMessage == 104:
+        self.checkVal('XPlugin Receive message passed incorrect inParam', inParam, self.msgCntr)
+      else:
+        self.checkVal('XPlugin Receive message passed incorrect inParam', inParam, 333)
+      self.msgCntr += 42
 
       self.checkVal('XPLMGetMyID returned wrong value', XPLMGetMyID(), self.id + 1)
       self.checkVal('XPLMCountPlugins returned wrong value', XPLMCountPlugins(), self.id + 2)
@@ -81,6 +86,8 @@ class PythonInterface(checkBase):
       exp = [x for x in features.keys()]
       exp.sort()
       self.checkVal('XPLMEnumerateFeatures not OK', self.keys, exp)
+      self.id = 4
+      XPLMIsPluginEnabled(self.id)
       return
 
    def featureEnumerator(self, name, ref):

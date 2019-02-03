@@ -175,7 +175,6 @@ class PythonInterface(checkBase):
       XPGetWidgetDescriptor(self.cust_widget, desc, 4096)
       self.checkVal('XPSetWidgetDescriptor', desc[0], self.c_widgetDesc)
 
-      self.checkVal('XPGetWidgetWithFocus', XPGetWidgetWithFocus(), 0)
       self.checkVal('XPSetKeyboardFocus', XPSetKeyboardFocus(self.cust_widget), self.cust_widget)
       self.checkVal('XPGetWidgetWithFocus', XPGetWidgetWithFocus(), self.cust_widget)
       XPLoseKeyboardFocus(self.cust_widget)

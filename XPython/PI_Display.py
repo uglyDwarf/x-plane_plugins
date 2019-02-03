@@ -39,20 +39,6 @@ class PythonInterface(checkBase):
       self.hotkeyCallbackCalled = 1
    
    def XPluginStop(self):
-      XPLMUnregisterDrawCallback(self, self.drawCallbackFun, self.drawPhase, self.drawBefore, self.drawRefcon)
-      self.checkVal("Key sniffer unregistration", XPLMUnregisterKeySniffer(self, self.keySnifferFun,
-                                                    self.keySnifferBeforeWin, self.keySnifferRefcon), 1);
-      XPLMDestroyWindow(self, self.winID)
-      self.checkVal('XPLMCreateWindow callbacks were not called', self.winRefcon, [519])
-
-      XPLMDestroyWindow(self, self.winIDEx)
-      if self.versions[1] >= 300:
-         self.checkVal('XPLMCreateWindowEx callbacks were not called', self.winExRefcon, [63])
-      else:
-         self.checkVal('XPLMCreateWindowEx callbacks were not called', self.winExRefcon, [31])
-      for hk in self.hotkeys:
-        XPLMUnregisterHotKey(self, hk)
-
       self.check()
    
    def XPluginEnable(self):
@@ -65,7 +51,7 @@ class PythonInterface(checkBase):
    def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
       self.checkVal('XPluginReceiveMessage: Unexpected inFromWho', inFromWho, 5)
       self.checkVal('XPluginReceiveMessage: Unexpected inMessage', inMessage, 103)
-      self.checkVal('XPluginReceiveMessage: Unexpected inParam', inParam[0], 42)
+      self.checkVal('XPluginReceiveMessage: Unexpected inParam', inParam, 333)
       self.int0Dref = XPLMFindDataRef("display/int0");
       self.int1Dref = XPLMFindDataRef("display/int1");
       self.int2Dref = XPLMFindDataRef("display/int2");
@@ -381,6 +367,20 @@ class PythonInterface(checkBase):
       self.checkVal('HotKey desc', description[0], desc[2])
       self.checkVal('Hotkey pluginID', pluginID[0], 42)
  
+      XPLMUnregisterDrawCallback(self, self.drawCallbackFun, self.drawPhase, self.drawBefore, self.drawRefcon)
+      self.checkVal("Key sniffer unregistration", XPLMUnregisterKeySniffer(self, self.keySnifferFun,
+                                                    self.keySnifferBeforeWin, self.keySnifferRefcon), 1);
+      XPLMDestroyWindow(self, self.winID)
+      self.checkVal('XPLMCreateWindow callbacks were not called', self.winRefcon, [519])
+
+      XPLMDestroyWindow(self, self.winIDEx)
+      if self.versions[1] >= 300:
+         self.checkVal('XPLMCreateWindowEx callbacks were not called', self.winExRefcon, [63])
+      else:
+         self.checkVal('XPLMCreateWindowEx callbacks were not called', self.winExRefcon, [31])
+      for hk in self.hotkeys:
+        XPLMUnregisterHotKey(self, hk)
+
       self.xpluginMessageReceived = 1
    
    def drawCallback(self, inPhase, inIsBefore, inRefcon):
