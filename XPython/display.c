@@ -36,9 +36,9 @@ static void receiveMonitorBounds(int inMonitorIndex, int inLeftBx, int inTopBx,
     if(err){
       PyErr_Print();
     }
+  }else{
+    Py_DECREF(pRes);
   }
-
-  Py_XDECREF(pRes);
 }
 
 int XPLMDrawCallback(XPLMDrawingPhase inPhase, int inIsBefore, void *inRefcon);
@@ -115,12 +115,12 @@ static PyObject *XPLMUnregisterDrawCallbackFun(PyObject *self, PyObject *args)
   PyObject *pID = PyDict_GetItem(drawCallbackIDDict, pyRefcon);
   if(pID == NULL){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMUnregisterDrawCallback failed to find the callback.\n");
-    Py_XDECREF(pyRefcon);
+    Py_DECREF(pyRefcon);
     return NULL;
   }
   PyDict_DelItem(drawCallbackIDDict, pyRefcon);
   PyDict_DelItem(drawCallbackDict, pID);
-  Py_XDECREF(pyRefcon);
+  Py_DECREF(pyRefcon);
 
   int res = XPLMUnregisterDrawCallback(XPLMDrawCallback, inPhase,
                                        inWantsBefore, PyLong_AsVoidPtr(pID));
@@ -171,7 +171,7 @@ static void drawWindow(XPLMWindowID  inWindowID,
     printf("Unknown window passed to drawWindow (%p).\n", inWindowID);
     return;
   }
-  PyObject *oRes = PyObject_CallFunctionObjArgs(PySequence_GetItem(pCbks, 0), pID, inRefcon, NULL);
+  PyObject *oRes = PyObject_CallFunctionObjArgs(PyTuple_GetItem(pCbks, 0), pID, inRefcon, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     PyErr_Print();
@@ -353,7 +353,7 @@ static PyObject *XPLMCreateWindowExFun(PyObject *self, PyObject *args)
   PyObject *tmp, *tmp1;
   PyObject *drawWindowFunc, *handleMouseClickFunc, *handleKeyFunc,
            *handleCursorFunc, *handleMouseWheelFunc;
-  PyObject *handleRightClickFunc = Py_None;
+  PyObject *handleRightClickFunc;
   params.structSize = sizeof(params);
   tmp1 = PySequence_GetItem(paramsObj, 0);
   tmp = PyNumber_Long(tmp1);
@@ -407,6 +407,9 @@ static PyObject *XPLMCreateWindowExFun(PyObject *self, PyObject *args)
     Py_DECREF(tmp1);
     params.handleRightClickFunc = handleRightClick;
     handleRightClickFunc = PySequence_GetItem(paramsObj, 13);
+  }else{
+    handleRightClickFunc = Py_None;
+    Py_INCREF(handleRightClickFunc);
   }
   
   PyObject *cbkTuple = Py_BuildValue("(OOOOOO)", drawWindowFunc, handleMouseClickFunc, handleKeyFunc,
@@ -1014,14 +1017,12 @@ static PyObject *XPLMUnregisterHotKeyFun(PyObject *self, PyObject *args)
   PyObject *pCbk = PyDict_GetItem(hotkeyDict, pRefcon);
   if(pCbk == NULL){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMUnregisterHotKey couldn't find refcon.\n");
-    Py_DECREF(pRefcon);
     Py_RETURN_NONE;
   }
 
   XPLMUnregisterHotKey(PyLong_AsVoidPtr(hotKey));
   PyDict_DelItem(hotkeyDict, pRefcon);
   PyDict_DelItem(hotkeyIDDict, hotKey);
-  Py_DECREF(pRefcon);
   Py_RETURN_NONE;
 } 
 
@@ -1263,14 +1264,17 @@ PyInit_XPLMDisplay(void)
 int XPLMDrawCallback(XPLMDrawingPhase inPhase, int inIsBefore, void *inRefcon)
 {
   PyObject *pl = NULL, *fun = NULL, *refcon = NULL, *pRes = NULL, *err = NULL;
+  PyObject *tup;
   int res = 1;
   pl = PyLong_FromVoidPtr(inRefcon);
   if(pl == NULL){
     printf("Can't create PyLong.");
     goto cleanup;
+  }else{
+    tup = PyDict_GetItem(drawCallbackDict, pl);
+    Py_DECREF(pl);
   }
 
-  PyObject *tup = PyDict_GetItem(drawCallbackDict, pl);
   if(!tup){
     printf("Got unknown inRefcon (%p)!", inRefcon);
     goto cleanup;
@@ -1298,9 +1302,6 @@ int XPLMDrawCallback(XPLMDrawingPhase inPhase, int inIsBefore, void *inRefcon)
     PyErr_Print();
   }
 
-  Py_XDECREF(pl);
-  Py_XDECREF(fun);
-  Py_XDECREF(refcon);
   Py_XDECREF(pRes);
   return res;
 }
@@ -1308,15 +1309,18 @@ int XPLMDrawCallback(XPLMDrawingPhase inPhase, int inIsBefore, void *inRefcon)
 int XPLMKeySnifferCallback(char inChar, XPLMKeyFlags inFlags, char inVirtualKey, void *inRefcon)
 {
   PyObject *pl = NULL, *fun = NULL, *refcon = NULL, *pRes = NULL, *err = NULL;
+  PyObject *tup;
   int res = 1;
 
   pl = PyLong_FromVoidPtr(inRefcon);
   if(pl == NULL){
     printf("Can't create PyLong.");
     goto cleanup;
+  }else{
+    tup = PyDict_GetItem(keySniffCallbackDict, pl);
+    Py_DECREF(pl);
   }
 
-  PyObject *tup = PyDict_GetItem(keySniffCallbackDict, pl);
   if(!tup){
     printf("Got unknown inRefcon (%p)!", inRefcon);
     goto cleanup;
@@ -1346,9 +1350,6 @@ int XPLMKeySnifferCallback(char inChar, XPLMKeyFlags inFlags, char inVirtualKey,
     PyErr_Print();
   }
 
-  Py_XDECREF(pl);
-  Py_XDECREF(fun);
-  Py_XDECREF(refcon);
   Py_XDECREF(pRes);
   return res;
 }
