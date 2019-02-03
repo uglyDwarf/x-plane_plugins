@@ -370,9 +370,12 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, vo
 {
   PyObject *pKey, *pVal, *pRes;
   Py_ssize_t pos = 0;
-  PyObject *param = Py_None;
+  PyObject *param;
   if(inParam != NULL){
-    param = (PyObject *)inParam;
+    param = PyLong_FromLong((long)inParam);
+  }else{
+    param = Py_None;
+    Py_INCREF(param);
   }
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
     pRes = PyObject_CallMethod(pVal, "XPluginReceiveMessage", "ilO", inFromWho, inMessage, param);
@@ -383,6 +386,7 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, vo
     }
     Py_XDECREF(pRes);
   }
+  Py_DECREF(param);
 }
 
 
