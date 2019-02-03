@@ -119,13 +119,13 @@ PyObject *XPLMReloadPluginsFun(PyObject *self, PyObject *args)
 PyObject *XPLMSendMessageToPluginFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  int inPluginID;
-  int inMessage;
-  PyObject *inParam;
-  if(!PyArg_ParseTuple(args, "iiO", &inPluginID, &inMessage, &inParam)){
+  long inPluginID;
+  long inMessage;
+  long inParam;
+  if(!PyArg_ParseTuple(args, "lll", &inPluginID, &inMessage, &inParam)){
     return NULL;
   }
-  XPLMSendMessageToPlugin(inPluginID, inMessage, inParam);
+  XPLMSendMessageToPlugin(inPluginID, inMessage, (void *)inParam);
   Py_RETURN_NONE;
 }
 
