@@ -111,16 +111,14 @@ static PyObject *XPLMUnregisterFlightLoopCallbackFun(PyObject *self, PyObject *a
   Py_DECREF(refconAddr);
   PyObject *id = PyDict_GetItem(flRevDict, revId);
   if(id == NULL){
-    Py_XDECREF(id);
-    Py_XDECREF(revId);
+    Py_DECREF(revId);
     printf("Couldn't find the id of the requested callback.\n");
     return NULL;
   }
   PyDict_DelItem(flRevDict, revId);
   PyDict_DelItem(flDict, id);
   XPLMUnregisterFlightLoopCallback(flightLoopCallback, PyLong_AsVoidPtr(id));
-  Py_XDECREF(id);
-  Py_XDECREF(revId);
+  Py_DECREF(revId);
   Py_RETURN_NONE;
 }
 
@@ -142,8 +140,7 @@ static PyObject *XPLMSetFlightLoopCallbackIntervalFun(PyObject *self, PyObject *
     return NULL;
   }
   XPLMSetFlightLoopCallbackInterval(flightLoopCallback, inInterval, inRelativeToNow, PyLong_AsVoidPtr(id));
-  Py_XDECREF(id);
-  Py_XDECREF(revId);
+  Py_DECREF(revId);
   Py_RETURN_NONE;
 }
 
@@ -194,14 +191,12 @@ static PyObject *XPLMDestroyFlightLoopFun(PyObject *self, PyObject *args)
   }
   PyObject *id = PyDict_GetItem(flRevDict, revId);
   if(id == NULL){
-    Py_XDECREF(id);
     printf("Couldn't find the id of the requested flight loop.\n");
     return NULL;
   }
   PyDict_DelItem(flRevDict, revId);
   PyDict_DelItem(flDict, id);
   XPLMDestroyFlightLoop_ptr(PyLong_AsVoidPtr(revId));
-  Py_XDECREF(id);
   Py_RETURN_NONE;
 }
 
