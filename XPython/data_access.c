@@ -539,6 +539,7 @@ static int getDatavi(void *inRefcon, int *outValues, int inOffset, int inMax)
     outValuesObj = PyList_New(inMax);
   }else{
     outValuesObj = Py_None;
+    Py_INCREF(outValuesObj);
   }
 
   PyObject *oFun = PySequence_GetItem(pCbks, 10);
@@ -623,6 +624,7 @@ static int getDatavf(void *inRefcon, float *outValues, int inOffset, int inMax)
     outValuesObj = PyList_New(inMax);
   }else{
     outValuesObj = Py_None;
+    Py_INCREF(outValuesObj);
   }
 
   PyObject *oFun = PySequence_GetItem(pCbks, 12);
@@ -707,6 +709,7 @@ static int getDatab(void *inRefcon, void *outValue, int inOffset, int inMax)
     outValuesObj = PyList_New(inMax);
   }else{
     outValuesObj = Py_None;
+    Py_INCREF(outValuesObj);
   }
 
   PyObject *oFun = PySequence_GetItem(pCbks, 14);
@@ -869,7 +872,7 @@ static void dataChanged(void *inRefcon)
   if(err){
     PyErr_Print();
   }
-  Py_DECREF(oRes);
+  Py_XDECREF(oRes);
   Py_DECREF(arg);
   Py_DECREF(fun);
 }
