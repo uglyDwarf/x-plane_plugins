@@ -116,8 +116,8 @@ static PyObject *XPLMUnregisterFlightLoopCallbackFun(PyObject *self, PyObject *a
     return NULL;
   }
   PyDict_DelItem(flRevDict, revId);
-  PyDict_DelItem(flDict, id);
   XPLMUnregisterFlightLoopCallback(flightLoopCallback, PyLong_AsVoidPtr(id));
+  PyDict_DelItem(flDict, id);
   Py_DECREF(revId);
   Py_RETURN_NONE;
 }
