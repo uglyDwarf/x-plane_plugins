@@ -94,6 +94,7 @@ PyInit_XPythonLogWriter(void)
 static wchar_t *program = NULL;
 
 static PyObject *moduleDict;
+static PyObject *loggerObj;
 
 int initPython(const char *programName){
   program = Py_DecodeLocale(programName, NULL);
@@ -131,14 +132,18 @@ int initPython(const char *programName){
     return -1;
   }
 
-  //get the plugin diractory into the python's path 
-  PyRun_SimpleString("import XPythonLogger\n"
-                     "print('Adding the \"./Resources/plugins/PythonPlugins\" to path')\n"
-                     "import sys\n"
-                     "sys.path.append('./Resources/plugins/PythonPlugins')");
+  //get the plugin directory into the python's path
+  loggerObj = PyImport_ImportModule("XPythonLogger");
+  PyObject *path = PySys_GetObject("path"); //Borrowed!
+  const char pathStr[] = "./Resources/plugins/PythonPlugins";
+  PyObject *pathStrObj = PyUnicode_DecodeUTF8(pathStr, sizeof(pathStr) - 1, NULL);
+  PyList_Append(path, pathStrObj);
+  Py_DECREF(pathStrObj);
+  //PySys_SetPath(L"");
   moduleDict = PyDict_New();
   return 0;
 }
+
 
 bool loadPIClass(const char *fname)
 {
@@ -280,47 +285,23 @@ PLUGIN_API void XPluginStop(void)
   }
   PyDict_Clear(moduleDict);
 
-  PyRun_SimpleString("import XPLMDefs\n"
-                     "XPLMDefs.cleanup()\n"
-                     "import XPLMDisplay\n"
-                     "XPLMDisplay.cleanup()\n"
-                     "import XPLMGraphics\n"
-                     "XPLMGraphics.cleanup()\n"
-                     "import XPLMUtilities\n"
-                     "XPLMUtilities.cleanup()\n"
-                     "import XPLMScenery\n"
-                     "XPLMScenery.cleanup()\n"
-                     "import XPLMMenus\n"
-                     "XPLMMenus.cleanup()\n"
-                     "import XPLMNavigation\n"
-                     "XPLMNavigation.cleanup()\n"
-                     "import XPLMPlugin\n"
-                     "XPLMPlugin.cleanup()\n"
-                     "import XPLMPlanes\n"
-                     "XPLMPlanes.cleanup()\n"
-                     "import XPLMProcessing\n"
-                     "XPLMProcessing.cleanup()\n"
-                     "import XPLMCamera\n"
-                     "XPLMCamera.cleanup()\n"
-                     "import XPWidgetDefs\n"
-                     "XPWidgetDefs.cleanup()\n"
-                     "import XPWidgets\n"
-                     "XPWidgets.cleanup()\n"
-                     "import XPStandardWidgets\n"
-                     "XPStandardWidgets.cleanup()\n"
-                     "import XPUIGraphics\n"
-                     "XPUIGraphics.cleanup()\n"
-                     "import XPWidgetUtils\n"
-                     "XPWidgetUtils.cleanup()\n"
-                     "import XPLMInstance\n"
-                     "XPLMInstance.cleanup()\n"
-                     "import XPLMMap\n"
-                     "XPLMMap.cleanup()\n"
-                     "import XPLMDataAccess\n"
-                     "XPLMDataAccess.cleanup()\n"
-                     "import SandyBarbourUtilities\n"
-                     "SandyBarbourUtilities.cleanup()\n"
-  );
+  // Invoke cleanup method of all built-in modules
+  char *mods[] = {"XPLMDefs", "XPLMDisplay", "XPLMGraphics", "XPLMUtilities", "XPLMScenery", "XPLMMenus",
+                  "XPLMNavigation", "XPLMPlugin", "XPLMPlanes", "XPLMProcessing", "XPLMCamera", "XPWidgetDefs",
+                  "XPWidgets", "XPStandardWidgets", "XPUIGraphics", "XPWidgetUtils", "XPLMInstance",
+                  "XPLMMap", "XPLMDataAccess", "SandyBarbourUtilities", NULL};
+  char **mod_ptr = mods;
+
+  while(*mod_ptr != NULL){
+    PyObject *mod = PyImport_ImportModule(*mod_ptr);
+    if(mod){
+      PyObject *res = PyObject_CallMethod(mod, "cleanup", "");
+      Py_DECREF(res);
+      Py_DECREF(mod);
+    }
+    ++mod_ptr;
+  }
+
   Py_Finalize();
   PyMem_RawFree(program);
   //printf("XPluginStop finished.\n");
