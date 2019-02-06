@@ -50,6 +50,8 @@ class PythonInterface(checkBase):
    
    def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
       self.checkVal('XPluginReceiveMessage: Unexpected inFromWho', inFromWho, 5)
+      if inMessage == 104:
+         return
       self.checkVal('XPluginReceiveMessage: Unexpected inMessage', inMessage, 103)
       self.checkVal('XPluginReceiveMessage: Unexpected inParam', inParam, 333)
       self.int0Dref = XPLMFindDataRef("display/int0");
