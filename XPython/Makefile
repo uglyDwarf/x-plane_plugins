@@ -3,8 +3,8 @@
 CC=clang
 CXX=clang++
 
-PY_CFLAGS=$(shell python3-config --cflags)
-PY_LDFLAGS=$(shell python3-config --ldflags)
+PY_CFLAGS=$(shell python3-dbg-config --cflags)
+PY_LDFLAGS=$(shell python3-dbg-config --ldflags)
 XPLM_CPPFLAGS=-I./SDK/CHeaders -I./SDK/CHeaders/XPLM -I./SDK/CHeaders/Widgets -DIBM=0 -DAPL=0 -DLIN=1
 COV_FLAGS += 
 #COV_CFLAGS+= -fprofile-instr-generate -fcoverage-mapping
