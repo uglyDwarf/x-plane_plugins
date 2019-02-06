@@ -127,21 +127,22 @@ static void objectLoaded(XPLMObjectRef inObject, void *inRefcon)
   PyObject *object = PyLong_FromVoidPtr(inObject);
   PyObject *pID = PyLong_FromVoidPtr(inRefcon);
   PyObject *loaderCallbackInfo = PyDict_GetItem(loaderDict, pID);
-  Py_XDECREF(pID);
   if(loaderCallbackInfo == NULL){
     printf("Unknown callback requested in objectLoaded(%p).\n", inRefcon);
     return;
   }
-  PyObject *res = PyObject_CallFunction(PySequence_GetItem(loaderCallbackInfo, 2), "(OO)",
-                                           object, PySequence_GetItem(loaderCallbackInfo, 3));
+  PyObject *res = PyObject_CallFunctionObjArgs(PySequence_GetItem(loaderCallbackInfo, 2),
+                                           object, PySequence_GetItem(loaderCallbackInfo, 3), NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     printf("Error occured during the flightLoop callback(inRefcon = %p):\n", inRefcon);
     PyErr_Print();
+  }else{
+    Py_DECREF(res);
   }
   PyDict_DelItem(loaderDict, pID);
-  Py_XDECREF(res);
-  Py_XDECREF(object);
+  Py_DECREF(pID);
+  Py_DECREF(object);
 }
 
 
@@ -152,7 +153,7 @@ static PyObject *XPLMLoadObjectAsyncFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_RuntimeError , "XPLMLoadObjectAsync is available only in XPLM210 and up.");
     return NULL;
   }
-  char *inPath = PyUnicode_AsUTF8(PySequence_GetItem(args, 1));
+  char *inPath = PyUnicode_AsUTF8(PyTuple_GetItem(args, 1));
   void *refcon = (void *)++loaderCntr;
   PyObject *key = PyLong_FromVoidPtr(refcon);
   PyDict_SetItem(loaderDict, key, args);
@@ -173,7 +174,6 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMObjectRef inObject = PyLong_AsVoidPtr(object);
-  Py_DECREF(object);
   XPLMDrawInfo_t *inLocations = (XPLMDrawInfo_t *)malloc(inCount * sizeof(XPLMDrawInfo_t));
   int i;
   for(i = 0; i < inCount; ++i){
@@ -207,7 +207,7 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
 static PyObject *XPLMUnloadObjectFun(PyObject *self, PyObject *args)
 {
   (void)self;
-  XPLMObjectRef inObject = PyLong_AsVoidPtr(PySequence_GetItem(args, 0));
+  XPLMObjectRef inObject = PyLong_AsVoidPtr(PyTuple_GetItem(args, 0));
   XPLMUnloadObject(inObject);
   Py_RETURN_NONE;
 }
