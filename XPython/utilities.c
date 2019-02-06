@@ -408,6 +408,7 @@ static PyObject *XPLMUnregisterCommandHandlerFun(PyObject *self, PyObject *args)
   }
   PyObject *key = PyLong_FromVoidPtr((void *)inRefcon);
   PyObject *refcon = PyDict_GetItem(commandRefcons, key);
+  XPLMUnregisterCommandHandler(PyLong_AsVoidPtr(inCommand), commandCallback, inBefore, PyLong_AsVoidPtr(refcon));
   if(PyDict_DelItem(commandRefcons, key)){
     printf("XPLMUnregisterCommandHandler: couldn't remove refcon.\n");
   }
@@ -416,7 +417,6 @@ static PyObject *XPLMUnregisterCommandHandlerFun(PyObject *self, PyObject *args)
     printf("XPLMUnregisterCommandHandler: couldn't remove command handler.\n");
   }
   
-  XPLMUnregisterCommandHandler(PyLong_AsVoidPtr(inCommand), commandCallback, inBefore, PyLong_AsVoidPtr(refcon));
   Py_RETURN_NONE;
 }
 
