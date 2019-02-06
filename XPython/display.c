@@ -118,12 +118,12 @@ static PyObject *XPLMUnregisterDrawCallbackFun(PyObject *self, PyObject *args)
     Py_DECREF(pyRefcon);
     return NULL;
   }
+  int res = XPLMUnregisterDrawCallback(XPLMDrawCallback, inPhase,
+                                       inWantsBefore, PyLong_AsVoidPtr(pID));
   PyDict_DelItem(drawCallbackIDDict, pyRefcon);
   PyDict_DelItem(drawCallbackDict, pID);
   Py_DECREF(pyRefcon);
 
-  int res = XPLMUnregisterDrawCallback(XPLMDrawCallback, inPhase,
-                                       inWantsBefore, PyLong_AsVoidPtr(pID));
   PyObject *err = PyErr_Occurred();
   if(err){
     printf("Error occured during the XPLMUnregisterDrawCallback call:\n");
@@ -145,10 +145,9 @@ static PyObject *XPLMUnregisterKeySnifferFun(PyObject *self, PyObject *args)
   int res = -1;
   while(PyDict_Next(keySniffCallbackDict, &pos, &pKey, &pVal)){
     if(PyObject_RichCompareBool(pVal, args, Py_EQ)){
-      if(PyDict_DelItem(keySniffCallbackDict, pKey) == 0){
-        res = XPLMUnregisterKeySniffer(XPLMKeySnifferCallback, 
-                                         inBeforeWindows, PyLong_AsVoidPtr(pKey));
-      }
+      res = XPLMUnregisterKeySniffer(XPLMKeySnifferCallback, 
+                                     inBeforeWindows, PyLong_AsVoidPtr(pKey));
+      PyDict_DelItem(keySniffCallbackDict, pKey);
       break;
     }
   }
@@ -440,6 +439,7 @@ static PyObject *XPLMCreateWindowFun(PyObject *self, PyObject *args)
     return NULL;
   }
 
+  Py_INCREF(refcon);
   XPLMWindowID id = XPLMCreateWindow(left, top, right, bottom, visible, drawWindow, handleKey, handleMouseClick, refcon);
 
   PyObject *pID = PyLong_FromVoidPtr(id);
