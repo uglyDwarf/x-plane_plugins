@@ -18,7 +18,25 @@ static std::string string;
 static int button;
 static int pressed;
 
+
+
+class command{
+  typedef std::pair<XPLMCommandCallback_f, void *> handlerRecord;
+  std::string name;
+  std::string description;
+ public:
+  command(std::string inName, std::string inDescription):name(inName), description(inDescription){};
+  std::list<handlerRecord> beforeCallbacks;
+  std::list<handlerRecord> afterCallbacks;
+  void addHandler(XPLMCommandCallback_f inHandler, int inBefore, void *inRefcon);
+  void removeHandler(XPLMCommandCallback_f inHandler, int inBefore, void *inRefcon);
+  bool call(XPLMCommandPhase phase);
+};
+
+
+
 static std::list<XPLMDataRef> d;
+static std::map<std::string, command*> commands;
 
 
 void initUtilitiesModule()
@@ -37,6 +55,10 @@ void cleanupUtilitiesModule()
     XPLMUnregisterDataAccessor(*i);
   }
   d.empty();
+  for(std::map<std::string, command*>::iterator j = commands.begin(); j != commands.end(); ++j){
+    delete j->second;
+  }
+  commands.empty();
 }
 
 void XPLMSimulateKeyPress(int inKeyType, int inKey)
@@ -214,19 +236,6 @@ int XPLMSaveDataFile(XPLMDataFileType inFileType, const char *inFilePath)
 }
 
 
-class command{
-  typedef std::pair<XPLMCommandCallback_f, void *> handlerRecord;
-  std::string name;
-  std::string description;
- public:
-  command(std::string inName, std::string inDescription):name(inName), description(inDescription){};
-  std::list<handlerRecord> beforeCallbacks;
-  std::list<handlerRecord> afterCallbacks;
-  void addHandler(XPLMCommandCallback_f inHandler, int inBefore, void *inRefcon);
-  void removeHandler(XPLMCommandCallback_f inHandler, int inBefore, void *inRefcon);
-  bool call(XPLMCommandPhase phase);
-};
-
 bool command::call(XPLMCommandPhase phase)
 {
   //res == true => interrupt processing
@@ -261,7 +270,6 @@ void command::removeHandler(XPLMCommandCallback_f inHandler, int inBefore, void 
   }
 }
 
-static std::map<std::string, command*> commands;
 
 XPLMCommandRef XPLMFindCommand(const char *name)
 {
