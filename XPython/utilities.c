@@ -26,8 +26,9 @@ static void error_callback(const char *inMessage)
     PyObject *err = PyErr_Occurred();
     if(err){
       PyErr_Print();
+    }else{
+      Py_DECREF(oRes);
     }
-    Py_XDECREF(oRes);
   }
   Py_DECREF(msg);
 }
@@ -412,7 +413,7 @@ static PyObject *XPLMUnregisterCommandHandlerFun(PyObject *self, PyObject *args)
   if(PyDict_DelItem(commandRefcons, key)){
     printf("XPLMUnregisterCommandHandler: couldn't remove refcon.\n");
   }
-  Py_XDECREF(key);
+  Py_DECREF(key);
   if(PyDict_DelItem(commandCallbacks, refcon)){
     printf("XPLMUnregisterCommandHandler: couldn't remove command handler.\n");
   }
