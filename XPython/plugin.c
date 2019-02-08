@@ -301,7 +301,7 @@ PLUGIN_API void XPluginStop(void)
     }
     ++mod_ptr;
   }
-
+  Py_DECREF(loggerObj);
   Py_Finalize();
   PyMem_RawFree(program);
   //printf("XPluginStop finished.\n");
@@ -319,11 +319,12 @@ PLUGIN_API int XPluginEnable(void)
     }else{
       //printf("XPluginEnable returned %ld\n", PyLong_AsLong(pRes));
     }
-    Py_XDECREF(pRes);
     PyObject *err = PyErr_Occurred();
     if(err){
       fprintf(logFile, "Error occured during the XPluginEnable call:\n");
       PyErr_Print();
+    }else{
+      Py_DECREF(pRes);
     }
   }
 
@@ -341,8 +342,9 @@ PLUGIN_API void XPluginDisable(void)
     if(err){
       fprintf(logFile, "Error occured during the XPluginDisable call:\n");
       PyErr_Print();
+    }else{
+      Py_DECREF(pRes);
     }
-    Py_XDECREF(pRes);
   }
 
 }
@@ -364,8 +366,9 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, vo
     if(err){
       fprintf(logFile, "Error occured during the XPluginReceiveMessage call:\n");
       PyErr_Print();
+    }else{
+      Py_DECREF(pRes);
     }
-    Py_XDECREF(pRes);
   }
   Py_DECREF(param);
 }
