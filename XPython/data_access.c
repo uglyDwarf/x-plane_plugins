@@ -916,19 +916,16 @@ static PyObject *XPLMUnshareDataFun(PyObject *self, PyObject *args)
   PyObject *tmp, *tmp1, *target;
   target = NULL;
   while(PyDict_Next(sharedDict, &cnt, &pKey, &pVal)){
-    tmp = PyTuple_GetItem(pVal, 0);
-    if(tmp != selfObj){
+    if(PyTuple_GetItem(pVal, 0) != selfObj){
       continue;
     }
-    tmp = PyTuple_GetItem(pVal, 1);
-    tmp1 = PyObject_Str(tmp);
+    tmp1 = PyObject_Str(PyTuple_GetItem(pVal, 1));
     if(strcmp(inDataName, PyUnicode_AsUTF8(tmp1)) != 0){
       Py_DECREF(tmp1);
       continue;
     }
     Py_DECREF(tmp1);
-    tmp = PyTuple_GetItem(pVal, 2);
-    tmp1 = PyNumber_Long(tmp);
+    tmp1 = PyNumber_Long(PyTuple_GetItem(pVal, 2));
     if(PyLong_AsLong(tmp) != inDataType){
       Py_DECREF(tmp1);
       continue;
