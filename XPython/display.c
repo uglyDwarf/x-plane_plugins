@@ -141,15 +141,19 @@ static PyObject *XPLMUnregisterKeySnifferFun(PyObject *self, PyObject *args)
     return NULL;
   }
   PyObject *pKey = NULL, *pVal = NULL;
+  PyObject *toDelete = NULL;
   Py_ssize_t pos = 0;
   int res = -1;
   while(PyDict_Next(keySniffCallbackDict, &pos, &pKey, &pVal)){
     if(PyObject_RichCompareBool(pVal, args, Py_EQ)){
-      res = XPLMUnregisterKeySniffer(XPLMKeySnifferCallback, 
-                                     inBeforeWindows, PyLong_AsVoidPtr(pKey));
-      PyDict_DelItem(keySniffCallbackDict, pKey);
+      toDelete = pKey;
       break;
     }
+  }
+  if(toDelete){
+    res = XPLMUnregisterKeySniffer(XPLMKeySnifferCallback, 
+                                   inBeforeWindows, PyLong_AsVoidPtr(toDelete));
+    PyDict_DelItem(keySniffCallbackDict, toDelete);
   }
 
   PyObject *err = PyErr_Occurred();
