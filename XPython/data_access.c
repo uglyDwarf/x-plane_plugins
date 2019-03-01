@@ -913,7 +913,7 @@ static PyObject *XPLMUnshareDataFun(PyObject *self, PyObject *args)
     return NULL;
   }
   inDataType = (int)tmpInDataType;
-  PyObject *tmp, *tmp1, *target;
+  PyObject *tmp1, *target;
   target = NULL;
   while(PyDict_Next(sharedDict, &cnt, &pKey, &pVal)){
     if(PyTuple_GetItem(pVal, 0) != selfObj){
@@ -926,7 +926,7 @@ static PyObject *XPLMUnshareDataFun(PyObject *self, PyObject *args)
     }
     Py_DECREF(tmp1);
     tmp1 = PyNumber_Long(PyTuple_GetItem(pVal, 2));
-    if(PyLong_AsLong(tmp) != inDataType){
+    if(PyLong_AsLong(tmp1) != inDataType){
       Py_DECREF(tmp1);
       continue;
     }
