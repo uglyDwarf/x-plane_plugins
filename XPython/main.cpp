@@ -4,6 +4,7 @@
 #include <dlfcn.h>
 #include <string.h>
 #include <XPLM/XPLMDefs.h>
+#include <XPLM/XPLMUtilities.h>
 
 #include "chkDisplay.h"
 #include "chkGraphics.h"
@@ -95,6 +96,7 @@ int main(int argc, char *argv[])
   initMapModule();
 
   int res = XPluginStart(outName, outSig, outDesc);
+  XPLMCommandRef reloadCmd = XPLMFindCommand("XPython3/reloadScripts");
   std::cout << "Y-Plane loaded plugin " << outName << "(" << res << ")" << std::endl;
   std::cout << "  Signature: " << outSig << std::endl;
   std::cout << "  Description:" << outDesc << std::endl;
@@ -105,6 +107,10 @@ int main(int argc, char *argv[])
     XPluginReceiveMessage(5, 103, (void*)333);
     XPluginDisable();
     XPluginEnable();
+    if(((c + 1) % 100) == 0){
+      std::cout << "Reloading..." << std::endl;
+      XPLMCommandOnce(reloadCmd);
+    }
   }
   XPluginStop();
   std::cout << "===============================================" << std::endl;

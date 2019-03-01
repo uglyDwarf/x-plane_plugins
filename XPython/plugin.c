@@ -38,6 +38,8 @@ static char *logFileName;
 static const char *pluginsPath = "./Resources/plugins/PythonPlugins";
 static const char *internalPluginsPath = "./Resources/plugins/XPythonRevival";
 
+static bool stopped;
+
 static PyObject *logWriterWrite(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -239,24 +241,13 @@ void loadModules(const char *path, const char *pattern)
   }
 }
 
+static bool pythonStarted;
 
-PLUGIN_API int XPluginStart(char *outName, char *outSig, char *outDesc)
+static int startPython(void)
 {
-  logFileName = "XPython.log";
-  char *log;
-  log = getenv("XPYTHON_LOG");
-  if(log != NULL){
-    logFileName = log;
+  if(pythonStarted){
+    return 0;
   }
-  logFile = fopen(logFileName, "w");
-  if(logFile == NULL){
-    logFile = stdout;
-  }
-
-  fprintf(logFile, "X-PluginStart called.\n");
-  strcpy(outName, "Python Interface revival");
-  strcpy(outSig, "XPythonRevival.0.0");
-  strcpy(outDesc, "X-Plane interface for Python 3.");
   loadAllFunctions();
   initPython("X-Plane");
 
@@ -264,24 +255,14 @@ PLUGIN_API int XPluginStart(char *outName, char *outSig, char *outDesc)
   loadModules(internalPluginsPath, "^I_PI_.*\\.py$");
   // Load modules
   loadModules(pluginsPath, "^PI_.*\\.py$");
-
+  pythonStarted = true;
   return 1;
 }
 
-
-PLUGIN_API void XPluginStop(void)
+static int stopPython(void)
 {
-  PyObject *pKey, *pVal;
-  Py_ssize_t pos = 0;
-
-  while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
-    PyObject *res = PyObject_CallMethod(pVal, "XPluginStop", NULL);
-    PyObject *err = PyErr_Occurred();
-    Py_DECREF(res);
-    if(err){
-      fprintf(logFile, "Error occured during the XPluginStop call:\n");
-      PyErr_Print();
-    }
+  if(!pythonStarted){
+    return 0;
   }
   PyDict_Clear(moduleDict);
 
@@ -304,6 +285,102 @@ PLUGIN_API void XPluginStop(void)
   Py_DECREF(loggerObj);
   Py_Finalize();
   PyMem_RawFree(program);
+  pythonStarted = false;
+  return 0;
+}
+
+static XPLMCommandRef stopScripts;
+static XPLMCommandRef startScripts;
+static XPLMCommandRef reloadScripts;
+
+static int commandHandler(XPLMCommandRef inCommand, XPLMCommandPhase inPhase, void *inRefcon)
+{
+  (void) inRefcon;
+  if(inPhase != xplm_CommandBegin){
+    return 0;
+  }
+  if(inCommand == stopScripts){
+    stopped = true;
+  }else if(inCommand == startScripts){
+    stopped = false;
+  }else if(inCommand == reloadScripts){
+    stopPython();
+    startPython();
+  }
+  return 0;
+}
+
+static void menuHandler(void *inMenuRef, void *inItemRef)
+{
+  (void) inMenuRef;
+  (void) commandHandler(inItemRef, xplm_CommandBegin, NULL);
+}
+
+PLUGIN_API int XPluginStart(char *outName, char *outSig, char *outDesc)
+{
+  logFileName = "XPython.log";
+  char *log;
+  log = getenv("XPYTHON_LOG");
+  if(log != NULL){
+    logFileName = log;
+  }
+  logFile = fopen(logFileName, "w");
+  if(logFile == NULL){
+    logFile = stdout;
+  }
+
+  fprintf(logFile, "X-PluginStart called.\n");
+  strcpy(outName, "XPython3");
+  strcpy(outSig, "XPython3.0.0");
+  strcpy(outDesc, "X-Plane interface for Python 3.");
+
+  stopScripts = XPLMCreateCommand("XPython3/stopScripts", "Stop all running scripts");
+  startScripts = XPLMCreateCommand("XPython3/startScripts", "Start all scripts");
+  reloadScripts = XPLMCreateCommand("XPython3/reloadScripts", "Reload all scripts");
+
+  XPLMRegisterCommandHandler(stopScripts, commandHandler, 1, (void *)0);
+  XPLMRegisterCommandHandler(startScripts, commandHandler, 1, (void *)1);
+  XPLMRegisterCommandHandler(reloadScripts, commandHandler, 1, (void *)2);
+
+  int menuIndex = XPLMAppendMenuItem(XPLMFindPluginsMenu(), "XPython3", NULL, 1);
+
+  XPLMMenuID setupMenu = XPLMCreateMenu("XPython3", XPLMFindPluginsMenu(), menuIndex, 
+                         menuHandler, NULL);
+  if(XPLMAppendMenuItemWithCommand_ptr){
+    XPLMAppendMenuItemWithCommand_ptr(setupMenu, "Stop scripts", stopScripts);
+    XPLMAppendMenuItemWithCommand_ptr(setupMenu, "Start scripts", startScripts);
+    XPLMAppendMenuItemWithCommand_ptr(setupMenu, "Reload scripts", reloadScripts);
+  }else{
+    XPLMAppendMenuItem(setupMenu, "Stop scripts", (void *)stopScripts, 0);
+    XPLMAppendMenuItem(setupMenu, "Sart scripts", (void *)startScripts, 0);
+    XPLMAppendMenuItem(setupMenu, "Reload scripts", (void *)reloadScripts, 0);
+  }
+
+  startPython();
+
+  return 1;
+}
+
+
+PLUGIN_API void XPluginStop(void)
+{
+  PyObject *pKey, *pVal;
+  Py_ssize_t pos = 0;
+
+  if(stopped){
+    return;
+  }
+
+  while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
+    PyObject *res = PyObject_CallMethod(pVal, "XPluginStop", NULL);
+    PyObject *err = PyErr_Occurred();
+    Py_DECREF(res);
+    if(err){
+      fprintf(logFile, "Error occured during the XPluginStop call:\n");
+      PyErr_Print();
+    }
+  }
+  stopPython();
   //printf("XPluginStop finished.\n");
 }
 
@@ -311,6 +388,9 @@ PLUGIN_API int XPluginEnable(void)
 {
   PyObject *pKey, *pVal, *pRes;
   Py_ssize_t pos = 0;
+  if(stopped){
+    return 1;
+  }
 
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
     pRes = PyObject_CallMethod(pVal, "XPluginEnable", NULL);
@@ -335,6 +415,9 @@ PLUGIN_API void XPluginDisable(void)
 {
   PyObject *pKey, *pVal, *pRes;
   Py_ssize_t pos = 0;
+  if(stopped){
+    return;
+  }
 
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
     pRes = PyObject_CallMethod(pVal, "XPluginDisable", NULL);
@@ -354,6 +437,9 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, vo
   PyObject *pKey, *pVal, *pRes;
   Py_ssize_t pos = 0;
   PyObject *param;
+  if(stopped){
+    return;
+  }
   if(inParam != NULL){
     param = PyLong_FromLong((long)inParam);
   }else{

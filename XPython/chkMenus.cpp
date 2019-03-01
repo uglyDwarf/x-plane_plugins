@@ -81,10 +81,12 @@ void XPLMClearAllMenuItems(XPLMMenuID inMenuID)
 
 int XPLMAppendMenuItem(XPLMMenuID inMenu, const char *inItemName, void *inItemRef, int inForceEnglish)
 {
-  assert(inMenu == newMenuID);
+  assert((inMenu == mainMenuID) || (inMenu == newMenuID));
   name = inItemName;
   lang = inForceEnglish;
-  menuHandler(menuRef, inItemRef);
+  if(menuHandler){
+    menuHandler(menuRef, inItemRef);
+  }
   return ++item;
 }
 
