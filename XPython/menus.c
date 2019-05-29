@@ -73,8 +73,8 @@ static PyObject *XPLMCreateMenuFun(PyObject *self, PyObject *args)
 static PyObject *XPLMDestroyMenuFun(PyObject *self, PyObject *args)
 {
   (void)self;
-  PyObject *menuID;
-  if(!PyArg_ParseTuple(args, "O", &menuID)){
+  PyObject *menuID, *anotherSelf;
+  if(!PyArg_ParseTuple(args, "OO", &anotherSelf, &menuID)){
     return NULL;
   }
   PyObject *menuRef = PyDict_GetItem(menuRefDict, menuID);

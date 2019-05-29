@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+make clean
+make CC="clang -m32" CXX="clang++ -m32" -j5 test
+mkdir -p XPythonRevival/64 XPythonRevival/32
+cp lin.xpl XPythonRevival/32
+ln -s 32/lin.xpl XPythonRevival/lin.xpl
+make clean
+make -j5 test
+cp lin.xpl XPythonRevival/64
+
+#
+

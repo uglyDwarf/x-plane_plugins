@@ -117,7 +117,7 @@ class PythonInterface(checkBase):
          self.checkVal('XPLMRemoveMenuItem wasn\'t called.', self.getString(name), "removed")
          self.checkVal('XPLMRemoveMenuItem didn\'t pass the inIndex.', XPLMGetDatai(item), itemIndex)
 
-      XPLMDestroyMenu(menu)
+      XPLMDestroyMenu(self, menu)
       self.checkVal('XPLMDestroyMenu wasn\'t called.', self.getString(name), "destroyed")
 
 
