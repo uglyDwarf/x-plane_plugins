@@ -41,6 +41,16 @@ XPluginDisable_proto XPluginDisable = NULL;
 typedef void (*XPluginReceiveMessage_proto)(XPLMPluginID inFromWho, long inMessage, void* inParam);
 XPluginReceiveMessage_proto XPluginReceiveMessage = NULL;
 
+#if LIN
+#if __x86_64__
+  const char plugin_path[] =  "./Resources/plugins/XPythonRevival/64/lin.xpl";
+#else
+  const char plugin_path[] =  "./Resources/plugins/XPythonRevival/lin.xpl";
+#endif
+#elif APL
+  const char plugin_path[] =  "./Resources/plugins/XPythonRevival/mac.xpl";
+#endif
+
 void *loadFunction(void *libHandle, const char *funcName)
 {
   void *fun;
@@ -63,7 +73,7 @@ int main(int argc, char *argv[])
   (void) argv;
   dlerror();
   void *plugin = NULL;
-  plugin = dlopen("./lin.xpl", RTLD_NOW | RTLD_GLOBAL);
+  plugin = dlopen(plugin_path, RTLD_NOW | RTLD_GLOBAL);
   std::cout << "Plugin: " << plugin << std::endl;
   if(plugin == NULL){
     std::cout << "Can't load plugin (" << dlerror() << ")" << std::endl;

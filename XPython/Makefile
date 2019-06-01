@@ -1,26 +1,63 @@
-.PHONY : clean
+.PHONY : clean all 32bit 64bit darwin test
 
-CC=clang
-CXX=clang++
+PLUGIN_PATH="Resources/plugins/XPythonRevival"
+PY_CFLAGS = $(shell python3-config --cflags)
+PY_LDFLAGS = $(shell python3-config --ldflags)
+CPPFLAGS += -I../SDK/CHeaders -I../SDK/CHeaders/XPLM -I../SDK/CHeaders/Widgets
 
-PY_CFLAGS=$(shell python3-dbg-config --cflags)
-PY_LDFLAGS=$(shell python3-dbg-config --ldflags)
-XPLM_CPPFLAGS=-I./SDK/CHeaders -I./SDK/CHeaders/XPLM -I./SDK/CHeaders/Widgets -DIBM=0 -DAPL=0 -DLIN=1
+all : main_200 main_210 main_300 main_301
+
+ifeq ($(TARGET), Linux)
+LDFLAGS += -Wl,--export-dynamic
+CPPFLAGS += -DIBM=0 -DAPL=0 -DLIN=1
+all : lin.xpl
+test : 32bit 64bit
+	rm -f XPython*.log
+	XPYTHON_LOG=XPython301_32.log ./32/main_301
+	XPYTHON_LOG=XPython300_32.log ./32/main_300
+	XPYTHON_LOG=XPython210_32.log ./32/main_210
+	XPYTHON_LOG=XPython200_32.log ./32/main_200
+	XPYTHON_LOG=XPython301_64.log ./64/main_301
+	XPYTHON_LOG=XPython300_64.log ./64/main_300
+	XPYTHON_LOG=XPython210_64.log ./64/main_210
+	XPYTHON_LOG=XPython200_64.log ./64/main_200
+	tail -n1 XPython*.log
+endif
+
+ifeq ($(BITS), 64)
+CFLAGS += -m64
+endif
+
+ifeq ($(BITS), 32)
+CFLAGS += -m32
+endif
+
+ifeq ($(TARGET), Darwin)
+CXXFLAGS += -arch i386 -arch x86_64
+CPPFLAGS += -DIBM=0 -DAPL=1 -DLIN=0
+all : mac.xpl
+test : mac
+	rm XPython*.log
+	XPYTHON_LOG=XPython301_mac.log ./mac/main_301
+	XPYTHON_LOG=XPython300_mac.log ./mac/main_300
+	XPYTHON_LOG=XPython210_mac.log ./mac/main_210
+	XPYTHON_LOG=XPython200_mac.log ./mac/main_200
+	tail -n1 XPython*.log
+endif
+
 COV_FLAGS += 
-#COV_CFLAGS+= -fprofile-instr-generate -fcoverage-mapping
-LDFLAGS+= -Wl,--export-dynamic -g -ldl
-#LDFLAGS+= -fsanitize=address -fno-omit-frame-pointer
-CPPFLAGS+= ${XPLM_CPPFLAGS}
+LDFLAGS+= -g -ldl
 CFLAGS+=-Wall -Wextra -g
 
-all : lin.xpl
+32bit:
+	cd 32 && $(MAKE)
 
-test : main_200 main_210 main_300 main_301 lin.xpl
-	XPYTHON_LOG=XPython301.log ./main_301
-	XPYTHON_LOG=XPython300.log ./main_300
-	XPYTHON_LOG=XPython210.log ./main_210
-	XPYTHON_LOG=XPython200.log ./main_200
-	tail -n1 XPython*.log
+64bit:
+	cd 64 && $(MAKE)
+
+darwin:
+	cd mac && $(MAKE)
+
 
 all_cov : CXXFLAGS+= ${COV_CFLAGS}
 all_cov : CFLAGS+= ${COV_CFLAGS}
@@ -56,16 +93,29 @@ main_200 : $(subst XXX,200,$(CHK_OBJ))
 
 
 lin.xpl : CFLAGS+= ${PY_CFLAGS} -fpic -fPIC -g -fvisibility=hidden
-lin.xpl : CPPFLAGS+= ${XPLM_CPPFLAGS}
+lin.xpl : CPPFLAGS+= ${XPLM_CPPFLAGS} -DIBM=0 -DAPL=0 -DLIN=1
 lin.xpl : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic -ldl -g -fvisibility=hidden
 lin.xpl : plugin.o defs.o display.o utils.o graphics.o data_access.o utilities.o scenery.o menus.o \
           navigation.o plugins.o planes.o processing.o camera.o widget_defs.o widgets.o \
           standard_widgets.o uigraphics.o widgetutils.o instance.o map.o plugin_dl.o sb.o utils.o
 	$(CC) $(CXXFLAGS) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
-valgrind : main_301 lin.xpl
-	valgrind --tool=memcheck --suppressions=valgrind-python.supp --leak-check=full ./main_301
+mac.xpl : CFLAGS+= ${PY_CFLAGS} -fpic -fPIC -g -fvisibility=hidden
+mac.xpl : CPPFLAGS+= ${XPLM_CPPFLAGS} -DIBM=0 -DAPL=1 -DLIN=0
+mac.xpl : LDFLAGS+= ${PY_LDFLAGS} -shared -fPIC -fpic -ldl -g -fvisibility=hidden -undefined dynamic_lookup
+mac.xpl : plugin.o defs.o display.o utils.o graphics.o data_access.o utilities.o scenery.o menus.o \
+          navigation.o plugins.o planes.o processing.o camera.o widget_defs.o widgets.o \
+          standard_widgets.o uigraphics.o widgetutils.o instance.o map.o plugin_dl.o sb.o utils.o
+	$(CC) $(CXXFLAGS) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
-clean :
+SUBDIRS = . 32 mac 64
+SUBDIRSCLEAN=$(addsuffix .clean,$(SUBDIRS))
+
+clean : $(SUBDIRSCLEAN)
+
+clean_current_directory:
 	rm -f *.so *.o main_??? lin.xpl default.prof* coverage.txt *.log
+
+%.clean: %
+	$(MAKE) -C $< clean_current_directory
 
