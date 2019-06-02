@@ -1,0 +1,5 @@
+#!/bin/bash
+#
+TARGET=Darwin make -j5 test
+#
+

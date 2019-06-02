@@ -36,8 +36,8 @@ ifeq ($(TARGET), Darwin)
 CXXFLAGS += -arch i386 -arch x86_64
 CPPFLAGS += -DIBM=0 -DAPL=1 -DLIN=0
 all : mac.xpl
-test : mac
-	rm XPython*.log
+test : darwin
+	rm -f XPython*.log
 	XPYTHON_LOG=XPython301_mac.log ./mac/main_301
 	XPYTHON_LOG=XPython300_mac.log ./mac/main_300
 	XPYTHON_LOG=XPython210_mac.log ./mac/main_210
@@ -114,7 +114,7 @@ SUBDIRSCLEAN=$(addsuffix .clean,$(SUBDIRS))
 clean : $(SUBDIRSCLEAN)
 
 clean_current_directory:
-	rm -f *.so *.o main_??? lin.xpl default.prof* coverage.txt *.log
+	rm -f *.so *.o main_??? ???.xpl default.prof* coverage.txt *.log
 
 %.clean: %
 	$(MAKE) -C $< clean_current_directory
