@@ -33,7 +33,7 @@ CFLAGS += -m32
 endif
 
 ifeq ($(TARGET), Darwin)
-CXXFLAGS += -arch i386 -arch x86_64
+CXXFLAGS += -arch x86_64
 CPPFLAGS += -DIBM=0 -DAPL=1 -DLIN=0
 all : mac.xpl
 test : darwin
