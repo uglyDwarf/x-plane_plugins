@@ -1,4 +1,4 @@
-#define _GNU_SOURCE
+#define _GNU_SOURCE 1
 #include <Python.h>
 #include <stdio.h>
 #include <stdbool.h>
