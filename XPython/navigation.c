@@ -58,23 +58,16 @@ static PyObject *XPLMFindNavAidFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "zzOOOi", &inNameFragment, &inIDFragment, &objLat, &objLon, &objFreq, &inType)){
     return NULL;
   }
-  PyObject *tmp;
   if(objLat != Py_None){
-    tmp = PyNumber_Float(objLat);
-    lat = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
+    lat = PyFloat_AsDouble(objLat);
     inLat = &lat;
   }
   if(objLon != Py_None){
-    tmp = PyNumber_Float(objLon);
-    lon = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
+    lon = PyFloat_AsDouble(objLon);
     inLon = &lon;
   }
   if(objFreq != Py_None){
-    tmp = PyNumber_Long(objFreq);
-    frequency = PyLong_AsLong(tmp);
-    Py_DECREF(tmp);
+    frequency = PyLong_AsLong(objFreq);
     inFrequency = &frequency;
   }
   return PyLong_FromLong(XPLMFindNavAid(inNameFragment, inIDFragment, inLat, inLon, inFrequency, inType));

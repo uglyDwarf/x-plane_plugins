@@ -186,7 +186,7 @@ PyObject *XPLMDrawAircraftFun(PyObject *self, PyObject *args)
   (void)self;
   int inPlaneIndex, inFullDraw;
   float inX, inY, inZ, inPitch, inRoll, inYaw;
-  PyObject *drawStateInfoSeq, *tmp;
+  PyObject *drawStateInfoSeq;
   XPLMPlaneDrawState_t inDrawStateInfo;
   if(!PyArg_ParseTuple(args, "iffffffiO", &inPlaneIndex, &inX, &inY, &inZ, &inPitch,
                                           &inRoll, &inYaw, &inFullDraw, &drawStateInfoSeq)){
@@ -194,36 +194,16 @@ PyObject *XPLMDrawAircraftFun(PyObject *self, PyObject *args)
   }
   PyObject *drawStateInfo = PySequence_Tuple(drawStateInfoSeq);
   inDrawStateInfo.structSize = sizeof(XPLMPlaneDrawState_t);
-  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 1));
-  inDrawStateInfo.gearPosition = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
-  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 2));
-  inDrawStateInfo.flapRatio = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
-  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 3));
-  inDrawStateInfo.spoilerRatio = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
-  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 4));
-  inDrawStateInfo.speedBrakeRatio = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
-  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 5));
-  inDrawStateInfo.slatRatio = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
-  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 6));
-  inDrawStateInfo.wingSweep = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
-  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 7));
-  inDrawStateInfo.thrust = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
-  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 8));
-  inDrawStateInfo.yokePitch = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
-  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 9));
-  inDrawStateInfo.yokeHeading = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
-  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 10));
-  inDrawStateInfo.yokeRoll = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
+  inDrawStateInfo.gearPosition = getFloatFromTuple(drawStateInfo, 1);
+  inDrawStateInfo.flapRatio = getFloatFromTuple(drawStateInfo, 2);
+  inDrawStateInfo.spoilerRatio = getFloatFromTuple(drawStateInfo, 3);
+  inDrawStateInfo.speedBrakeRatio = getFloatFromTuple(drawStateInfo, 4);
+  inDrawStateInfo.slatRatio = getFloatFromTuple(drawStateInfo, 5);
+  inDrawStateInfo.wingSweep = getFloatFromTuple(drawStateInfo, 6);
+  inDrawStateInfo.thrust = getFloatFromTuple(drawStateInfo, 7);
+  inDrawStateInfo.yokePitch = getFloatFromTuple(drawStateInfo, 8);
+  inDrawStateInfo.yokeHeading = getFloatFromTuple(drawStateInfo, 9);
+  inDrawStateInfo.yokeRoll = getFloatFromTuple(drawStateInfo, 10);
 
   XPLMDrawAircraft(inPlaneIndex, inX, inY, inZ, inPitch, inRoll, inYaw, inFullDraw, &inDrawStateInfo);
   Py_RETURN_NONE;

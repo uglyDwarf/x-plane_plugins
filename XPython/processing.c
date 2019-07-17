@@ -49,9 +49,7 @@ static float flightLoopCallback(float inElapsedSinceLastCall, float inElapsedTim
     PyErr_Print();
     tmp = -1.0f;
   }else{
-    PyObject *f = PyNumber_Float(res);
-    tmp = PyFloat_AsDouble(f);
-    Py_DECREF(f);
+    tmp = PyFloat_AsDouble(res);
   }
   Py_XDECREF(res);
   return tmp;
@@ -158,9 +156,7 @@ static PyObject *XPLMCreateFlightLoopFun(PyObject* self, PyObject *args)
   PyObject *params = PySequence_Tuple(param_seq);
   XPLMCreateFlightLoop_t fl;
   fl.structSize = sizeof(fl);
-  PyObject *tmp = PyNumber_Long(PyTuple_GetItem(params, 0));
-  fl.phase = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
+  fl.phase = PyLong_AsLong(PyTuple_GetItem(params, 0));
   fl.callbackFunc = flightLoopCallback;
   fl.refcon = (void *)++flCntr;
   
