@@ -6,5 +6,8 @@
 
 void dbg(const char *msg);
 bool objToList(PyObject *item, PyObject *list);
+float getFloatFromTuple(PyObject *seq, Py_ssize_t i);
+long getLongFromTuple(PyObject *seq, Py_ssize_t i);
+
 
 #endif

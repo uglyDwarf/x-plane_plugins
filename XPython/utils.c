@@ -28,4 +28,13 @@ bool objToList(PyObject *item, PyObject *list)
   return true;
 }
 
+float getFloatFromTuple(PyObject *seq, Py_ssize_t i)
+{
+  return PyFloat_AsDouble(PyTuple_GetItem(seq, i));
+}
+
+long getLongFromTuple(PyObject *seq, Py_ssize_t i)
+{
+  return PyLong_AsLong(PyTuple_GetItem(seq, i));
+}
 

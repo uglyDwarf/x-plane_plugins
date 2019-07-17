@@ -309,9 +309,7 @@ static int commandCallback(XPLMCommandRef inCommand, XPLMCommandPhase inPhase, v
     PyErr_Print();
   }
   Py_DECREF(pID);
-  PyObject *tmp = PyNumber_Long(oRes);
-  int res = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
+  int res = PyLong_AsLong(oRes);
   err = PyErr_Occurred();
   if(err){
     PyErr_Print();

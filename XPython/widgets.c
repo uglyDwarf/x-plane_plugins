@@ -49,9 +49,7 @@ int widgetCallback(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inPa
         PyErr_Print();
         break;
       }
-      PyObject *tmp = PyNumber_Long(resObj);
-      res = PyLong_AsLong(tmp);
-      Py_DECREF(tmp);
+      res = PyLong_AsLong(resObj);
       Py_DECREF(resObj);
     }
     if(res != 0){
