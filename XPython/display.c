@@ -353,70 +353,48 @@ static PyObject *XPLMCreateWindowExFun(PyObject *self, PyObject *args)
   }
   
   XPLMCreateWindow_t params;
-  PyObject *tmp, *tmp1;
   PyObject *drawWindowFunc, *handleMouseClickFunc, *handleKeyFunc,
            *handleCursorFunc, *handleMouseWheelFunc;
   PyObject *handleRightClickFunc;
   params.structSize = sizeof(params);
-  tmp1 = PySequence_GetItem(paramsObj, 0);
-  tmp = PyNumber_Long(tmp1);
-  params.left = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
-  Py_DECREF(tmp1);
-  tmp1 = PySequence_GetItem(paramsObj, 1);
-  tmp = PyNumber_Long(tmp1);
-  params.top = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
-  Py_DECREF(tmp1);
-  tmp1 = PySequence_GetItem(paramsObj, 2);
-  tmp = PyNumber_Long(tmp1);
-  params.right = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
-  Py_DECREF(tmp1);
-  tmp1 = PySequence_GetItem(paramsObj, 3);
-  tmp = PyNumber_Long(tmp1);
-  params.bottom = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
-  Py_DECREF(tmp1);
-  tmp1 = PySequence_GetItem(paramsObj, 4);
-  tmp = PyNumber_Long(tmp1);
-  params.visible = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
-  Py_DECREF(tmp1);
+  PyObject *paramsTuple = PySequence_Tuple(paramsObj);
+  params.left = getLongFromTuple(paramsTuple, 0);
+  params.top = getLongFromTuple(paramsTuple, 1);
+  params.right = getLongFromTuple(paramsTuple, 2);
+  params.bottom = getLongFromTuple(paramsTuple, 3);
+  params.visible = getLongFromTuple(paramsTuple, 4);
   // PySequence_GetItem returns new reference!
-  drawWindowFunc = PySequence_GetItem(paramsObj, 5);
-  handleMouseClickFunc = PySequence_GetItem(paramsObj, 6);
-  handleKeyFunc = PySequence_GetItem(paramsObj, 7);
-  handleCursorFunc = PySequence_GetItem(paramsObj, 8);
-  handleMouseWheelFunc = PySequence_GetItem(paramsObj, 9);
+  drawWindowFunc = PyTuple_GetItem(paramsTuple, 5);
+  Py_INCREF(drawWindowFunc);
+  handleMouseClickFunc = PyTuple_GetItem(paramsTuple, 6);
+  Py_INCREF(handleMouseClickFunc);
+  handleKeyFunc = PyTuple_GetItem(paramsTuple, 7);
+  Py_INCREF(handleKeyFunc);
+  handleCursorFunc = PyTuple_GetItem(paramsTuple, 8);
+  Py_INCREF(handleCursorFunc);
+  handleMouseWheelFunc = PyTuple_GetItem(paramsTuple, 9);
+  Py_INCREF(handleMouseWheelFunc);
   params.drawWindowFunc = drawWindow;
   params.handleMouseClickFunc = handleMouseClick;
   params.handleKeyFunc = handleKey;
   params.handleCursorFunc = handleCursor;
   params.handleMouseWheelFunc = handleMouseWheel;
-  params.refcon = PySequence_GetItem(paramsObj, 10);
-
+  params.refcon = PyTuple_GetItem(paramsTuple, 10);
+  Py_INCREF(params.refcon);
   //SDK 3.0+
   if(PySequence_Length(paramsObj) > 11){
-    tmp1 = PySequence_GetItem(paramsObj, 11);
-    tmp = PyNumber_Long(tmp1);
-    params.decorateAsFloatingWindow = PyLong_AsLong(tmp);
-    Py_DECREF(tmp);
-    Py_DECREF(tmp1);
-    tmp1 = PySequence_GetItem(paramsObj, 12);
-    tmp = PyNumber_Long(tmp1);
-    params.layer = PyLong_AsLong(tmp);
-    Py_DECREF(tmp);
-    Py_DECREF(tmp1);
+    params.decorateAsFloatingWindow = getLongFromTuple(paramsTuple, 11);
+    params.layer = getLongFromTuple(paramsTuple, 12);
     params.handleRightClickFunc = handleRightClick;
-    handleRightClickFunc = PySequence_GetItem(paramsObj, 13);
+    handleRightClickFunc = PyTuple_GetItem(paramsTuple, 13);
   }else{
     handleRightClickFunc = Py_None;
-    Py_INCREF(handleRightClickFunc);
   }
+  Py_INCREF(handleRightClickFunc);
   
   PyObject *cbkTuple = Py_BuildValue("(OOOOOO)", drawWindowFunc, handleMouseClickFunc, handleKeyFunc,
                                                handleCursorFunc, handleMouseWheelFunc, handleRightClickFunc);
+  Py_DECREF(paramsTuple);
   if(!cbkTuple){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMCreateWindowEx couldn't create a callback tuple.\n");
     return NULL;

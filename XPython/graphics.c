@@ -167,21 +167,13 @@ static PyObject *XPLMDrawStringFun(PyObject *self, PyObject *args)
     return NULL;
   }
   PyObject *rgbTuple = PySequence_Tuple(rgbList);
-  PyObject *r, *g, *b;
-  r = PyNumber_Float(PyTuple_GetItem(rgbTuple, 0));
-  g = PyNumber_Float(PyTuple_GetItem(rgbTuple, 1));
-  b = PyNumber_Float(PyTuple_GetItem(rgbTuple, 2));
-  float inColorRGB[3] = {PyFloat_AsDouble(r),
-                         PyFloat_AsDouble(g),
-                         PyFloat_AsDouble(b)};
-  Py_DECREF(r);
-  Py_DECREF(g);
-  Py_DECREF(b);
+  float inColorRGB[3];
+  inColorRGB[0] = getFloatFromTuple(rgbTuple, 0);
+  inColorRGB[1] = getFloatFromTuple(rgbTuple, 1);
+  inColorRGB[2] = getFloatFromTuple(rgbTuple, 2);
   Py_DECREF(rgbTuple);
   if(wordWrapWidthObj != Py_None){
-    PyObject *tmp = PyNumber_Long(wordWrapWidthObj);
-    wordWrapWidth = PyLong_AsLong(tmp);
-    Py_DECREF(tmp);
+    wordWrapWidth = PyLong_AsLong(wordWrapWidthObj);
     if(wordWrapWidth != 0){
       inWordWrapWidth = &wordWrapWidth;
     }
@@ -213,16 +205,10 @@ static PyObject *XPLMDrawNumberFun(PyObject *self, PyObject *args)
     return NULL;
   }
   PyObject *rgbTuple = PySequence_Tuple(rgbList);
-  PyObject *r, *g, *b;
-  r = PyNumber_Float(PyTuple_GetItem(rgbTuple, 0));
-  g = PyNumber_Float(PyTuple_GetItem(rgbTuple, 1));
-  b = PyNumber_Float(PyTuple_GetItem(rgbTuple, 2));
-  float inColorRGB[3] = {PyFloat_AsDouble(r),
-                         PyFloat_AsDouble(g),
-                         PyFloat_AsDouble(b)};
-  Py_DECREF(r);
-  Py_DECREF(g);
-  Py_DECREF(b);
+  float inColorRGB[3];
+  inColorRGB[0] = getFloatFromTuple(rgbTuple, 0);
+  inColorRGB[1] = getFloatFromTuple(rgbTuple, 1);
+  inColorRGB[2] = getFloatFromTuple(rgbTuple, 2);
   Py_DECREF(rgbTuple);
 
   XPLMDrawNumber(inColorRGB, inXOffset, inYOffset, inValue, inDigits, inDecimals, inShowSign, inFontID);

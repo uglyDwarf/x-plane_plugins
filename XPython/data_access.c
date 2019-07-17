@@ -136,10 +136,7 @@ static PyObject *XPLMSetDatadFun(PyObject *self, PyObject *args)
 
 static inline XPLMDataRef drefFromObj(PyObject *obj)
 {
-  PyObject *tmp = PyNumber_Long(obj);
-  XPLMDataRef res = (XPLMDataRef)PyLong_AsVoidPtr(tmp);
-  Py_DECREF(tmp);
-  return res;
+  return (XPLMDataRef)PyLong_AsVoidPtr(obj);
 }
 
 static PyObject *XPLMGetDataviFun(PyObject *self, PyObject *args)
@@ -203,14 +200,11 @@ static PyObject *XPLMSetDataviFun(PyObject *self, PyObject *args)
     return NULL;
   }
   inValues = (int *)malloc(inCount * sizeof(int));
+  PyObject *tup = PySequence_Tuple(inValuesObj);
   for(int i = 0; i < inCount; ++i){
-    PyObject *tmp, *tmp1;
-    tmp1 = PySequence_GetItem(inValuesObj, i);
-    tmp = PyNumber_Long(tmp1);
-    Py_DECREF(tmp1);
-    inValues[i] = PyLong_AsLong(tmp);
-    Py_DECREF(tmp);
+    inValues[i] = PyLong_AsLong(PyTuple_GetItem(tup, i));
   }
+  Py_DECREF(tup);
   
   XPLMSetDatavi(inDataRef, inValues, inOffset, inCount);
   free(inValues);
@@ -279,10 +273,9 @@ static PyObject *XPLMSetDatavfFun(PyObject *self, PyObject *args)
     return NULL;
   }
   inValues = (float *)malloc(inCount * sizeof(float));
+  PyObject *tup = PySequence_Tuple(inValuesObj);
   for(int i = 0; i < inCount; ++i){
-    PyObject *tmp = PyNumber_Float(PySequence_GetItem(inValuesObj, i));
-    inValues[i] = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
+    inValues[i] = PyFloat_AsDouble(PyTuple_GetItem(tup, i));
   }
   
   XPLMSetDatavf(inDataRef, inValues, inOffset, inCount);
@@ -351,13 +344,11 @@ static PyObject *XPLMSetDatabFun(PyObject *self, PyObject *args)
     return NULL;
   }
   inValues = (uint8_t *)malloc(inCount * sizeof(uint8_t));
+  PyObject *tup = PySequence_Tuple(inValuesObj);
   for(int i = 0; i < inCount; ++i){
-    PyObject *tmp1 = PySequence_GetItem(inValuesObj, i);
-    PyObject *tmp = PyNumber_Long(tmp1);
-    Py_DECREF(tmp1);
-    inValues[i] = PyLong_AsLong(tmp);
-    Py_DECREF(tmp);
+    inValues[i] = PyLong_AsLong(PyTuple_GetItem(tup, i));
   }
+  Py_DECREF(tup);
   
   XPLMSetDatab(inDataRef, inValues, inOffset, inCount);
   free(inValues);
@@ -384,9 +375,7 @@ static int getDatai(void *inRefcon)
   Py_DECREF(oFun);
   Py_DECREF(oArg);
   Py_DECREF(pID);
-  PyObject *tmp = PyNumber_Long(oRes);
-  int res = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
+  int res = PyLong_AsLong(oRes);
   err = PyErr_Occurred();
   if(err){
     PyErr_Print();
@@ -438,9 +427,7 @@ static float getDataf(void *inRefcon)
   Py_DECREF(oArg1);
   Py_DECREF(pID);
 
-  PyObject *tmp = PyNumber_Float(oRes);
-  float res = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
+  float res = PyFloat_AsDouble(oRes);
   err = PyErr_Occurred();
   if(err){
     PyErr_Print();
@@ -491,9 +478,7 @@ static double getDatad(void *inRefcon)
   Py_DECREF(oFun);
   Py_DECREF(oArg);
   Py_DECREF(pID);
-  PyObject *tmp = PyNumber_Float(oRes);
-  double res = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
+  double res = PyFloat_AsDouble(oRes);
   err = PyErr_Occurred();
   if(err){
     PyErr_Print();
@@ -556,9 +541,7 @@ static int getDatavi(void *inRefcon, int *outValues, int inOffset, int inMax)
   Py_DECREF(oArg1);
   Py_DECREF(oArg2);
   Py_DECREF(oArg3);
-  PyObject *tmp = PyNumber_Long(oRes);
-  int res = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
+  int res = PyLong_AsLong(oRes);
   err = PyErr_Occurred();
   if(err){
     PyErr_Print();
@@ -566,9 +549,7 @@ static int getDatavi(void *inRefcon, int *outValues, int inOffset, int inMax)
   }else{
     if(outValues){
       for(int i = 0; i < res; ++i){
-        PyObject *tmp = PyNumber_Long(PyList_GetItem(outValuesObj, i));
-        outValues[i] = PyLong_AsLong(tmp);
-        Py_DECREF(tmp);
+        outValues[i] = PyLong_AsLong(PyList_GetItem(outValuesObj, i));
       }
     }
   }
@@ -641,9 +622,7 @@ static int getDatavf(void *inRefcon, float *outValues, int inOffset, int inMax)
   Py_DECREF(oArg1);
   Py_DECREF(oArg2);
   Py_DECREF(oArg3);
-  PyObject *tmp = PyNumber_Long(oRes);
-  int res = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
+  int res = PyLong_AsLong(oRes);
   err = PyErr_Occurred();
   if(err){
     PyErr_Print();
@@ -651,9 +630,7 @@ static int getDatavf(void *inRefcon, float *outValues, int inOffset, int inMax)
   }else{
     if(outValues){
       for(int i = 0; i < res; ++i){
-        PyObject *tmp = PyNumber_Float(PyList_GetItem(outValuesObj, i));
-        outValues[i] = PyFloat_AsDouble(tmp);
-        Py_DECREF(tmp);
+        outValues[i] = PyFloat_AsDouble(PyList_GetItem(outValuesObj, i));
       }
     }
   }
@@ -726,9 +703,7 @@ static int getDatab(void *inRefcon, void *outValue, int inOffset, int inMax)
   Py_DECREF(oArg1);
   Py_DECREF(oArg2);
   Py_DECREF(oArg3);
-  PyObject *tmp = PyNumber_Long(oRes);
-  int res = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
+  int res = PyLong_AsLong(oRes);
   err = PyErr_Occurred();
   if(err){
     PyErr_Print();
@@ -737,9 +712,7 @@ static int getDatab(void *inRefcon, void *outValue, int inOffset, int inMax)
     if(outValue){
       uint8_t *pOutValue = (uint8_t *)outValue;
       for(int i = 0; i < res; ++i){
-        PyObject *tmp = PyNumber_Long(PyList_GetItem(outValuesObj, i));
-        pOutValue[i] = PyLong_AsLong(tmp);
-        Py_DECREF(tmp);
+        pOutValue[i] = PyLong_AsLong(PyList_GetItem(outValuesObj, i));
       }
     }
   }
@@ -850,9 +823,7 @@ static PyObject *XPLMUnregisterDataAccessorFun(PyObject *self, PyObject *args)
   if(PyDict_DelItem(drefDict, drefObj)){
     printf("XPLMUnregisterDataref: Couldn't remove the dref.\n");
   }
-  PyObject *tmp = PyNumber_Long(drefObj);
-  XPLMUnregisterDataAccessor(PyLong_AsVoidPtr(tmp));
-  Py_DECREF(tmp);
+  XPLMUnregisterDataAccessor(PyLong_AsVoidPtr(drefObj));
   Py_RETURN_NONE;
 }
 
@@ -925,12 +896,9 @@ static PyObject *XPLMUnshareDataFun(PyObject *self, PyObject *args)
       continue;
     }
     Py_DECREF(tmp1);
-    tmp1 = PyNumber_Long(PyTuple_GetItem(pVal, 2));
-    if(PyLong_AsLong(tmp1) != inDataType){
-      Py_DECREF(tmp1);
+    if(PyLong_AsLong(PyTuple_GetItem(pVal, 2)) != inDataType){
       continue;
     }
-    Py_DECREF(tmp1);
     if(PyTuple_GetItem(pVal, 3) != callbackObj){
       continue;
     }
