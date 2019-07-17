@@ -167,7 +167,7 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
   (void)self;
   PyObject *object;
   int inCount;
-  PyObject *locations, *tmp;
+  PyObject *locations;
   int lighting;
   int earth_relative;
   if(!PyArg_ParseTuple(args, "OiOii", &object, &inCount, &locations, &lighting, &earth_relative)){
@@ -176,28 +176,19 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
   XPLMObjectRef inObject = PyLong_AsVoidPtr(object);
   XPLMDrawInfo_t *inLocations = (XPLMDrawInfo_t *)malloc(inCount * sizeof(XPLMDrawInfo_t));
   int i;
+  PyObject *locationsTuple = PySequence_Tuple(locations);
   for(i = 0; i < inCount; ++i){
-    PyObject *loc = PySequence_GetItem(locations, i);
+    PyObject *loc = PySequence_Tuple(PyTuple_GetItem(locationsTuple, i));
     inLocations[i].structSize = sizeof(XPLMDrawInfo_t);
-    tmp = PyNumber_Float(PySequence_GetItem(loc, 0));
-    inLocations[i].x = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(loc, 1));
-    inLocations[i].y = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(loc, 2));
-    inLocations[i].z = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(loc, 3));
-    inLocations[i].pitch = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(loc, 4));
-    inLocations[i].heading = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(loc, 5));
-    inLocations[i].roll = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
+    inLocations[i].x = getFloatFromTuple(loc, 0);
+    inLocations[i].y = getFloatFromTuple(loc, 1);
+    inLocations[i].z = getFloatFromTuple(loc, 2);
+    inLocations[i].pitch = getFloatFromTuple(loc, 3);
+    inLocations[i].heading = getFloatFromTuple(loc, 4);
+    inLocations[i].roll = getFloatFromTuple(loc, 5);
+    Py_DECREF(loc);
   }
+  Py_DECREF(locationsTuple);
 
   XPLMDrawObjects(inObject, inCount, inLocations, lighting, earth_relative);
   free(inLocations);
