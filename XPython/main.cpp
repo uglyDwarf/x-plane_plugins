@@ -112,8 +112,9 @@ int main(int argc, char *argv[])
   std::cout << "  Description:" << outDesc << std::endl;
   
   for(int c = 0; c < 1000; ++c){
-    std::cout << c << std::endl;
-
+    if(c % 50 == 0){
+      std::cout << c << std::endl;
+    }
     XPluginReceiveMessage(5, 103, (void*)333);
     XPluginDisable();
     XPluginEnable();
