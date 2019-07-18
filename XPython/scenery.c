@@ -10,6 +10,8 @@
 #include "utils.h"
 #include "plugin_dl.h"
 
+static const char probeName[] = "XPLMProbe";
+
 static PyObject *XPLMCreateProbeFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -17,7 +19,7 @@ static PyObject *XPLMCreateProbeFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "i", &inProbeType)){
     return NULL;
   }
-  return PyLong_FromVoidPtr(XPLMCreateProbe(inProbeType));
+  return PyCapsule_New(XPLMCreateProbe(inProbeType), probeName, NULL);
 }
 
 static PyObject *XPLMDestroyProbeFun(PyObject *self, PyObject *args)
@@ -27,7 +29,7 @@ static PyObject *XPLMDestroyProbeFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &inProbe)){
     return NULL;
   }
-  XPLMDestroyProbe(PyLong_AsVoidPtr(inProbe));
+  XPLMDestroyProbe(PyCapsule_GetPointer(inProbe, probeName));
   Py_RETURN_NONE;
 }
 
@@ -41,7 +43,7 @@ static PyObject *XPLMProbeTerrainXYZFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OfffO", &probe, &inX, &inY, &inZ, &info)){
     return NULL;
   }
-  XPLMProbeRef inProbe = PyLong_AsVoidPtr(probe);
+  XPLMProbeRef inProbe = PyCapsule_GetPointer(probe, probeName);
   XPLMProbeInfo_t outInfo;
   XPLMProbeResult res = XPLMProbeTerrainXYZ(inProbe, inX, inY, inZ, &outInfo);
 
@@ -286,6 +288,7 @@ PyInit_XPLMScenery(void)
   if(!(libEnumDict = PyDict_New())){
     return NULL;
   }
+
   PyObject *mod = PyModule_Create(&XPLMSceneryModule);
   if(mod){
     PyModule_AddIntConstant(mod, "xplm_ProbeY", xplm_ProbeY);
@@ -293,7 +296,6 @@ PyInit_XPLMScenery(void)
     PyModule_AddIntConstant(mod, "xplm_ProbeHitTerrain", xplm_ProbeHitTerrain);
     PyModule_AddIntConstant(mod, "xplm_ProbeError", xplm_ProbeError);
     PyModule_AddIntConstant(mod, "xplm_ProbeMissed ", xplm_ProbeMissed );
-
   }
 
   return mod;
