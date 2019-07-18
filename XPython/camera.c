@@ -13,7 +13,6 @@ static PyObject *camDict;
 
 static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosingControl, void *inRefcon)
 {
-  PyObject *tmp;
   PyObject *ref = PyLong_FromVoidPtr(inRefcon);
   PyObject *callbackInfo = PyDict_GetItem(camDict, ref);
   Py_XDECREF(ref);
