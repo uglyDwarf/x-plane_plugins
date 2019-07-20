@@ -116,7 +116,7 @@ static PyObject *XPLMLoadObjectFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMObjectRef res = XPLMLoadObject(inPath);
-  return PyLong_FromVoidPtr(res);
+  return PyCapsule_New(res, objRefName, NULL);
 }
 
 
@@ -126,15 +126,15 @@ static intptr_t loaderCntr;
 
 static void objectLoaded(XPLMObjectRef inObject, void *inRefcon)
 {
-  PyObject *object = PyLong_FromVoidPtr(inObject);
+  PyObject *object = PyCapsule_New(inObject, objRefName, NULL);
   PyObject *pID = PyLong_FromVoidPtr(inRefcon);
   PyObject *loaderCallbackInfo = PyDict_GetItem(loaderDict, pID);
   if(loaderCallbackInfo == NULL){
     printf("Unknown callback requested in objectLoaded(%p).\n", inRefcon);
     return;
   }
-  PyObject *res = PyObject_CallFunctionObjArgs(PySequence_GetItem(loaderCallbackInfo, 2),
-                                           object, PySequence_GetItem(loaderCallbackInfo, 3), NULL);
+  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(loaderCallbackInfo, 2),
+                                           object, PyTuple_GetItem(loaderCallbackInfo, 3), NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     printf("Error occured during the flightLoop callback(inRefcon = %p):\n", inRefcon);
@@ -175,7 +175,7 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OiOii", &object, &inCount, &locations, &lighting, &earth_relative)){
     return NULL;
   }
-  XPLMObjectRef inObject = PyLong_AsVoidPtr(object);
+  XPLMObjectRef inObject = PyCapsule_GetPointer(object, objRefName);
   XPLMDrawInfo_t *inLocations = (XPLMDrawInfo_t *)malloc(inCount * sizeof(XPLMDrawInfo_t));
   int i;
   PyObject *locationsTuple = PySequence_Tuple(locations);
@@ -200,7 +200,7 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
 static PyObject *XPLMUnloadObjectFun(PyObject *self, PyObject *args)
 {
   (void)self;
-  XPLMObjectRef inObject = PyLong_AsVoidPtr(PyTuple_GetItem(args, 0));
+  XPLMObjectRef inObject = PyCapsule_GetPointer(PyTuple_GetItem(args, 0), objRefName);
   XPLMUnloadObject(inObject);
   Py_RETURN_NONE;
 }

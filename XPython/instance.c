@@ -11,6 +11,8 @@
 #include <XPLM/XPLMInstance.h>
 
 
+static const char instanceRefName[] = "XPLMInstanceRef";
+
 static PyObject *XPLMCreateInstanceFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -38,11 +40,11 @@ static PyObject *XPLMCreateInstanceFun(PyObject *self, PyObject *args)
     Py_DECREF(s);
   }
   Py_DECREF(drefListTuple);
-  XPLMObjectRef inObj = PyLong_AsVoidPtr(obj);
+  XPLMObjectRef inObj = PyCapsule_GetPointer(obj, objRefName);
 
   XPLMInstanceRef res = XPLMCreateInstance_ptr(inObj, datarefs);
   free(datarefs);
-  return PyLong_FromVoidPtr(res);
+  return PyCapsule_New(res, instanceRefName, NULL);
 }
 
 static PyObject *XPLMDestroyInstanceFun(PyObject *self, PyObject *args)
@@ -57,7 +59,7 @@ static PyObject *XPLMDestroyInstanceFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &instance)){
     return NULL;
   }
-  XPLMDestroyInstance_ptr(PyLong_AsVoidPtr(instance));
+  XPLMDestroyInstance_ptr(PyCapsule_GetPointer(instance, instanceRefName));
   Py_RETURN_NONE;
 }
 
@@ -93,7 +95,7 @@ static PyObject *XPLMInstanceSetPositionFun(PyObject *self, PyObject *args)
     inData[i] = getFloatFromTuple(dataTuple, i);
   }
   Py_DECREF(dataTuple);
-  XPLMInstanceSetPosition_ptr(PyLong_AsVoidPtr(instance), &inNewPosition, inData);
+  XPLMInstanceSetPosition_ptr(PyCapsule_GetPointer(instance, instanceRefName), &inNewPosition, inData);
   free(inData);
   Py_RETURN_NONE;
 }
