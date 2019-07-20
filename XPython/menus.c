@@ -127,7 +127,7 @@ static PyObject *XPLMAppendMenuItemWithCommandFun(PyObject *self, PyObject *args
     return NULL;
   }
   XPLMMenuID inMenu = PyLong_AsVoidPtr(menuID);
-  XPLMCommandRef inCommandToExecute = (XPLMCommandRef)PyLong_AsVoidPtr(commandToExecute);
+  XPLMCommandRef inCommandToExecute = (XPLMCommandRef)PyCapsule_GetPointer(commandToExecute, commandRefName);
   int res = XPLMAppendMenuItemWithCommand_ptr(inMenu, inItemName, inCommandToExecute);
   return PyLong_FromLong(res);
 }

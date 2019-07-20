@@ -10,9 +10,23 @@
 PyObject *errCallbacks;
 PyObject *commandCallbacks;
 PyObject *commandRefcons;
+PyObject *commandCapsules;
 intptr_t commandCallbackCntr;
 
 
+static PyObject *getCommandCapsule(XPLMCommandRef cmdRef)
+{
+  // Check if the refernece is known
+  PyObject *key = PyLong_FromVoidPtr(cmdRef);
+  PyObject *res = PyDict_GetItem(commandCapsules, key);
+  if(res == NULL){
+    // New ref, register it
+    res = PyCapsule_New(cmdRef, commandRefName, NULL);
+    PyDict_SetItem(commandCapsules, key, res);
+  }
+  Py_INCREF(res);
+  return res;
+}
 
 static void error_callback(const char *inMessage)
 {
@@ -299,7 +313,7 @@ static int commandCallback(XPLMCommandRef inCommand, XPLMCommandPhase inPhase, v
     return -1;
   }
   //0 - self, 1 - callback, 2 - refcon
-  PyObject *arg1 = PyLong_FromVoidPtr(inCommand);
+  PyObject *arg1 = getCommandCapsule(inCommand);
   PyObject *arg2 = PyLong_FromLong(inPhase);
   PyObject *oRes = PyObject_CallFunctionObjArgs(PyTuple_GetItem(pCbk, 2), arg1, arg2, PyTuple_GetItem(pCbk, 4), NULL);
   Py_DECREF(arg1);
@@ -326,7 +340,7 @@ static PyObject *XPLMFindCommandFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMCommandRef res = XPLMFindCommand(inName);
-  return PyLong_FromVoidPtr(res);
+  return getCommandCapsule(res);
 }
 
 static PyObject *XPLMCommandBeginFun(PyObject *self, PyObject *args)
@@ -336,7 +350,7 @@ static PyObject *XPLMCommandBeginFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &inCommand)){
     return NULL;
   }
-  XPLMCommandBegin(PyLong_AsVoidPtr(inCommand));
+  XPLMCommandBegin(PyCapsule_GetPointer(inCommand, commandRefName));
   Py_RETURN_NONE;
 }
 
@@ -347,7 +361,7 @@ static PyObject *XPLMCommandEndFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &inCommand)){
     return NULL;
   }
-  XPLMCommandEnd(PyLong_AsVoidPtr(inCommand));
+  XPLMCommandEnd(PyCapsule_GetPointer(inCommand, commandRefName));
   Py_RETURN_NONE;
 }
 
@@ -358,7 +372,7 @@ static PyObject *XPLMCommandOnceFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &inCommand)){
     return NULL;
   }
-  XPLMCommandOnce(PyLong_AsVoidPtr(inCommand));
+  XPLMCommandOnce(PyCapsule_GetPointer(inCommand, commandRefName));
   Py_RETURN_NONE;
 }
 
@@ -371,7 +385,7 @@ static PyObject *XPLMCreateCommandFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMCommandRef res = XPLMCreateCommand(inName, inDescription);
-  return PyLong_FromVoidPtr(res);
+  return getCommandCapsule(res);
 }
 
 static PyObject *XPLMRegisterCommandHandlerFun(PyObject *self, PyObject *args)
@@ -385,7 +399,7 @@ static PyObject *XPLMRegisterCommandHandlerFun(PyObject *self, PyObject *args)
     return NULL;
   }
   intptr_t refcon = commandCallbackCntr++;
-  XPLMRegisterCommandHandler(PyLong_AsVoidPtr(inCommand), commandCallback, inBefore, (void *)refcon);
+  XPLMRegisterCommandHandler(PyCapsule_GetPointer(inCommand, commandRefName), commandCallback, inBefore, (void *)refcon);
   PyObject *rc = PyLong_FromVoidPtr((void *)refcon);
   PyObject *irc = PyLong_FromVoidPtr((void *)inRefcon);
   PyDict_SetItem(commandRefcons, irc, rc);
@@ -407,7 +421,8 @@ static PyObject *XPLMUnregisterCommandHandlerFun(PyObject *self, PyObject *args)
   }
   PyObject *key = PyLong_FromVoidPtr((void *)inRefcon);
   PyObject *refcon = PyDict_GetItem(commandRefcons, key);
-  XPLMUnregisterCommandHandler(PyLong_AsVoidPtr(inCommand), commandCallback, inBefore, PyLong_AsVoidPtr(refcon));
+  XPLMUnregisterCommandHandler(PyCapsule_GetPointer(inCommand, commandRefName), commandCallback,
+                               inBefore, PyLong_AsVoidPtr(refcon));
   if(PyDict_DelItem(commandRefcons, key)){
     printf("XPLMUnregisterCommandHandler: couldn't remove refcon.\n");
   }
@@ -415,7 +430,6 @@ static PyObject *XPLMUnregisterCommandHandlerFun(PyObject *self, PyObject *args)
   if(PyDict_DelItem(commandCallbacks, refcon)){
     printf("XPLMUnregisterCommandHandler: couldn't remove command handler.\n");
   }
-  
   Py_RETURN_NONE;
 }
 
@@ -429,6 +443,8 @@ static PyObject *cleanup(PyObject *self, PyObject *args)
   Py_DECREF(commandCallbacks);
   PyDict_Clear(commandRefcons);
   Py_DECREF(commandRefcons);
+  PyDict_Clear(commandCapsules);
+  Py_DECREF(commandCapsules);
   Py_RETURN_NONE;
 }
 
@@ -486,6 +502,9 @@ PyInit_XPLMUtilities(void)
     return NULL;
   }
   if(!(commandRefcons = PyDict_New())){
+    return NULL;
+  }
+  if(!(commandCapsules = PyDict_New())){
     return NULL;
   }
 
