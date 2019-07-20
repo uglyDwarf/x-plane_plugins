@@ -53,9 +53,8 @@ class PythonInterface(checkBase):
                      self.prepCacheCallback, self.drawCallback, self.iconCallback,
                      self.labelCallback, 5545, "Superlayer", self.layerList)
       self.layer = XPLMCreateMapLayer(self, self.params)
-      self.checkVal('XPLMCreateMapLayer:structSize', XPLMGetDatai(self.int0Dref), 88)
       self.checkVal('XPLMCreateMapLayer:layerType', XPLMGetDatai(self.int1Dref), self.params[1])
-      self.checkVal('XPLMCreateMapLayer:structSize', self.getString(self.str0Dref), self.params[8])
+      self.checkVal('XPLMCreateMapLayer:layerName', self.getString(self.str0Dref), self.params[8])
 
       mapId = 'Hi-Alt Map'
       res = XPLMMapExists(mapId)
