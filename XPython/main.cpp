@@ -115,13 +115,13 @@ int main(int argc, char *argv[])
     if(c % 50 == 0){
       std::cout << c << std::endl;
     }
-    XPluginReceiveMessage(5, 103, (void*)333);
-    XPluginDisable();
-    XPluginEnable();
-    if(((c + 1) % 100) == 0){
+    if((c > 0) && ((c % 100) == 0)){
       std::cout << "Reloading..." << std::endl;
       XPLMCommandOnce(reloadCmd);
     }
+    XPluginReceiveMessage(5, 103, (void*)333);
+    XPluginDisable();
+    XPluginEnable();
   }
   XPluginStop();
   std::cout << "===============================================" << std::endl;
