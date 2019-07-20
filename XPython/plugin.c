@@ -39,6 +39,7 @@ static const char *pluginsPath = "./Resources/plugins/PythonPlugins";
 static const char *internalPluginsPath = "./Resources/plugins/XPythonRevival";
 
 static bool stopped;
+static int allErrorsEncountered;
 
 static PyObject *logWriterWrite(PyObject *self, PyObject *args)
 {
@@ -61,9 +62,23 @@ static PyObject *logWriterFlush(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+static PyObject *logWriterAddAllErrors(PyObject *self, PyObject *args)
+{
+  (void) self;
+  int errs;
+  if(!PyArg_ParseTuple(args, "i", &errs)){
+    return NULL;
+  }
+  printf("Adding %d errors...\n", errs);
+  allErrorsEncountered += errs;
+  Py_RETURN_NONE;
+}
+
+
 static PyMethodDef logWriterMethods[] = {
   {"write", logWriterWrite, METH_VARARGS, ""},
   {"flush", logWriterFlush, METH_VARARGS, ""},
+  {"addAllErrors", logWriterAddAllErrors, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 
@@ -368,6 +383,9 @@ PLUGIN_API void XPluginStop(void)
   XPLMUnregisterCommandHandler(stopScripts, commandHandler, 1, (void *)0);
   XPLMUnregisterCommandHandler(startScripts, commandHandler, 1, (void *)1);
   XPLMUnregisterCommandHandler(reloadScripts, commandHandler, 1, (void *)2);
+  if(allErrorsEncountered){
+    fprintf(logFile, "Total errors encountered: %d\n", allErrorsEncountered);
+  }
   fclose(logFile);
   printf("XPluginStop finished.\n");
 }

@@ -2,6 +2,7 @@
 #
 
 from XPLMDataAccess import *
+from XPythonLogger import addAllErrors
 
 class checkBase(object):
    _all_errors = 0
@@ -23,6 +24,7 @@ class checkBase(object):
            print("No errors found.")
         else:
            print("{} errors encountered!".format(cls._all_errors))
+           addAllErrors(cls._all_errors)
 
 
    def __init__(self, moduleName, expectedChecks = None):
@@ -40,7 +42,7 @@ class checkBase(object):
                self._modName, self._checks, self._expected))
       else:
          print('{0} module check: {1} errors found.'.format(self._modName, self._errors))
-         self.addErrors(self._errors)
+         checkBase.addErrors(self._errors)
 
    def floatEq(self, a, b):
       if (a == None) or (b == None):
