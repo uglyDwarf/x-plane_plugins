@@ -4,8 +4,8 @@
 #include <Python.h>
 #include <stdbool.h>
 
-const char *objRefName; 
-const char *commandRefName;
+extern const char *objRefName; 
+extern const char *commandRefName;
 
 void dbg(const char *msg);
 bool objToList(PyObject *item, PyObject *list);
