@@ -155,7 +155,7 @@ static PyObject *XPLMLoadObjectAsyncFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_RuntimeError , "XPLMLoadObjectAsync is available only in XPLM210 and up.");
     return NULL;
   }
-  char *inPath = PyUnicode_AsUTF8(PyTuple_GetItem(args, 1));
+  const char *inPath = PyUnicode_AsUTF8(PyTuple_GetItem(args, 1));
   void *refcon = (void *)++loaderCntr;
   PyObject *key = PyLong_FromVoidPtr(refcon);
   PyDict_SetItem(loaderDict, key, args);

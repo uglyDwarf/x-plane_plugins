@@ -117,17 +117,22 @@ PyObject *XPLMAcquirePlanesFun(PyObject *self, PyObject *args)
     for(i = 0; i < len; ++i){
       PyObject *tmpItem = PySequence_GetItem(aircraft, i);
       PyObject *tmpStr = PyObject_Str(tmpItem);
-      char *tmp = PyUnicode_AsUTF8(tmpStr);
+      const char *tmp = PyUnicode_AsUTF8(tmpStr);
       Py_DECREF(tmpStr);
       Py_DECREF(tmpItem);
       if(tmp[0] == '\0'){
         break;
       }else{
-        inAircraft[i] = tmp;
+        inAircraft[i] = strdup(tmp);
       }
     }
     inAircraft[i] = NULL;
     res = XPLMAcquirePlanes(inAircraft, planesAvailable, refcon);
+    i = 0;
+    while(inAircraft[i]){
+      free(inAircraft[i]);
+      ++i;
+    }
     free(inAircraft);
   }
   return PyLong_FromLong(res);
