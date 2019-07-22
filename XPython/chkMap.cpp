@@ -17,6 +17,10 @@ static std::string str0;
 static int int0, int1, int2, int3, int4;
 static float float0, float1, float2, float3;
 
+#if defined(XPLM300)
+static XPLMMapProjectionID commonProj;
+#endif
+
 static std::list<XPLMDataRef> d;
 
 void initMapModule()
@@ -83,19 +87,19 @@ int XPLMMapExists(const char *mapIdentifier)
   bounds[1] = layer.showUiToggle + 2;
   bounds[2] = layer.showUiToggle + 3;
   bounds[3] = layer.showUiToggle + 4;
-  intptr_t proj = layer.layerType + 5;
+  commonProj = (void *)(intptr_t)(layer.layerType + 5);
   float rest = layer.layerType + 6;
 
-  layer.prepCacheCallback(&layer, bounds, (void*)proj, layer.refcon);
+  layer.prepCacheCallback(&layer, bounds, commonProj, layer.refcon);
 
-  bounds[0] += 11; bounds[1] += 11; bounds[2] += 11; bounds[3] += 11; proj += 11; rest += 11;
-  layer.drawCallback(&layer, bounds, rest, rest + 4, proj + 8, (void *)proj, layer.refcon);
+  bounds[0] += 11; bounds[1] += 11; bounds[2] += 11; bounds[3] += 11; rest += 11;
+  layer.drawCallback(&layer, bounds, rest, rest + 4, rest + 7, commonProj, layer.refcon);
 
-  bounds[0] += 11; bounds[1] += 11; bounds[2] += 11; bounds[3] += 11; proj += 11; rest += 11;
-  layer.iconCallback(&layer, bounds, rest, rest + 4, proj + 8, (void *)proj, layer.refcon);
+  bounds[0] += 11; bounds[1] += 11; bounds[2] += 11; bounds[3] += 11; rest += 11;
+  layer.iconCallback(&layer, bounds, rest, rest + 4, rest + 7, commonProj, layer.refcon);
   
-  bounds[0] += 11; bounds[1] += 11; bounds[2] += 11; bounds[3] += 11; proj += 11; rest += 11;
-  layer.labelCallback(&layer, bounds, rest, rest + 4, proj + 8, (void *)proj, layer.refcon);
+  bounds[0] += 11; bounds[1] += 11; bounds[2] += 11; bounds[3] += 11; rest += 11;
+  layer.labelCallback(&layer, bounds, rest, rest + 4, rest + 7, commonProj, layer.refcon);
 
   str0 = mapIdentifier; //Would be overwritten by the callbacks
   return 32769;
@@ -131,27 +135,27 @@ void XPLMDrawMapLabel(XPLMMapLayerID inLayer, const char *inText, float mapX, fl
 
 void XPLMMapProject(XPLMMapProjectionID projection, double latitude, double longitude, float *outX, float *outY)
 {
-  int0 = (intptr_t)projection;
+  assert(projection == commonProj);
   *outX = latitude * 2.5;
   *outY = longitude * 3.6;
 }
 
 void XPLMMapUnproject(XPLMMapProjectionID projection, float mapX, float mapY, double *outLatitude, double *outLongitude)
 {
-  int0 = (intptr_t)projection;
+  assert(projection == commonProj);
   *outLatitude = mapY * 4.7;
   *outLongitude = mapX * 5.8;
 }
 
 float XPLMMapScaleMeter(XPLMMapProjectionID projection, float mapX, float mapY)
 {
-  int0 = (intptr_t)projection;
+  assert(projection == commonProj);
   return 2 * mapX - mapY;
 }
 
 float XPLMMapGetNorthHeading(XPLMMapProjectionID projection, float mapX, float mapY)
 {
-  int0 = (intptr_t)projection;
+  assert(projection == commonProj);
   return 2 * mapY - mapX;
 }
 #endif
