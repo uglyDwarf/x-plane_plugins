@@ -10,7 +10,7 @@
 #include "utils.h"
 #include "plugin_dl.h"
 
-static const char probeName[] = "XPLMProbe";
+static const char probeName[] = "XPLMProbeRef";
 
 static PyObject *XPLMCreateProbeFun(PyObject *self, PyObject *args)
 {
