@@ -13,6 +13,8 @@ static PyObject *flDict;
 static PyObject *flRevDict;
 static PyObject *flIDDict;
 
+static const char flIDRef[] = "FlightLoopIDRef";
+
 /*
 void dbg(const char *msg){
   printf("Going to check %s\n", msg);
@@ -168,7 +170,7 @@ static PyObject *XPLMCreateFlightLoopFun(PyObject* self, PyObject *args)
   PyDict_SetItem(flDict, id, argObj);
   Py_XDECREF(argObj);
   //we need to uniquely identify the id of the callback based on the caller and inRefcon
-  PyObject *resObj = PyLong_FromVoidPtr(res);
+  PyObject *resObj = PyCapsule_New(res, flIDRef, NULL);
   PyDict_SetItem(flRevDict, resObj, id);
   Py_XDECREF(id);
   return resObj;
@@ -192,7 +194,7 @@ static PyObject *XPLMDestroyFlightLoopFun(PyObject *self, PyObject *args)
   }
   PyDict_DelItem(flRevDict, revId);
   PyDict_DelItem(flDict, id);
-  XPLMDestroyFlightLoop_ptr(PyLong_AsVoidPtr(revId));
+  XPLMDestroyFlightLoop_ptr(PyCapsule_GetPointer(revId, flIDRef));
   Py_RETURN_NONE;
 }
 
@@ -209,7 +211,7 @@ static PyObject *XPLMScheduleFlightLoopFun(PyObject *self, PyObject*args)
   if(!PyArg_ParseTuple(args, "OOfi", &pluginSelf, &flightLoopID, &inInterval, &inRelativeToNow)){
     return NULL;
   }
-  XPLMFlightLoopID inFlightLoopID = PyLong_AsVoidPtr(flightLoopID);
+  XPLMFlightLoopID inFlightLoopID = PyCapsule_GetPointer(flightLoopID, flIDRef);
   XPLMScheduleFlightLoop_ptr(inFlightLoopID, inInterval, inRelativeToNow);
   Py_RETURN_NONE;
 }
