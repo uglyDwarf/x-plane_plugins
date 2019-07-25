@@ -15,7 +15,7 @@ static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosing
 {
   PyObject *ref = PyLong_FromVoidPtr(inRefcon);
   PyObject *callbackInfo = PyDict_GetItem(camDict, ref);
-  Py_XDECREF(ref);
+  Py_DECREF(ref);
   if(callbackInfo == NULL){
     printf("Couldn't find cameraControl callback with id = %p.", inRefcon); 
     return 0;
@@ -82,7 +82,7 @@ static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosing
   }
   Py_DECREF(pos);
   int res = PyLong_AsLong(resObj);
-  Py_XDECREF(resObj);
+  Py_DECREF(resObj);
   return res;
 }
 
@@ -98,7 +98,7 @@ static PyObject *XPLMControlCameraFun(PyObject *self, PyObject *args)
   PyObject *refconObj = PyLong_FromVoidPtr(inRefcon);
   PyDict_SetItem(camDict, refconObj, args);
   XPLMControlCamera(inHowLong, cameraControl, inRefcon);
-  Py_XDECREF(refconObj);
+  Py_DECREF(refconObj);
   Py_RETURN_NONE;
 }
 

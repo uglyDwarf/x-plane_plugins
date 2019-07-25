@@ -19,7 +19,7 @@ static PyObject *XPLMCreateProbeFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "i", &inProbeType)){
     return NULL;
   }
-  return PyCapsule_New(XPLMCreateProbe(inProbeType), probeName, NULL);
+  return getPtrRefOneshot(XPLMCreateProbe(inProbeType), probeName);
 }
 
 static PyObject *XPLMDestroyProbeFun(PyObject *self, PyObject *args)
@@ -29,7 +29,7 @@ static PyObject *XPLMDestroyProbeFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &inProbe)){
     return NULL;
   }
-  XPLMDestroyProbe(PyCapsule_GetPointer(inProbe, probeName));
+  XPLMDestroyProbe(refToPtr(inProbe, probeName));
   Py_RETURN_NONE;
 }
 
@@ -43,7 +43,7 @@ static PyObject *XPLMProbeTerrainXYZFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OfffO", &probe, &inX, &inY, &inZ, &info)){
     return NULL;
   }
-  XPLMProbeRef inProbe = PyCapsule_GetPointer(probe, probeName);
+  XPLMProbeRef inProbe = refToPtr(probe, probeName);
   XPLMProbeInfo_t outInfo;
   XPLMProbeResult res = XPLMProbeTerrainXYZ(inProbe, inX, inY, inZ, &outInfo);
 
@@ -116,7 +116,7 @@ static PyObject *XPLMLoadObjectFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMObjectRef res = XPLMLoadObject(inPath);
-  return PyCapsule_New(res, objRefName, NULL);
+  return getPtrRefOneshot(res, objRefName);
 }
 
 
@@ -126,7 +126,7 @@ static intptr_t loaderCntr;
 
 static void objectLoaded(XPLMObjectRef inObject, void *inRefcon)
 {
-  PyObject *object = PyCapsule_New(inObject, objRefName, NULL);
+  PyObject *object = getPtrRefOneshot(inObject, objRefName);
   PyObject *pID = PyLong_FromVoidPtr(inRefcon);
   PyObject *loaderCallbackInfo = PyDict_GetItem(loaderDict, pID);
   if(loaderCallbackInfo == NULL){
@@ -175,7 +175,7 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OiOii", &object, &inCount, &locations, &lighting, &earth_relative)){
     return NULL;
   }
-  XPLMObjectRef inObject = PyCapsule_GetPointer(object, objRefName);
+  XPLMObjectRef inObject = refToPtr(object, objRefName);
   XPLMDrawInfo_t *inLocations = (XPLMDrawInfo_t *)malloc(inCount * sizeof(XPLMDrawInfo_t));
   int i;
   PyObject *locationsTuple = PySequence_Tuple(locations);
@@ -200,7 +200,7 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
 static PyObject *XPLMUnloadObjectFun(PyObject *self, PyObject *args)
 {
   (void)self;
-  XPLMObjectRef inObject = PyCapsule_GetPointer(PyTuple_GetItem(args, 0), objRefName);
+  XPLMObjectRef inObject = refToPtr(PyTuple_GetItem(args, 0), objRefName);
   XPLMUnloadObject(inObject);
   Py_RETURN_NONE;
 }
@@ -235,7 +235,7 @@ static PyObject *XPLMLookupObjectsFun(PyObject *self, PyObject *args)
   void *myRef = (void *)++libEnumCntr;
   PyObject *refObj = PyLong_FromVoidPtr(myRef);
   PyDict_SetItem(libEnumDict, refObj, args);
-  Py_XDECREF(refObj);
+  Py_DECREF(refObj);
   int res = XPLMLookupObjects(inPath, inLatitude, inLongitude, libraryEnumerator, myRef);
   return PyLong_FromLong(res);
 }

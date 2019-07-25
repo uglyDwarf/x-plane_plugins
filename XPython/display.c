@@ -24,6 +24,11 @@ static PyObject *hotkeyIDDict;
 
 static PyObject *monitorBndsCallback;
 
+static PyObject *windowIDCapsules;
+static PyObject *hotkeyIDCapsules;
+static const char windowIDRef[] = "XPLMWindowIDRef";
+static const char hotkeyIDRef[] = "XPLMHotkeyIDRef";
+
 
 static void receiveMonitorBounds(int inMonitorIndex, int inLeftBx, int inTopBx,
                                        int inRightBx, int inBottomBx, void *refcon)
@@ -168,7 +173,7 @@ static PyObject *XPLMUnregisterKeySnifferFun(PyObject *self, PyObject *args)
 static void drawWindow(XPLMWindowID  inWindowID,
                 void         *inRefcon)
 {
-  PyObject *pID = PyLong_FromVoidPtr(inWindowID);
+  PyObject *pID = getPtrRef(inWindowID, windowIDCapsules, windowIDRef);
   PyObject *pCbks = PyDict_GetItem(windowDict, pID);
   if(pCbks == NULL){
     printf("Unknown window passed to drawWindow (%p).\n", inWindowID);
@@ -190,7 +195,7 @@ static void handleKey(XPLMWindowID  inWindowID,
                void         *inRefcon,
                int           losingFocus)
 {
-  PyObject *pID = PyLong_FromVoidPtr(inWindowID);
+  PyObject *pID = getPtrRef(inWindowID, windowIDCapsules, windowIDRef);
   PyObject *pCbks = PyDict_GetItem(windowDict, pID);
   if(pCbks == NULL){
     printf("Unknown window passed to handleKey (%p).\n", inWindowID);
@@ -219,7 +224,7 @@ static int handleMouseClick(XPLMWindowID     inWindowID,
                      XPLMMouseStatus  inMouse,
                      void            *inRefcon)
 {
-  PyObject *pID = PyLong_FromVoidPtr(inWindowID);
+  PyObject *pID = getPtrRef(inWindowID, windowIDCapsules, windowIDRef);
   PyObject *pCbks = PyDict_GetItem(windowDict, pID);
   if(pCbks == NULL){
     printf("Unknown window passed to handleMouseClick (%p).\n", inWindowID);
@@ -249,7 +254,7 @@ static int handleRightClick(XPLMWindowID     inWindowID,
                      XPLMMouseStatus  inMouse,
                      void            *inRefcon)
 {
-  PyObject *pID = PyLong_FromVoidPtr(inWindowID);
+  PyObject *pID = getPtrRef(inWindowID, windowIDCapsules, windowIDRef);
   PyObject *pCbks = PyDict_GetItem(windowDict, pID);
   if(pCbks == NULL){
     printf("Unknown window passed to handleMouseClick (%p).\n", inWindowID);
@@ -278,7 +283,7 @@ static XPLMCursorStatus handleCursor(XPLMWindowID  inWindowID,
                               int           y,
                               void         *inRefcon)
 {
-  PyObject *pID = PyLong_FromVoidPtr(inWindowID);
+  PyObject *pID = getPtrRef(inWindowID, windowIDCapsules, windowIDRef);
   PyObject *pCbks = PyDict_GetItem(windowDict, pID);
   if(pCbks == NULL){
     printf("Unknown window passed to handleCursor (%p).\n", inWindowID);
@@ -312,7 +317,7 @@ static int handleMouseWheel(XPLMWindowID  inWindowID,
                      int           clicks,
                      void         *inRefcon)
 {
-  PyObject *pID = PyLong_FromVoidPtr(inWindowID);
+  PyObject *pID = getPtrRef(inWindowID, windowIDCapsules, windowIDRef);
   PyObject *pCbks = PyDict_GetItem(windowDict, pID);
   if(pCbks == NULL){
     printf("Unknown window passed to handleMouseWheel (%p).\n", inWindowID);
@@ -400,7 +405,7 @@ static PyObject *XPLMCreateWindowExFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMWindowID id = XPLMCreateWindowEx(&params);
-  PyObject *pID = PyLong_FromVoidPtr(id); 
+  PyObject *pID = getPtrRef(id, windowIDCapsules, windowIDRef);
   PyDict_SetItem(windowDict, pID, cbkTuple);
   Py_DECREF(cbkTuple);
   return pID;
@@ -424,7 +429,7 @@ static PyObject *XPLMCreateWindowFun(PyObject *self, PyObject *args)
   Py_INCREF(refcon);
   XPLMWindowID id = XPLMCreateWindow(left, top, right, bottom, visible, drawWindow, handleKey, handleMouseClick, refcon);
 
-  PyObject *pID = PyLong_FromVoidPtr(id);
+  PyObject *pID = getPtrRef(id, windowIDCapsules, windowIDRef);
   PyDict_SetItem(windowDict, pID, cbkTuple);
   Py_DECREF(cbkTuple);
   return pID;
@@ -438,7 +443,7 @@ static PyObject *XPLMDestroyWindowFun(PyObject *self, PyObject *args)
     return NULL;
   }
   if(PyDict_Contains(windowDict, pID)){
-    XPLMWindowID winID = PyLong_AsVoidPtr(pID);
+    XPLMWindowID winID = refToPtr(pID, windowIDRef);
     PyObject *tmp = XPLMGetWindowRefCon(winID);
     Py_DECREF(tmp);
     XPLMDestroyWindow(winID);
@@ -598,7 +603,7 @@ static PyObject *XPLMGetWindowGeometryFun(PyObject *self, PyObject *args)
     return NULL;
   }
   int left, top, right, bottom;
-  XPLMGetWindowGeometry(PyLong_AsVoidPtr(win), &left, &top, &right, &bottom);
+  XPLMGetWindowGeometry(refToPtr(win, windowIDRef), &left, &top, &right, &bottom);
   PyObject *tmp;
   if(PyList_Check(leftObj)){
     tmp = PyLong_FromLong(left);
@@ -631,7 +636,7 @@ static PyObject *XPLMSetWindowGeometryFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Oiiii", &win, &inLeft, &inTop, &inRight, &inBottom)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(win);
+  void *inWindowID = refToPtr(win, windowIDRef);
   XPLMSetWindowGeometry(inWindowID, inLeft, inTop, inRight, inBottom);
   Py_RETURN_NONE;
 }
@@ -648,7 +653,7 @@ static PyObject *XPLMGetWindowGeometryOSFun(PyObject *self, PyObject *args)
     return NULL;
   }
   int left, top, right, bottom;
-  XPLMGetWindowGeometryOS_ptr(PyLong_AsVoidPtr(win), &left, &top, &right, &bottom);
+  XPLMGetWindowGeometryOS_ptr(refToPtr(win, windowIDRef), &left, &top, &right, &bottom);
   PyObject *tmp;
   if(PyList_Check(leftObj)){
     tmp = PyLong_FromLong(left);
@@ -685,7 +690,7 @@ static PyObject *XPLMSetWindowGeometryOSFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Oiiii", &win, &inLeft, &inTop, &inRight, &inBottom)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(win);
+  void *inWindowID = refToPtr(win, windowIDRef);
   XPLMSetWindowGeometryOS_ptr(inWindowID, inLeft, inTop, inRight, inBottom);
   Py_RETURN_NONE;
 }
@@ -702,7 +707,7 @@ static PyObject *XPLMGetWindowGeometryVRFun(PyObject *self, PyObject *args)
     return NULL;
   }
   int outWidthBoxels, outHeightBoxels;
-  XPLMGetWindowGeometryVR_ptr(PyLong_AsVoidPtr(win), &outWidthBoxels, &outHeightBoxels);
+  XPLMGetWindowGeometryVR_ptr(refToPtr(win, windowIDRef), &outWidthBoxels, &outHeightBoxels);
   PyObject *tmp;
   if(PyList_Check(outWidthBoxelsObj)){
     tmp = PyLong_FromLong(outWidthBoxels);
@@ -729,7 +734,7 @@ static PyObject *XPLMSetWindowGeometryVRFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Oii", &win, &widthBoxels, &heightBoxels)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(win);
+  void *inWindowID = refToPtr(win, windowIDRef);
   XPLMSetWindowGeometryVR_ptr(inWindowID, widthBoxels, heightBoxels);
   Py_RETURN_NONE;
 }
@@ -741,7 +746,7 @@ static PyObject *XPLMGetWindowIsVisibleFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(win);
+  void *inWindowID = refToPtr(win, windowIDRef);
   return PyLong_FromLong(XPLMGetWindowIsVisible(inWindowID));
 }
 
@@ -753,7 +758,7 @@ static PyObject *XPLMSetWindowIsVisibleFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Oi", &win, &inIsVisible)){
     return NULL;
   }
-  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
   XPLMSetWindowIsVisible(inWindowID, inIsVisible);
   Py_RETURN_NONE;
 }
@@ -769,7 +774,7 @@ static PyObject *XPLMWindowIsPoppedOutFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(win);
+  void *inWindowID = refToPtr(win, windowIDRef);
   return PyLong_FromLong(XPLMWindowIsPoppedOut_ptr(inWindowID));
 }
 
@@ -784,7 +789,7 @@ static PyObject *XPLMWindowIsInVRFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  void *inWindowID = PyLong_AsVoidPtr(win);
+  void *inWindowID = refToPtr(win, windowIDRef);
   return PyLong_FromLong(XPLMWindowIsInVR_ptr(inWindowID));
 }
 
@@ -800,7 +805,7 @@ static PyObject *XPLMSetWindowGravityFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Offff", &win, &inLeftGravity, &inTopGravity, &inRightGravity, &inBottomGravity)){
     return NULL;
   }
-  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
   XPLMSetWindowGravity_ptr(inWindowID, inLeftGravity, inTopGravity, inRightGravity, inBottomGravity);
   Py_RETURN_NONE;
 }
@@ -817,7 +822,7 @@ static PyObject *XPLMSetWindowResizingLimitsFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Oiiii", &win, &inMinWidthBoxels, &inMinHeightBoxels, &inMaxWidthBoxels, &inMaxHeightBoxels)){
     return NULL;
   }
-  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
   XPLMSetWindowResizingLimits_ptr(inWindowID, inMinWidthBoxels, inMinHeightBoxels, inMaxWidthBoxels, inMaxHeightBoxels);
   Py_RETURN_NONE;
 }
@@ -834,7 +839,7 @@ static PyObject *XPLMSetWindowPositioningModeFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Oii", &win, &inPositioningMode, &inMonitorIndex)){
     return NULL;
   }
-  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
   XPLMSetWindowPositioningMode_ptr(inWindowID, inPositioningMode, inMonitorIndex);
   Py_RETURN_NONE;
 }
@@ -851,7 +856,7 @@ static PyObject *XPLMSetWindowTitleFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Os", &win, &inWindowTitle)){
     return NULL;
   }
-  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
   XPLMSetWindowTitle_ptr(inWindowID, inWindowTitle);
   Py_RETURN_NONE;
 }
@@ -863,7 +868,7 @@ static PyObject *XPLMGetWindowRefConFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
   PyObject *res = XPLMGetWindowRefCon(inWindowID);
   // Needs to be done, because python decrefs it when the function
   //   that called us returns; otherwise all hell breaks loose!!!
@@ -879,7 +884,7 @@ static PyObject *XPLMSetWindowRefConFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OO", &win, &inRefcon)){
     return NULL;
   }
-  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
   // Decref the old refcon
   PyObject *tmp = XPLMGetWindowRefCon(inWindowID);
   Py_DECREF(tmp);
@@ -896,7 +901,7 @@ static PyObject *XPLMTakeKeyboardFocusFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
   XPLMTakeKeyboardFocus(inWindowID);
   Py_RETURN_NONE;
 }
@@ -912,7 +917,7 @@ static PyObject *XPLMHasKeyboardFocusFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
   return PyLong_FromLong(XPLMHasKeyboardFocus_ptr(inWindowID));
 }
 
@@ -923,7 +928,7 @@ static PyObject *XPLMBringWindowToFrontFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
   XPLMBringWindowToFront(inWindowID);
   Py_RETURN_NONE;
 }
@@ -935,7 +940,7 @@ static PyObject *XPLMIsWindowInFrontFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  XPLMWindowID inWindowID = PyLong_AsVoidPtr(win);
+  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
   return PyLong_FromLong(XPLMIsWindowInFront(inWindowID));
 }
 
@@ -977,7 +982,7 @@ static PyObject *XPLMRegisterHotKeyFun(PyObject *self, PyObject *args)
   PyDict_SetItem(hotkeyDict, pRefcon, hkTuple);
 
   XPLMHotKeyID id = XPLMRegisterHotKey(inVirtualKey, inFlags, inDescription, hotkeyCallback, inRefcon);
-  PyObject *pId = PyLong_FromVoidPtr(id);
+  PyObject *pId = getPtrRef(id, hotkeyIDCapsules, hotkeyIDRef);
   //Allows me to identify my unique refcon based on hotkey id 
   PyDict_SetItem(hotkeyIDDict, pId, pRefcon);
   Py_DECREF(pRefcon);
@@ -1001,10 +1006,11 @@ static PyObject *XPLMUnregisterHotKeyFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_RuntimeError ,"XPLMUnregisterHotKey couldn't find refcon.\n");
     Py_RETURN_NONE;
   }
-
-  XPLMUnregisterHotKey(PyLong_AsVoidPtr(hotKey));
+  XPLMHotKeyID *hk = refToPtr(hotKey, hotkeyIDRef);
+  XPLMUnregisterHotKey(hk);
   PyDict_DelItem(hotkeyDict, pRefcon);
   PyDict_DelItem(hotkeyIDDict, hotKey);
+  removePtrRef(hk, hotkeyIDCapsules);
   Py_RETURN_NONE;
 } 
 
@@ -1022,7 +1028,7 @@ static PyObject *XPLMGetNthHotKeyFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "i", &inIndex)){
     return NULL;
   }
-  return PyLong_FromVoidPtr(XPLMGetNthHotKey(inIndex));
+  return getPtrRef(XPLMGetNthHotKey(inIndex), hotkeyIDCapsules, hotkeyIDRef);
 } 
 
 static PyObject *XPLMGetHotKeyInfoFun(PyObject *self, PyObject *args)
@@ -1032,7 +1038,7 @@ static PyObject *XPLMGetHotKeyInfoFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OOOOO", &hotKey, &virtualKey, &flags, &description, &plugin)){
     return NULL;
   }
-  XPLMHotKeyID inHotKey = PyLong_AsVoidPtr(hotKey);
+  XPLMHotKeyID inHotKey = refToPtr(hotKey, hotkeyIDRef);
   char outVirtualKey;
   XPLMKeyFlags outFlags;
   char outDescription[1024];
@@ -1077,7 +1083,7 @@ static PyObject *XPLMSetHotKeyCombinationFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Oii", &hotKey, &inVirtualKey, &inFlags)){
     return NULL;
   }
-  void *inHotkey = PyLong_AsVoidPtr(hotKey);
+  void *inHotkey = refToPtr(hotKey, hotkeyIDRef);
   XPLMSetHotKeyCombination(inHotkey, (char)inVirtualKey, inFlags);
   Py_RETURN_NONE;
 } 
@@ -1098,6 +1104,10 @@ static PyObject *cleanup(PyObject *self, PyObject *args)
   Py_DECREF(hotkeyDict);
   PyDict_Clear(hotkeyIDDict);
   Py_DECREF(hotkeyIDDict);
+  PyDict_Clear(windowIDCapsules);
+  Py_DECREF(windowIDCapsules);
+  PyDict_Clear(hotkeyIDCapsules);
+  Py_DECREF(hotkeyIDCapsules);
   Py_RETURN_NONE;
 }
 
@@ -1177,6 +1187,12 @@ PyInit_XPLMDisplay(void)
     return NULL;
   }
   if(!(hotkeyIDDict = PyDict_New())){
+    return NULL;
+  }
+  if(!(windowIDCapsules = PyDict_New())){
+    return NULL;
+  }
+  if(!(hotkeyIDCapsules = PyDict_New())){
     return NULL;
   }
   PyObject *mod = PyModule_Create(&XPLMDisplayModule);

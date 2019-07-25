@@ -21,19 +21,6 @@ PyObject *mapProjectionCapsule;
 static const char layerIDRefName[] = "LayerIdRef";
 static const char projectionRefName[] = "ProjectionRef";
 
-static PyObject *getLayerIDCapsule(XPLMMapLayerID layerIDRef)
-{
-  // Check if the refernece is known
-  PyObject *key = PyLong_FromVoidPtr(layerIDRef);
-  PyObject *res = PyDict_GetItem(mapLayerIDCapsules, key);
-  if(res == NULL){
-    // New ref, register it
-    res = PyCapsule_New(layerIDRef, layerIDRefName, NULL);
-    PyDict_SetItem(mapLayerIDCapsules, key, res);
-  }
-  Py_INCREF(res);
-  return res;
-}
 
 static inline void mapCallback(int inCallbackIndex, XPLMMapLayerID inLayer, const float *inMapBoundsLeftTopRightBottom, float zoomRatio,
                         float mapUnitsPerUserInterfaceUnit, XPLMMapStyle mapStyle, XPLMMapProjectionID projection,
@@ -42,14 +29,14 @@ static inline void mapCallback(int inCallbackIndex, XPLMMapLayerID inLayer, cons
   PyObject *layerObj, *boundsObj, *refconObj, *callback;
   PyObject *ref = PyLong_FromVoidPtr(inRefcon);
   PyObject *callbackInfo = PyDict_GetItem(mapDict, ref);
-  Py_XDECREF(ref);
+  Py_DECREF(ref);
   if(callbackInfo == NULL){
     printf("Couldn't find map callback with id = %p.", inRefcon); 
     return;
   }
 
-  layerObj = getLayerIDCapsule(inLayer);
-  mapProjectionCapsule = PyCapsule_New(projection, projectionRefName, NULL);
+  layerObj = getPtrRef(inLayer, mapLayerIDCapsules, layerIDRefName);
+  mapProjectionCapsule = getPtrRefOneshot(projection, projectionRefName);
   refconObj = PyTuple_GetItem(callbackInfo, 9);
   callback = PyTuple_GetItem(callbackInfo, inCallbackIndex);
   
@@ -88,14 +75,14 @@ static inline void mapPrepareCacheCallback(XPLMMapLayerID inLayer, const float *
   PyObject *layerObj, *boundsObj, *refconObj, *callback;
   PyObject *ref = PyLong_FromVoidPtr(inRefcon);
   PyObject *callbackInfo = PyDict_GetItem(mapDict, ref);
-  Py_XDECREF(ref);
+  Py_DECREF(ref);
   if(callbackInfo == NULL){
     printf("Couldn't find map callback with id = %p.", inRefcon); 
     return;
   }
 
-  layerObj = getLayerIDCapsule(inLayer);
-  mapProjectionCapsule = PyCapsule_New(projection, projectionRefName, NULL);
+  layerObj = getPtrRef(inLayer, mapLayerIDCapsules, layerIDRefName);
+  mapProjectionCapsule = getPtrRefOneshot(projection, projectionRefName);
   refconObj = PyTuple_GetItem(callbackInfo, 9);
   callback = PyTuple_GetItem(callbackInfo, 3);
   
@@ -125,13 +112,13 @@ static inline void mapWillBeDeletedCallback(XPLMMapLayerID inLayer, void *inRefc
   PyObject *layerObj, *refconObj, *callback;
   PyObject *ref = PyLong_FromVoidPtr(inRefcon);
   PyObject *callbackInfo = PyDict_GetItem(mapDict, ref);
-  Py_XDECREF(ref);
+  Py_DECREF(ref);
   if(callbackInfo == NULL){
     printf("Couldn't find map callback with id = %p.", inRefcon); 
     return;
   }
 
-  layerObj = getLayerIDCapsule(inLayer);
+  layerObj = getPtrRef(inLayer, mapLayerIDCapsules, layerIDRefName);
   refconObj = PyTuple_GetItem(callbackInfo, 9);
   callback = PyTuple_GetItem(callbackInfo, 2);
   
@@ -152,7 +139,7 @@ static inline void mapCreatedCallback(const char *mapIdentifier, void *inRefcon)
   PyObject *mapIdentifierObj, *refconObj, *callback;
   PyObject *ref = PyLong_FromVoidPtr(inRefcon);
   PyObject *callbackInfo = PyDict_GetItem(mapCreateDict, ref);
-  Py_XDECREF(ref);
+  Py_DECREF(ref);
   if(callbackInfo == NULL){
     printf("Couldn't find map created callback with id = %p.", inRefcon); 
     return;
@@ -230,7 +217,7 @@ static PyObject *XPLMCreateMapLayerFun(PyObject *self, PyObject *args)
   if(!res){
     return NULL;
   }
-  PyObject *resObj = getLayerIDCapsule(res);
+  PyObject *resObj = getPtrRef(res, mapLayerIDCapsules, layerIDRefName);
   PyObject *refObj = PyLong_FromVoidPtr(ref);
   PyDict_SetItem(mapDict, refObj, paramsTuple);
   PyDict_SetItem(mapRefDict, resObj, refObj);
@@ -252,16 +239,13 @@ static PyObject *XPLMDestroyMapLayerFun(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  XPLMMapLayerID inLayer = PyCapsule_GetPointer(layer, layerIDRefName);
+  XPLMMapLayerID inLayer = refToPtr(layer, layerIDRefName);
   int res = XPLMDestroyMapLayer_ptr(inLayer);
   if(res){
     PyObject *ref = PyDict_GetItem(mapRefDict, layer);
     PyDict_DelItem(mapDict, ref);
     PyDict_DelItem(mapRefDict, layer);
-
-    ref = PyLong_FromVoidPtr(inLayer);
-    PyDict_DelItem(mapLayerIDCapsules, ref);
-    Py_DECREF(ref);
+    removePtrRef(inLayer, mapLayerIDCapsules);
   }
 
   return PyLong_FromLong(res);
@@ -315,7 +299,7 @@ static PyObject *XPLMDrawMapIconFromSheetFun(PyObject *self, PyObject *args)
                        &orientation, &rotationDegrees, &mapWidth)){
     return NULL;
   }
-  XPLMMapLayerID layer = PyCapsule_GetPointer(layerObj, layerIDRefName);
+  XPLMMapLayerID layer = refToPtr(layerObj, layerIDRefName);
   XPLMDrawMapIconFromSheet_ptr(layer, inPngPath, s, t, ds, dt, mapX, mapY,
                        orientation, rotationDegrees, mapWidth);
   Py_RETURN_NONE;
@@ -337,7 +321,7 @@ static PyObject *XPLMDrawMapLabelFun(PyObject *self, PyObject *args)
                        &orientation, &rotationDegrees)){
     return NULL;
   }
-  XPLMMapLayerID layer = PyCapsule_GetPointer(layerObj, layerIDRefName);
+  XPLMMapLayerID layer = refToPtr(layerObj, layerIDRefName);
   XPLMDrawMapLabel_ptr(layer, inText, mapX, mapY, orientation, rotationDegrees);
   Py_RETURN_NONE;
 }
@@ -355,7 +339,7 @@ static PyObject *XPLMMapProjectFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OddOO", &projectionObj, &latitude, &longitude, &outXObj, &outYObj)){
     return NULL;
   }
-  XPLMMapProjectionID projection = PyCapsule_GetPointer(projectionObj, projectionRefName);
+  XPLMMapProjectionID projection = refToPtr(projectionObj, projectionRefName);
   float outX, outY;
   XPLMMapProject_ptr(projection, latitude, longitude, &outX, &outY);
   objToList(PyFloat_FromDouble(outX), outXObj);
@@ -376,7 +360,7 @@ static PyObject *XPLMMapUnprojectFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OffOO", &projectionObj, &mapX, &mapY, &outLatitudeObj, &outLongitudeObj)){
     return NULL;
   }
-  XPLMMapProjectionID projection = PyCapsule_GetPointer(projectionObj, projectionRefName);
+  XPLMMapProjectionID projection = refToPtr(projectionObj, projectionRefName);
   double outLongitude, outLatitude;
   XPLMMapUnproject_ptr(projection, mapX, mapY, &outLatitude, &outLongitude);
   objToList(PyFloat_FromDouble(outLatitude), outLatitudeObj);
@@ -397,7 +381,7 @@ static PyObject *XPLMMapScaleMeterFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Off", &projectionObj, &mapX, &mapY)){
     return NULL;
   }
-  XPLMMapProjectionID projection = PyCapsule_GetPointer(projectionObj, projectionRefName);
+  XPLMMapProjectionID projection = refToPtr(projectionObj, projectionRefName);
   float res = XPLMMapScaleMeter_ptr(projection, mapX, mapY);
   return PyFloat_FromDouble(res);
 }
@@ -415,7 +399,7 @@ static PyObject *XPLMMapGetNorthHeadingFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Off", &projectionObj, &mapX, &mapY)){
     return NULL;
   }
-  XPLMMapProjectionID projection = PyCapsule_GetPointer(projectionObj, projectionRefName);
+  XPLMMapProjectionID projection = refToPtr(projectionObj, projectionRefName);
   float res = XPLMMapGetNorthHeading_ptr(projection, mapX, mapY);
   return PyFloat_FromDouble(res);
 }

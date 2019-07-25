@@ -40,3 +40,40 @@ long getLongFromTuple(PyObject *seq, Py_ssize_t i)
   return PyLong_AsLong(PyTuple_GetItem(seq, i));
 }
 
+// To avoid Python code messing with raw pointers (when passed
+//   in using PyLong_FromVoidPtr), these are hidden in the capsules.
+
+// Can be used where no callbacks are involved in passing the capsule
+PyObject *getPtrRefOneshot(void *ptr, const char *refName)
+{
+  return PyCapsule_New(ptr, refName, NULL);
+}
+
+PyObject *getPtrRef(void *ptr, PyObject *dict, const char *refName)
+{
+  // Check if the refernece is known
+  PyObject *key = PyLong_FromVoidPtr(ptr);
+  PyObject *res = PyDict_GetItem(dict, key);
+  if(res == NULL){
+    // New ref, register it
+    res = getPtrRefOneshot(ptr, refName);
+    PyDict_SetItem(dict, key, res);
+  }
+  Py_INCREF(res);
+  return res;
+}
+
+void *refToPtr(PyObject *ref, const char *refName)
+{
+  return PyCapsule_GetPointer(ref, refName);
+}
+
+void removePtrRef(void *ptr, PyObject *dict)
+{
+  PyObject *key = PyLong_FromVoidPtr(ptr);
+  PyDict_DelItem(dict, key);
+  Py_DECREF(key);
+}
+
+
+

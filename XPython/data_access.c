@@ -24,7 +24,7 @@ static PyObject *XPLMFindDataRefFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "s", &inDataRefName)){
     return NULL;
   }
-  return PyCapsule_New(XPLMFindDataRef(inDataRefName), dataRefName, NULL);
+  return getPtrRefOneshot(XPLMFindDataRef(inDataRefName), dataRefName);
 }
 
 static PyObject *XPLMCanWriteDataRefFun(PyObject *self, PyObject *args)
@@ -34,7 +34,7 @@ static PyObject *XPLMCanWriteDataRefFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &dataRef)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyCapsule_GetPointer(dataRef, dataRefName);
+  XPLMDataRef inDataRef = refToPtr(dataRef, dataRefName);
   if(XPLMCanWriteDataRef(inDataRef)){
     Py_RETURN_TRUE;
   }else{
@@ -49,7 +49,7 @@ static PyObject *XPLMIsDataRefGoodFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &dataRef)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyCapsule_GetPointer(dataRef, dataRefName);
+  XPLMDataRef inDataRef = refToPtr(dataRef, dataRefName);
   return PyLong_FromLong(XPLMIsDataRefGood(inDataRef));
 }
 
@@ -60,7 +60,7 @@ static PyObject *XPLMGetDataRefTypesFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &dataRef)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyCapsule_GetPointer(dataRef, dataRefName);
+  XPLMDataRef inDataRef = refToPtr(dataRef, dataRefName);
   return PyLong_FromLong(XPLMGetDataRefTypes(inDataRef));
 }
 
@@ -71,7 +71,7 @@ static PyObject *XPLMGetDataiFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &dataRef)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyCapsule_GetPointer(dataRef, dataRefName);
+  XPLMDataRef inDataRef = refToPtr(dataRef, dataRefName);
   return PyLong_FromLong(XPLMGetDatai(inDataRef));
 }
 
@@ -83,7 +83,7 @@ static PyObject *XPLMSetDataiFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Oi", &dataRef, &inValue)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyCapsule_GetPointer(dataRef, dataRefName);
+  XPLMDataRef inDataRef = refToPtr(dataRef, dataRefName);
   XPLMSetDatai(inDataRef, inValue);
   Py_RETURN_NONE;
 }
@@ -95,7 +95,7 @@ static PyObject *XPLMGetDatafFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &dataRef)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyCapsule_GetPointer(dataRef, dataRefName);
+  XPLMDataRef inDataRef = refToPtr(dataRef, dataRefName);
   return PyFloat_FromDouble(XPLMGetDataf(inDataRef));
 }
 
@@ -107,7 +107,7 @@ static PyObject *XPLMSetDatafFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Of", &dataRef, &inValue)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyCapsule_GetPointer(dataRef, dataRefName);
+  XPLMDataRef inDataRef = refToPtr(dataRef, dataRefName);
   XPLMSetDataf(inDataRef, inValue);
   Py_RETURN_NONE;
 }
@@ -119,7 +119,7 @@ static PyObject *XPLMGetDatadFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &dataRef)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyCapsule_GetPointer(dataRef, dataRefName);
+  XPLMDataRef inDataRef = refToPtr(dataRef, dataRefName);
   return PyFloat_FromDouble(XPLMGetDatad(inDataRef));
 }
 
@@ -131,14 +131,14 @@ static PyObject *XPLMSetDatadFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Od", &dataRef, &inValue)){
     return NULL;
   }
-  XPLMDataRef inDataRef = PyCapsule_GetPointer(dataRef, dataRefName);
+  XPLMDataRef inDataRef = refToPtr(dataRef, dataRefName);
   XPLMSetDatad(inDataRef, inValue);
   Py_RETURN_NONE;
 }
 
 static inline XPLMDataRef drefFromObj(PyObject *obj)
 {
-  return (XPLMDataRef)PyCapsule_GetPointer(obj, dataRefName);
+  return (XPLMDataRef)refToPtr(obj, dataRefName);
 }
 
 static PyObject *XPLMGetDataviFun(PyObject *self, PyObject *args)
@@ -788,7 +788,7 @@ static PyObject *XPLMRegisterDataAccessorFun(PyObject *self, PyObject *args)
   if(PyDict_SetItem(accessorDict, refconObj, args) != 0){
     Py_RETURN_NONE;
   }
-  PyObject *resObj = PyCapsule_New(res, dataRefName, NULL);
+  PyObject *resObj = getPtrRefOneshot(res, dataRefName);
   PyDict_SetItem(drefDict, resObj, refconObj);
   Py_DECREF(refconObj);
   return resObj;
@@ -825,7 +825,7 @@ static PyObject *XPLMUnregisterDataAccessorFun(PyObject *self, PyObject *args)
   if(PyDict_DelItem(drefDict, drefObj)){
     printf("XPLMUnregisterDataref: Couldn't remove the dref.\n");
   }
-  XPLMUnregisterDataAccessor(PyCapsule_GetPointer(drefObj, dataRefName));
+  XPLMUnregisterDataAccessor(refToPtr(drefObj, dataRefName));
   Py_RETURN_NONE;
 }
 
