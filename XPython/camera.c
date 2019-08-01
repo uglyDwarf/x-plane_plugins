@@ -122,9 +122,16 @@ static PyObject *XPLMIsCameraBeingControlledFun(PyObject *self, PyObject *args)
 static PyObject *XPLMReadCameraPositionFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  PyObject *resArray;
-  if(!PyArg_ParseTuple(args, "O", &resArray)){
-    return NULL;
+  PyObject *resArray = NULL;
+  bool returnRes = false;
+  if(PyTuple_Size(args) == 1){
+    if(!PyArg_ParseTuple(args, "O", &resArray)){
+      return NULL;
+    }
+  }
+  if(!resArray){
+    resArray = PyList_New(0);
+    returnRes = true;
   }
   if(!PyList_Check(resArray)){
     PyErr_SetString(PyExc_RuntimeError ,"Argument must be list.\n");
@@ -161,7 +168,11 @@ static PyObject *XPLMReadCameraPositionFun(PyObject *self, PyObject *args)
   PyList_Append(resArray, tmp);
   Py_DECREF(tmp);
 
-  Py_RETURN_NONE;
+  if(returnRes){
+    return resArray;
+  }else{
+    Py_RETURN_NONE;
+  }
 }
 
 static PyObject *cleanup(PyObject *self, PyObject *args)

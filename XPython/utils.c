@@ -51,6 +51,9 @@ PyObject *getPtrRefOneshot(void *ptr, const char *refName)
 
 PyObject *getPtrRef(void *ptr, PyObject *dict, const char *refName)
 {
+  if(ptr == NULL){
+    Py_RETURN_NONE;
+  }
   // Check if the refernece is known
   PyObject *key = PyLong_FromVoidPtr(ptr);
   PyObject *res = PyDict_GetItem(dict, key);

@@ -24,7 +24,12 @@ static PyObject *XPLMFindDataRefFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "s", &inDataRefName)){
     return NULL;
   }
-  return getPtrRefOneshot(XPLMFindDataRef(inDataRefName), dataRefName);
+  XPLMDataRef ref = XPLMFindDataRef(inDataRefName);
+  if(ref){
+    return getPtrRefOneshot(ref, dataRefName);
+  }else{
+    Py_RETURN_NONE;
+  }
 }
 
 static PyObject *XPLMCanWriteDataRefFun(PyObject *self, PyObject *args)

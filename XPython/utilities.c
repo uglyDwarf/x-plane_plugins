@@ -282,11 +282,16 @@ static PyObject *XPLMSaveDataFileFun(PyObject *self, PyObject *args)
 {
   (void) self;
   int inFileType;
-  const char *inFilePath;
-  if(!PyArg_ParseTuple(args, "is", &inFileType, &inFilePath)){
+  const char *filePath = NULL;
+  PyObject *inFilePath;
+  if(!PyArg_ParseTuple(args, "iO", &inFileType, &inFilePath)){
     return NULL;
   }
-  int res = XPLMSaveDataFile(inFileType, inFilePath);
+  if(PyUnicode_Check(inFilePath)){
+    filePath = PyUnicode_AsUTF8(inFilePath);
+  }
+
+  int res = XPLMSaveDataFile(inFileType, filePath);
   return PyLong_FromLong(res);
 }
 
