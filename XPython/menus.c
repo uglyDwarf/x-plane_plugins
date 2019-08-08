@@ -57,18 +57,23 @@ static PyObject *XPLMFindAircraftMenuFun(PyObject *self, PyObject *args)
 static PyObject *XPLMCreateMenuFun(PyObject *self, PyObject *args)
 {
   (void)self;
-  PyObject *parentMenu = NULL, *handler = NULL, *menuRef = NULL;
+  PyObject *parentMenu = NULL, *pythonHandler = NULL, *menuRef = NULL;
   int inParentItem;
   const char *inName;
-  if(!PyArg_ParseTuple(args, "OsOiOO", &self, &inName, &parentMenu, &inParentItem, &handler, &menuRef)){
+  if(!PyArg_ParseTuple(args, "OsOiOO", &self, &inName, &parentMenu, &inParentItem, &pythonHandler, &menuRef)){
     return NULL;
   }
   void *inMenuRef = (void *)++menuCntr;
   menuRef = PyLong_FromVoidPtr(inMenuRef);
+  XPLMMenuHandler_f handler = (pythonHandler != Py_None) ? menuHandler : NULL;
+  XPLMMenuID rawMenuID = XPLMCreateMenu(inName, refToPtr(parentMenu, menuIDRef),
+                                        inParentItem, handler, inMenuRef);
+  if(!rawMenuID){
+    Py_DECREF(menuRef);
+    Py_RETURN_NONE;
+  }
+  PyObject *menuID = getPtrRef(rawMenuID, menuIDCapsules, menuIDRef);
   PyDict_SetItem(menuDict, menuRef, args);
-  PyObject *menuID = getPtrRef(XPLMCreateMenu(inName, refToPtr(parentMenu, menuIDRef),
-                                              inParentItem, menuHandler, inMenuRef),
-                               menuIDCapsules, menuIDRef);
   PyDict_SetItem(menuRefDict, menuID, menuRef);
   Py_DECREF(menuRef);
   return menuID;
