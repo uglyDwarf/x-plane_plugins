@@ -46,12 +46,16 @@ long getLongFromTuple(PyObject *seq, Py_ssize_t i)
 // Can be used where no callbacks are involved in passing the capsule
 PyObject *getPtrRefOneshot(void *ptr, const char *refName)
 {
-  return PyCapsule_New(ptr, refName, NULL);
+  if(ptr){
+    return PyCapsule_New(ptr, refName, NULL);
+  }else{
+    Py_RETURN_NONE;
+  }
 }
 
 PyObject *getPtrRef(void *ptr, PyObject *dict, const char *refName)
 {
-  if(ptr == NULL){
+  if(!ptr){
     Py_RETURN_NONE;
   }
   // Check if the refernece is known
@@ -68,11 +72,18 @@ PyObject *getPtrRef(void *ptr, PyObject *dict, const char *refName)
 
 void *refToPtr(PyObject *ref, const char *refName)
 {
-  return PyCapsule_GetPointer(ref, refName);
+  if(ref == Py_None){
+    return NULL;
+  }else{
+    return PyCapsule_GetPointer(ref, refName);
+  }
 }
 
 void removePtrRef(void *ptr, PyObject *dict)
 {
+  if(!ptr){
+    return;
+  }
   PyObject *key = PyLong_FromVoidPtr(ptr);
   PyDict_DelItem(dict, key);
   Py_DECREF(key);
