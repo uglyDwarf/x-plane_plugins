@@ -19,8 +19,43 @@ PyObject *widgetCallbackDict;
 int widgetCallback(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inParam1, intptr_t inParam2)
 {
   PyObject *widget = PyLong_FromVoidPtr(inWidget);
-  PyObject *param1 = PyLong_FromLong(inParam1);
-  PyObject *param2 = PyLong_FromLong(inParam2);
+  PyObject *param1, *param2;
+  XPKeyState_t *keyState;
+  XPMouseState_t *mouseState;
+  XPWidgetGeometryChange_t *wChange;
+  param1 = PyLong_FromLong(inParam1);
+  param2 = PyLong_FromLong(inParam2);
+  switch(inMessage){
+    case xpMsg_KeyPress:
+      keyState = (XPKeyState_t *)inParam1;
+      param1 = Py_BuildValue("(iii)", (int)keyState->key, (int)keyState->flags,
+                                     (int)keyState->vkey);
+      break;
+    case xpMsg_MouseDown:
+    case xpMsg_MouseDrag:
+    case xpMsg_MouseUp:
+    case xpMsg_MouseWheel:
+    case xpMsg_CursorAdjust:
+      mouseState = (XPMouseState_t *)inParam1;
+      param1 = Py_BuildValue("(iiii)", mouseState->x, mouseState->y,
+                                      mouseState->button, mouseState->delta);
+      break;
+    case xpMsg_Reshape:
+      wChange = (XPWidgetGeometryChange_t *)inParam1;
+      param1 = Py_BuildValue("(iiii)", wChange->dx, wChange->dy,
+                                      wChange->dwidth, wChange->dheight);
+      break;
+    case xpMsg_AcceptChild:
+    case xpMsg_LoseChild:
+    case xpMsg_AcceptParent:
+    case xpMsg_Shown:
+    case xpMsg_Hidden:
+      param1 = PyLong_FromVoidPtr((void *)inParam1);
+      break;
+      
+    default: // intentionally empty
+      break;
+  }
 
   PyObject *callbackList = PyDict_GetItem(widgetCallbackDict, widget);
   if(callbackList == NULL){
@@ -53,6 +88,9 @@ int widgetCallback(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inPa
       Py_DECREF(resObj);
     }
     if(res != 0){
+      if(inMessage == xpMsg_CursorAdjust){
+        *(XPLMCursorStatus *)inParam2 = (int)PyLong_AsLong(param2);
+      }
       break;
     }
   }
@@ -344,13 +382,18 @@ static PyObject *XPGetWidgetDescriptorFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OOi", &widget, &descriptor, &inMaxDescLength)){
     return NULL;
   }
-  char *outDescriptor = (char *)malloc(inMaxDescLength + 1);
-  int res = XPGetWidgetDescriptor(PyLong_AsVoidPtr(widget), outDescriptor, inMaxDescLength);
-  outDescriptor[inMaxDescLength] = '\0';
-  PyObject *str = PyUnicode_DecodeUTF8(outDescriptor, strlen(outDescriptor), NULL);
-  PyList_Append(descriptor, str);
-  Py_DECREF(str);
-  free(outDescriptor);
+  int res;
+  if(descriptor != Py_None){
+    char *outDescriptor = (char *)malloc(inMaxDescLength + 1);
+    res = XPGetWidgetDescriptor(PyLong_AsVoidPtr(widget), outDescriptor, inMaxDescLength);
+    outDescriptor[inMaxDescLength] = '\0';
+    PyObject *str = PyUnicode_DecodeUTF8(outDescriptor, strlen(outDescriptor), NULL);
+    PyList_Append(descriptor, str);
+    Py_DECREF(str);
+    free(outDescriptor);
+  }else{
+    res = XPGetWidgetDescriptor(PyLong_AsVoidPtr(widget), NULL, inMaxDescLength);
+  }
   return PyLong_FromLong(res);
 }
 
