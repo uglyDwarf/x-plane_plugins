@@ -45,6 +45,7 @@ static PyObject *XPLMProbeTerrainXYZFun(PyObject *self, PyObject *args)
   }
   XPLMProbeRef inProbe = refToPtr(probe, probeName);
   XPLMProbeInfo_t outInfo;
+  outInfo.structSize = sizeof(outInfo);
   XPLMProbeResult res = XPLMProbeTerrainXYZ(inProbe, inX, inY, inZ, &outInfo);
 
   if(PySequence_Size(info) > 0){
