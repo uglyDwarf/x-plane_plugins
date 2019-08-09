@@ -1,10 +1,10 @@
 """
 WIDGET DEFINITIONS
 ******************
-A widget is a call-back driven screen entity like a push-button, window, 
-text entry field, etc. 
+A widget is a call-back driven screen entity like a push-button, window,
+text entry field, etc.
 
-Use the widget API to create widgets of various classes. You can nest them 
+Use the widget API to create widgets of various classes. You can nest them
 into trees of widgets to create complex user interfaces.
 
 
@@ -12,74 +12,74 @@ Constants and enumerations
 **************************
 XPWidgetPropertyID
 
-Properties are values attached to instances of your widgets. A property is 
-identified by a 32-bit ID and its value is the width of a pointer. 
+Properties are values attached to instances of your widgets. A property is
+identified by a 32-bit ID and its value is the width of a pointer.
 
-Each widget instance may have a property or not have it. When you set a 
-property on a widget for the first time, the property is added to the 
-widget; it then stays there for the life of the widget. 
+Each widget instance may have a property or not have it. When you set a
+property on a widget for the first time, the property is added to the
+widget; it then stays there for the life of the widget.
 
-Some property IDs are predefined by the widget package; you can make up 
+Some property IDs are predefined by the widget package; you can make up
 your own property IDs as well.
 
 
 XPDispatchMode
 
-The dispatching modes describe how the widgets library sends out messages.  
+The dispatching modes describe how the widgets library sends out messages.
 
 
 XPWidgetClass
 
-Widget classes define predefined widget types. A widget class basically 
-specifies from a library the widget function to be used for the widget. 
+Widget classes define predefined widget types. A widget class basically
+specifies from a library the widget function to be used for the widget.
 Most widgets can be made right from classes.
 
 
 XPWidgetMessage
 
-Widgets receive 32-bit messages indicating what action is to be taken or 
+Widgets receive 32-bit messages indicating what action is to be taken or
 notifications of events. The list of messages may be expanded.
 """
 
 # XPWidgetPropertyID
-# A window's refcon is an opaque value used by client code to find other data 
-# based on it.                                                                
+# A window's refcon is an opaque value used by client code to find other data
+# based on it.
 xpProperty_Refcon                        = 0
-# These properties are used by the utlities to implement dragging.            
+# These properties are used by the utlities to implement dragging.
 xpProperty_Dragging                      = 1
 xpProperty_DragXOff                      = 2
 xpProperty_DragYOff                      = 3
-# Is the widget hilited?  (For widgets that support this kind of thing.)      
+# Is the widget hilited?  (For widgets that support this kind of thing.)
 xpProperty_Hilited                       = 4
-# Is there a C++ object attached to this widget?                              
+# Is there a C++ object attached to this widget?
 xpProperty_Object                        = 5
-# If this property is 1, the widget package will use OpenGL to restrict       
-# drawing to the Wiget's exposed rectangle.                                   
+# If this property is 1, the widget package will use OpenGL to restrict
+# drawing to the Wiget's exposed rectangle.
 xpProperty_Clip                          = 6
-# Is this widget enabled (for those that have a disabled state too)?          
+# Is this widget enabled (for those that have a disabled state too)?
 xpProperty_Enabled                       = 7
-# NOTE: Property IDs 1 - 999 are reserved for the widget's library.           
-# NOTE: Property IDs 1000 - 9999 are allocated to the standard widget classes 
-#  provided with the library Properties 1000 - 1099 are for widget class 0,    
-#  1100 - 1199 for widget class 1, etc.                                        
+# NOTE: Property IDs 1 - 999 are reserved for the widget's library.
+# NOTE: Property IDs 1000 - 9999 are allocated to the standard widget classes
+#  provided with the library Properties 1000 - 1099 are for widget class 0,
+#  1100 - 1199 for widget class 1, etc.
 xpProperty_UserStart                     = 10000
 
 
 #XPDispatchMode
-# The message will only be sent to the target widget.                         
+# The message will only be sent to the target widget.
 xpMode_Direct                            = 0
-# The message is sent to the target widget, then up the chain of parents      
-# until the message is handled or a parentless widget is reached.             
+# The message is sent to the target widget, then up the chain of parents
+# until the message is handled or a parentless widget is reached.
 xpMode_UpChain                           = 1
-# The message is sent to the target widget and then all of its children       
-# recursively depth-first.                                                    
+# The message is sent to the target widget and then all of its children
+# recursively depth-first.
 xpMode_Recursive                         = 2
-# The message is snet just to the target, but goes to every callback, even if 
-# it is handled.                                                              
+# The message is snet just to the target, but goes to every callback, even if
+# it is handled.
 xpMode_DirectAllCallbacks                = 3
-# The message is only sent to the very first handler even if it is not        
-# accepted. (This is really only useful for some internal Widget Lib          
-# functions.                                                                  
+# The message is only sent to the very first handler even if it is not
+# accepted. (This is really only useful for some internal Widget Lib
+# functions.
 xpMode_Once                              = 4
 
 
@@ -275,19 +275,19 @@ xpMsg_UserStart                          = 10000
 
 
 def XPWidgetFunc_t(self,
-                   inMessage,    
-                   inWidget,    
-                   inParam1,    
+                   inMessage,
+                   inWidget,
+                   inParam1,
                    inParam2):
     """
-    This function defines your custom widget's behavior. It will be called by 
-    the widgets library to send messages to your widget. The message and widget 
-    ID are passed in, as well as two ptr-width signed parameters whose meaning 
-    varies with the message. Return 1 to indicate that you have processed the 
-    message, 0 to indicate that you have not. For any message that is not 
+    This function defines your custom widget's behavior. It will be called by
+    the widgets library to send messages to your widget. The message and widget
+    ID are passed in, as well as two ptr-width signed parameters whose meaning
+    varies with the message. Return 1 to indicate that you have processed the
+    message, 0 to indicate that you have not. For any message that is not
     understood, return 0.
 
-    inMessage : integer    
+    inMessage : integer
     inWidget  : XPWidgetID
     inParam1, inParam2 : depends on the message
     """

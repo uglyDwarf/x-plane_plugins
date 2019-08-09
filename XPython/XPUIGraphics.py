@@ -23,28 +23,28 @@ element. All other elements can be rescaled.
 
 XPElementStyle
 
-Elements are individually drawable UI things like push buttons, etc. The 
-style defines what kind of element you are drawing. Elements can be 
-stretched in one or two dimensions (depending on the element). Some 
-elements can be lit. 
+Elements are individually drawable UI things like push buttons, etc. The
+style defines what kind of element you are drawing. Elements can be
+stretched in one or two dimensions (depending on the element). Some
+elements can be lit.
 
-In X-Plane 6 some elements must be drawn over metal. Some are scalable and 
-some are not. Any element can be drawn anywhere in X-Plane 7. 
+In X-Plane 6 some elements must be drawn over metal. Some are scalable and
+some are not. Any element can be drawn anywhere in X-Plane 7.
 
 Scalable Axis Required Background
 
 
 XPTrackStyle
 
-A track is a UI element that displays a value vertically or horizontally. 
-X-Plane has three kinds of tracks: scroll bars, sliders, and progress bars. 
-Tracks can be displayed either horizontally or vertically; tracks will 
-choose their own layout based on the larger dimension of their dimensions 
-(e.g. they know if they are tall or wide). Sliders may be lit or unlit 
-(showing the user manipulating them). 
+A track is a UI element that displays a value vertically or horizontally.
+X-Plane has three kinds of tracks: scroll bars, sliders, and progress bars.
+Tracks can be displayed either horizontally or vertically; tracks will
+choose their own layout based on the larger dimension of their dimensions
+(e.g. they know if they are tall or wide). Sliders may be lit or unlit
+(showing the user manipulating them).
 
-ScrollBar - this is a standard scroll bar with arrows and a thumb to drag. 
-Slider - this is a simple track with a ball in the middle that can be slid. 
+ScrollBar - this is a standard scroll bar with arrows and a thumb to drag.
+Slider - this is a simple track with a ball in the middle that can be slid.
 Progress - this is a progress indicator showing how a long task is going.
 """
 
@@ -62,85 +62,85 @@ xpWindow_Screen                          = 4
 xpWindow_ListView                        = 5
 
 # XPElementStyle
-# x      metal                                                                
+# x      metal
 xpElement_TextField                      = 6
-# none     metal                                                              
+# none     metal
 xpElement_CheckBox                       = 9
-# none     metal                                                              
+# none     metal
 xpElement_CheckBoxLit                    = 10
-# none     window header                                                      
+# none     window header
 xpElement_WindowCloseBox                 = 14
-# none     window header                                                      
+# none     window header
 xpElement_WindowCloseBoxPressed          = 15
-# x     metal                                                                 
+# x     metal
 xpElement_PushButton                     = 16
-# x     metal                                                                 
+# x     metal
 xpElement_PushButtonLit                  = 17
-# none     any                                                                
+# none     any
 xpElement_OilPlatform                    = 24
-# none     any                                                                
+# none     any
 xpElement_OilPlatformSmall               = 25
-# none     any                                                                
+# none     any
 xpElement_Ship                           = 26
-# none     any                                                                
+# none     any
 xpElement_ILSGlideScope                  = 27
-# none     any                                                                
+# none     any
 xpElement_MarkerLeft                     = 28
-# none     any                                                                
+# none     any
 xpElement_Airport                        = 29
-# none     any                                                                
+# none     any
 xpElement_Waypoint                       = 30
-# none     any                                                                
+# none     any
 xpElement_NDB                            = 31
-# none     any                                                                
+# none     any
 xpElement_VOR                            = 32
-# none     any                                                                
+# none     any
 xpElement_RadioTower                     = 33
-# none     any                                                                
+# none     any
 xpElement_AircraftCarrier                = 34
-# none     any                                                                
+# none     any
 xpElement_Fire                           = 35
-# none     any                                                                
+# none     any
 xpElement_MarkerRight                    = 36
-# none     any                                                                
+# none     any
 xpElement_CustomObject                   = 37
-# none     any                                                                
+# none     any
 xpElement_CoolingTower                   = 38
-# none     any                                                                
+# none     any
 xpElement_SmokeStack                     = 39
-# none     any                                                                
+# none     any
 xpElement_Building                       = 40
-# none     any                                                                
+# none     any
 xpElement_PowerLine                      = 41
-# none     metal                                                              
+# none     metal
 xpElement_CopyButtons                    = 45
-# none     metal                                                              
+# none     metal
 xpElement_CopyButtonsWithEditingGrid     = 46
-# x, y     metal                                                              
+# x, y     metal
 xpElement_EditingGrid                    = 47
-# THIS CAN PROBABLY BE REMOVED                                               
+# THIS CAN PROBABLY BE REMOVED
 xpElement_ScrollBar                      = 48
-# none     any                                                                
+# none     any
 xpElement_VORWithCompassRose             = 49
-# none     metal                                                              
+# none     metal
 xpElement_Zoomer                         = 51
-# x, y     metal                                                              
+# x, y     metal
 xpElement_TextFieldMiddle                = 52
-# none     metal                                                              
+# none     metal
 xpElement_LittleDownArrow                = 53
-# none     metal                                                              
+# none     metal
 xpElement_LittleUpArrow                  = 54
-# none     metal                                                              
+# none     metal
 xpElement_WindowDragBar                  = 61
-# none     metal                                                              
+# none     metal
 xpElement_WindowDragBarSmooth            = 62
 
 
 #XPTrackStyle
 xpTrack_ScrollBar                        = 0
-# over metal  can be lit  can be rotated                                     
+# over metal  can be lit  can be rotated
 xpTrack_Slider                           = 1
-# over metal  cannot be lit cannot be rotated                                
+# over metal  cannot be lit cannot be rotated
 xpTrack_Progress                         = 2
 
 
@@ -175,7 +175,7 @@ def XPDrawElement(inX1, inY1, inX2, inY2, inStyle, inLit):
     the width and height do not match the preferred dimensions; it'll just look
     ugly. Pass inLit to see the lit version of the element; if the element
     cannot be lit this is ignored.
-    
+
     inX1, inY1, inX2, inY2 : integers
     inStyle : XPWindowStyle
     inLit : integer
@@ -188,7 +188,7 @@ def XPGetElementDefaultDimensions(inStyle, outWidth, outHeight, outCanBeLit):
     This routine returns the recommended or minimum dimensions of a given UI
     element. outCanBeLit tells whether the element has both a lit and unlit
     state. Pass None to not receive any of these parameters.
-    
+
     inStyle : XPWindowStyle
     outWidth, outHeight, outCanBeLit : lists or None, will contain returned values
     """
