@@ -4,8 +4,9 @@
 #include <stdbool.h>
 #include "utils.h"
 
-const char *objRefName = "XPLMObjectRef"; 
-const char *commandRefName = "XPLMCommandRef"; 
+const char *objRefName = "XPLMObjectRef";
+const char *commandRefName = "XPLMCommandRef";
+const char *widgetRefName = "XPLMWidgetID";
 
 void dbg(const char *msg){
   printf("Going to check %s\n", msg);

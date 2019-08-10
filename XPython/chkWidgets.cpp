@@ -388,7 +388,8 @@ int XPGetWidgetDescriptor(XPWidgetID inWidget, char *outDescriptor, int inMaxDes
 
 XPLMWindowID XPGetWidgetUnderlyingWindow(XPWidgetID inWidget)
 {
-  return (void *)((char *)inWidget + 333);
+  assert(static_cast<widget *>(inWidget) == focused);
+  return NULL;
 }
 
 void XPSetWidgetProperty(XPWidgetID inWidget, XPWidgetPropertyID inProperty, intptr_t inValue)

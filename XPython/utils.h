@@ -4,8 +4,13 @@
 #include <Python.h>
 #include <stdbool.h>
 
-extern const char *objRefName; 
+extern const char *objRefName;
 extern const char *commandRefName;
+extern const char *widgetRefName;
+extern const char *windowIDRef;
+extern PyObject *widgetIDCapsules;
+extern PyObject *windowIDCapsules;
+
 
 void dbg(const char *msg);
 bool objToList(PyObject *item, PyObject *list);

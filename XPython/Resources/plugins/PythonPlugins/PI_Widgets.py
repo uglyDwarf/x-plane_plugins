@@ -44,7 +44,7 @@ class PythonInterface(checkBase):
       self.widgetVisible = 107
       self.widgetDesc = 'Awesome widget'
       self.widgetIsRoot = 108
-      self.widgetContainer = 0
+      self.widgetContainer = None
       self.widgetClass = 109
       self.widget = XPCreateWidget(self.widgetLeft, self.widgetTop, self.widgetRight, self.widgetBottom,
                                    self.widgetVisible, self.widgetDesc, self.widgetIsRoot,
@@ -111,7 +111,7 @@ class PythonInterface(checkBase):
       self.cust_widget1 = XPCreateCustomWidget(self, self.c_widget1Left, self.c_widget1Top,
                                                self.c_widget1Right, self.c_widget1Bottom,
                                                self.c_widgetVisible, self.c_widgetDesc,
-                                               self.c_widgetIsRoot, 0,
+                                               self.c_widgetIsRoot, None,
                                                self.c_widgetCallback)
       XPPlaceWidgetWithin(self.cust_widget1, self.widget)
       self.checkVal('XPCountChildWidgets', XPCountChildWidgets(self.widget), 2)
@@ -181,7 +181,7 @@ class PythonInterface(checkBase):
       self.checkVal('XPLoseKeyboardFocus', XPGetWidgetWithFocus(), self.widget)
 
       try:
-        self.checkVal('XPGetWidgetUnderlyingWindow', XPGetWidgetUnderlyingWindow(self.widget), self.widget + 333)
+        self.checkVal('XPGetWidgetUnderlyingWindow', XPGetWidgetUnderlyingWindow(self.widget), None)
       except RuntimeError as re:
          if (self.versions[1] >= 301) or (str(re) != 'XPGetWidgetUnderlyingWindow is available only in XPLM301 and up.'):
             raise

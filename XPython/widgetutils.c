@@ -8,6 +8,7 @@
 #include <XPLM/XPLMDefs.h>
 #include <Widgets/XPWidgetDefs.h>
 #include <Widgets/XPWidgetUtils.h>
+#include "utils.h"
 
 static PyObject *XPUCreateWidgetsFun(PyObject *self, PyObject *args)
 {
@@ -18,7 +19,7 @@ static PyObject *XPUCreateWidgetsFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OiOO", &widgetDefs, &inCount, &paramParent, &widgets)){
     return NULL;
   }
-  XPWidgetID inParamParent = PyLong_AsVoidPtr(paramParent);
+  XPWidgetID inParamParent = refToPtr(paramParent, widgetRefName);
   XPWidgetID *ioWidgets = malloc(sizeof(XPWidgetID) * inCount);
   XPWidgetCreate_t *defs = malloc(sizeof(XPWidgetCreate_t) * inCount);
   if((defs == NULL) || (ioWidgets == NULL)){
@@ -41,7 +42,7 @@ static PyObject *XPUCreateWidgetsFun(PyObject *self, PyObject *args)
   XPUCreateWidgets(defs, inCount, inParamParent, ioWidgets);
 
   for(i = 0; i < inCount; ++i){
-    PyObject *tmp = PyLong_FromVoidPtr(ioWidgets[i]);
+    PyObject *tmp = getPtrRef(ioWidgets[i], widgetIDCapsules, widgetRefName);
     PyList_Append(widgets, tmp);
     Py_DECREF(tmp);
   }
@@ -59,7 +60,7 @@ static PyObject *XPUMoveWidgetByFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "Oii", &widget, &inDeltaX, &inDeltaY)){
     return NULL;
   }
-  inWidget = PyLong_AsVoidPtr(widget);
+  inWidget = refToPtr(widget, widgetRefName);
   XPUMoveWidgetBy(inWidget, inDeltaX, inDeltaY);
   Py_RETURN_NONE;
 }
@@ -74,7 +75,7 @@ static PyObject *XPUFixedLayoutFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "iOOO", &inMessage, &widget, &param1, &param2)){
     return NULL;
   }
-  inWidget = PyLong_AsVoidPtr(widget);
+  inWidget = refToPtr(widget, widgetRefName);
   inParam1 = PyLong_AsLong(param1);
   inParam2 = PyLong_AsLong(param2);
  
@@ -93,7 +94,7 @@ static PyObject *XPUSelectIfNeededFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "iOOOi", &inMessage, &widget, &param1, &param2, &inEatClick)){
     return NULL;
   }
-  inWidget = PyLong_AsVoidPtr(widget);
+  inWidget = refToPtr(widget, widgetRefName);
   inParam1 = PyLong_AsLong(param1);
   inParam2 = PyLong_AsLong(param2);
  
@@ -112,7 +113,7 @@ static PyObject *XPUDefocusKeyboardFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "iOOOi", &inMessage, &widget, &param1, &param2, &inEatClick)){
     return NULL;
   }
-  inWidget = PyLong_AsVoidPtr(widget);
+  inWidget = refToPtr(widget, widgetRefName);
   inParam1 = PyLong_AsLong(param1);
   inParam2 = PyLong_AsLong(param2);
  
@@ -131,7 +132,7 @@ static PyObject *XPUDragWidgetFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "iOOOiiii", &inMessage, &widget, &param1, &param2, &inLeft, &inTop, &inRight, &inBottom)){
     return NULL;
   }
-  inWidget = PyLong_AsVoidPtr(widget);
+  inWidget = refToPtr(widget, widgetRefName);
   inParam1 = PyLong_AsLong(param1);
   inParam2 = PyLong_AsLong(param2);
  

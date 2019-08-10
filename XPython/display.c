@@ -24,9 +24,9 @@ static PyObject *hotkeyIDDict;
 
 static PyObject *monitorBndsCallback;
 
-static PyObject *windowIDCapsules;
+PyObject *windowIDCapsules;
 static PyObject *hotkeyIDCapsules;
-static const char windowIDRef[] = "XPLMWindowIDRef";
+const char *windowIDRef = "XPLMWindowIDRef";
 static const char hotkeyIDRef[] = "XPLMHotkeyIDRef";
 
 
