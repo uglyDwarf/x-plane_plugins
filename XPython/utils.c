@@ -73,11 +73,16 @@ PyObject *getPtrRef(void *ptr, PyObject *dict, const char *refName)
 
 void *refToPtr(PyObject *ref, const char *refName)
 {
-  if(ref == Py_None){
-    return NULL;
-  }else{
+  if(PyCapsule_CheckExact(ref)){
     return PyCapsule_GetPointer(ref, refName);
+  }else if(ref == Py_None){
+    return NULL;
+  }else if(PyLong_Check(ref) && (PyLong_AsLong(ref) == 0)){
+    return NULL;
   }
+  // If we got here, then ref is something we didn't expect.
+  PyErr_Format(PyExc_RuntimeError, "Error extracting %s reference from %S", refName, ref);
+  return NULL;
 }
 
 void removePtrRef(void *ptr, PyObject *dict)
