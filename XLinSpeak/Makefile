@@ -3,12 +3,18 @@
 all : lin32.xpl lin64.xpl
 
 lin32.xpl : xpl.c hook.c hook.h sec.c sec.h len.c len.h utils.c utils.h hook_asm32.o
-	gcc -g -shared -fvisibility=hidden -fPIC -o $@ \
+	mkdir -p ./xlinspeak/32
+	cp xlinspeak.cfg.sample ./xlinspeak
+	
+	gcc -g -lconfig -O2 -march=native -shared -fvisibility=hidden -fPIC -o ./xlinspeak/32/lin.xpl \
 	    -Wall -Wextra -m32 \
             -I SDK/CHeaders/XPLM $^ -L. -lspeechd
 
 lin64.xpl : xpl.c hook.c hook.h sec.c sec.h len64.c len.h utils.c utils.h hook_asm64.o
-	gcc -g -shared -fvisibility=hidden -fPIC -o $@ \
+	mkdir -p ./xlinspeak/64
+	cp xlinspeak.cfg.sample ./xlinspeak
+
+	gcc -g -lconfig -fPIC -O2 -march=native -shared -fvisibility=hidden -o ./xlinspeak/64/lin.xpl \
 	    -Wall -Wextra \
             -I SDK/CHeaders/XPLM $^ -lspeechd
 
@@ -33,7 +39,7 @@ asm64.ref : asm64.bin
 	ndisasm -b64 $^ > $@
 
 len64 : len64.c
-	gcc -g -Wall -Wextra -o $@ -DTEST_LEN $^
+	gcc -g -O2 -march=native -Wall -Wextra -o $@ -DTEST_LEN $^
 
 test32 : asm32.ref len32
 	./len32 asm32.bin > dis32.ref
@@ -48,8 +54,11 @@ asm32.ref : asm32.bin
 	ndisasm -b32 $^ > $@
 
 len32 : len.c
-	gcc -g -Wall -Wextra -o $@ -DTEST_LEN $^
+	gcc -g -O2 -march=native -Wall -Wextra -o $@ -DTEST_LEN $^
+
 
 clean :
 	rm -f *.o lin*.xpl asm*.addr asm*.bin asm*.ref dis*.addr dis*.ref len32 len64
+	rm -rf ./xlinspeak
+
 
