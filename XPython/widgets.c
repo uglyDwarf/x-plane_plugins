@@ -1,16 +1,14 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
-#define XPLM300
-#define XPLM301
 
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDisplay.h>
 #include <Widgets/XPWidgetDefs.h>
 #include <Widgets/XPWidgets.h>
+#include <Widgets/XPStandardWidgets.h>
 #include "plugin_dl.h"
 #include "utils.h"
 
@@ -27,40 +25,47 @@ int widgetCallback(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inPa
   param1 = PyLong_FromLong(inParam1);
   param2 = PyLong_FromLong(inParam2);
   switch(inMessage){
-    case xpMsg_KeyPress:
-      keyState = (XPKeyState_t *)inParam1;
-      param1 = Py_BuildValue("(iii)", (int)keyState->key, (int)keyState->flags,
-                                     (int)keyState->vkey);
-      break;
-    case xpMsg_MouseDown:
-    case xpMsg_MouseDrag:
-    case xpMsg_MouseUp:
-    case xpMsg_MouseWheel:
-    case xpMsg_CursorAdjust:
-      mouseState = (XPMouseState_t *)inParam1;
-      param1 = Py_BuildValue("(iiii)", mouseState->x, mouseState->y,
-                                      mouseState->button, mouseState->delta);
-      break;
-    case xpMsg_Reshape:
-      wChange = (XPWidgetGeometryChange_t *)inParam1;
-      param1 = Py_BuildValue("(iiii)", wChange->dx, wChange->dy,
-                                      wChange->dwidth, wChange->dheight);
-      break;
-    case xpMsg_AcceptChild:
-    case xpMsg_LoseChild:
-    case xpMsg_AcceptParent:
-    case xpMsg_Shown:
-    case xpMsg_Hidden:
-      param1 =  getPtrRef((void *)inParam1, widgetIDCapsules, widgetRefName);
-      break;
-      
-    default: // intentionally empty
-      break;
+  case xpMsg_KeyPress:
+    keyState = (XPKeyState_t *)inParam1;
+    param1 = Py_BuildValue("(iii)", (int)keyState->key, (int)keyState->flags,
+                           (int)keyState->vkey);
+    break;
+  case xpMsg_MouseDown:
+  case xpMsg_MouseDrag:
+  case xpMsg_MouseUp:
+  case xpMsg_MouseWheel:
+  case xpMsg_CursorAdjust:
+    mouseState = (XPMouseState_t *)inParam1;
+    param1 = Py_BuildValue("(iiii)", mouseState->x, mouseState->y,
+                           mouseState->button, mouseState->delta);
+    break;
+  case xpMsg_Reshape:
+    wChange = (XPWidgetGeometryChange_t *)inParam1;
+    param1 = Py_BuildValue("(iiii)", wChange->dx, wChange->dy,
+                           wChange->dwidth, wChange->dheight);
+    break;
+  case xpMsg_AcceptChild:
+  case xpMsg_LoseChild:
+  case xpMsg_AcceptParent:
+  case xpMsg_Shown:
+  case xpMsg_Hidden:
+  case xpMsg_TextFieldChanged:
+    param1 =  getPtrRef((void *)inParam1, widgetIDCapsules, widgetRefName);
+    break;
+    
+  default: // intentionally empty
+    break;
   }
 
   PyObject *callbackList = PyDict_GetItem(widgetCallbackDict, widget);
   if(callbackList == NULL){
-    printf("Couldn't find the callback list for widget ID %p.\n", inWidget);
+    /* we'll get an xpMsg_Create that we can't handle from a CustomWidget (because the widgetCallbackDict
+       isn't populated yet). Ignore the message (CreateCustomWidget() below will send it again!)
+       If not xpMsg_Create, write error.
+     */
+    if (inMessage != xpMsg_Create) {
+      printf("Couldn't find the callback list for widget ID %p. for message %d\n", inWidget, inMessage);
+    }
     Py_DECREF(widget);
     Py_DECREF(param1);
     Py_DECREF(param2);
@@ -119,7 +124,14 @@ static PyObject *XPCreateWidgetFun(PyObject *self, PyObject *args)
                                          &container, &inClass)){
     return NULL;
   }
-  XPWidgetID inContainer = refToPtr(container, widgetRefName);
+  // use inContainer 0, if passed in value of 0
+  XPWidgetID inContainer;
+  if ((PyLong_Check(container) && PyLong_AsLong(container) == 0) || container == Py_None) {
+    inContainer = 0;
+  } else {
+    inContainer = refToPtr(container, widgetRefName);
+  }
+
   XPWidgetID res = XPCreateWidget(inLeft, inTop, inRight, inBottom, inVisible, inDescriptor, inIsRoot, inContainer, inClass);
   return getPtrRef(res, widgetIDCapsules, widgetRefName);
 }
@@ -134,15 +146,32 @@ static PyObject *XPCreateCustomWidgetFun(PyObject *self, PyObject *args)
   PyObject *inCallback;
   if(!PyArg_ParseTuple(args, "OiiiiisiOO", &pluginSelf, &inLeft, &inTop, &inRight, &inBottom, &inVisible, &inDescriptor,
                        &inIsRoot, &container, &inCallback)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "iiiiisiOO", &inLeft, &inTop, &inRight, &inBottom, &inVisible, &inDescriptor,
+                         &inIsRoot, &container, &inCallback)){
+      return NULL;
+    }
   }
-  XPWidgetID inContainer = refToPtr(container, widgetRefName);
+  // use inContainer 0, if passed in value of 0
+  XPWidgetID inContainer;
+  if ((PyLong_Check(container) && PyLong_AsLong(container) == 0) || container == Py_None) {
+    inContainer = 0;
+  } else {
+    inContainer = refToPtr(container, widgetRefName);
+  }
+
+  /* vvvvvvvvvvvvvvvvvv widgetCallback will be immediately called with Create msg BUT
+       widgetCallbackDict does not yet have entry for this widget, so the create msg
+       will not be received by this function. 
+       So... we populate the dict and then call SendMessageToWidget directly!
+   */
   XPWidgetID res = XPCreateCustomWidget(inLeft, inTop, inRight, inBottom, inVisible, inDescriptor, inIsRoot,
                                         inContainer, widgetCallback);
   PyObject *resObj = getPtrRef(res, widgetIDCapsules, widgetRefName);
   PyObject *callbackList = PyList_New(0);
   PyList_Insert(callbackList, 0, inCallback);
   PyDict_SetItem(widgetCallbackDict, resObj, callbackList);
+  XPSendMessageToWidget(res, xpMsg_Create, xpMode_Direct, 0, 0);
   return resObj;
 }
 
@@ -152,7 +181,10 @@ static PyObject *XPDestroyWidgetFun(PyObject *self, PyObject *args)
   PyObject *widget, *pluginSelf;
   int inDestroyChildren;
   if(!PyArg_ParseTuple(args, "OOi", &pluginSelf, &widget, &inDestroyChildren)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "Oi", &widget, &inDestroyChildren)){
+      return NULL;
+    }
   }
   XPWidgetID wid = refToPtr(widget, widgetRefName);
   XPDestroyWidget(wid, inDestroyChildren);
@@ -173,8 +205,21 @@ static PyObject *XPSendMessageToWidgetFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPWidgetID inWidget = refToPtr(widget, widgetRefName);
-  intptr_t inParam1 = PyLong_AsLong(param1);
-  intptr_t inParam2 = PyLong_AsLong(param2);
+  intptr_t inParam1;
+  if (PyCapsule_CheckExact(param1)) {
+    printf("param one is a capsule with name %s\n", PyCapsule_GetName(param1));
+    inParam1 = (intptr_t) PyCapsule_GetPointer(param1, PyCapsule_GetName(param1));
+  } else {
+    inParam1 = PyLong_AsLong(param1);
+  }
+
+  intptr_t inParam2;
+  if (PyCapsule_CheckExact(param2)) {
+    printf("param one is a capsule with name %s\n", PyCapsule_GetName(param2));
+    inParam2 = (intptr_t) PyCapsule_GetPointer(param1, PyCapsule_GetName(param2));
+  } else {
+    inParam2 = PyLong_AsLong(param2);
+  }
 
   int res = XPSendMessageToWidget(inWidget, inMessage, inMode, inParam1, inParam2);
   return PyLong_FromLong(res);
@@ -488,7 +533,10 @@ static PyObject *XPAddWidgetCallbackFun(PyObject *self, PyObject *args)
   (void) self;
   PyObject *pluginSelf, *widget, *callback;
   if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &widget, &callback)){
-    return NULL;
+    PyErr_Clear();
+    if (!PyArg_ParseTuple(args, "OO", &widget, &callback)){
+      return NULL;
+    }
   }
   PyObject *current = PyDict_GetItem(widgetCallbackDict, widget);
   if(current == NULL){
