@@ -148,6 +148,8 @@ void XPLMDisableAIForPlane(int inPlaneIndex)
   int0 = inPlaneIndex;
 }
 
+#if defined(XPLM_DEPRECATED)
+/* Use XPLMInstance */
 void XPLMDrawAircraft(int inPlaneIndex, float inX, float inY, float inZ, float inPitch, float inRoll, float inYaw,
                       int inFullDraw, XPLMPlaneDrawState_t *inDrawStateInfo)
 {
@@ -171,6 +173,7 @@ void XPLMDrawAircraft(int inPlaneIndex, float inX, float inY, float inZ, float i
   yokeHeading = inDrawStateInfo->yokeHeading;
   yokeRoll = inDrawStateInfo->yokeRoll;
 }
+#endif
 
 void XPLMReinitUsersPlane(void)
 {

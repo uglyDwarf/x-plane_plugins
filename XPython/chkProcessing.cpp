@@ -116,6 +116,7 @@ XPLMFlightLoopID XPLMCreateFlightLoop(XPLMCreateFlightLoop_t *inParams)
 
 void XPLMDestroyFlightLoop(XPLMFlightLoopID inFlightLoopID)
 {
+  (void)(inFlightLoopID);
   assert(inFlightLoopID == id);
   delete id;
   id = NULL;

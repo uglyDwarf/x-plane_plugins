@@ -57,6 +57,7 @@ XPLMInstanceRef XPLMCreateInstance(XPLMObjectRef obj, const char **datarefs)
 
 void XPLMDestroyInstance(XPLMInstanceRef instance)
 {
+  (void)(instance);
   assert(instance == &inst);
   int0 = 365;
 }
