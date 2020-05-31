@@ -1,17 +1,15 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
-#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMPlanes.h>
 #include "utils.h"
 #include "plugin_dl.h"
 
 static intptr_t availableCntr;
-static PyObject *availableDict;
+PyObject *availableDict;
 
 PyObject *XPLMSetUsersAircraftFun(PyObject *self, PyObject *args)
 {
@@ -101,12 +99,18 @@ PyObject *XPLMAcquirePlanesFun(PyObject *self, PyObject *args)
   (void)self;
   PyObject *pluginSelf, *aircraft, *inCallback, *inRefcon;
   if(!PyArg_ParseTuple(args, "OOOO", &pluginSelf, &aircraft, &inCallback, &inRefcon)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "OOO", &aircraft, &inCallback, &inRefcon)){
+      return NULL;
+    }
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
   int res;
   void *refcon = (void*)++availableCntr;
   PyObject *refObj = PyLong_FromVoidPtr(refcon);
-  PyDict_SetItem(availableDict, refObj, args);
+  PyObject *argsObj = Py_BuildValue( "(OOOO)", pluginSelf, aircraft, inCallback, inRefcon);
+  PyDict_SetItem(availableDict, refObj, argsObj);
+  Py_DECREF(argsObj);
   Py_DECREF(refObj);
   if(aircraft == Py_None){
     res = XPLMAcquirePlanes(NULL, planesAvailable, refcon);
@@ -117,14 +121,20 @@ PyObject *XPLMAcquirePlanesFun(PyObject *self, PyObject *args)
     for(i = 0; i < len; ++i){
       PyObject *tmpItem = PySequence_GetItem(aircraft, i);
       PyObject *tmpStr = PyObject_Str(tmpItem);
-      const char *tmp = PyUnicode_AsUTF8(tmpStr);
-      Py_DECREF(tmpStr);
+      PyObject *tmpObj = PyUnicode_AsUTF8String(tmpStr);
+      char *tmp = PyBytes_AsString(tmpObj);
+
       Py_DECREF(tmpItem);
+      Py_DECREF(tmpStr);
+
+      if (PyErr_Occurred()) return NULL;
       if(tmp[0] == '\0'){
+        Py_DECREF(tmpObj);
         break;
       }else{
         inAircraft[i] = strdup(tmp);
       }
+      Py_DECREF(tmpObj);
     }
     inAircraft[i] = NULL;
     res = XPLMAcquirePlanes(inAircraft, planesAvailable, refcon);
@@ -186,12 +196,13 @@ PyObject *XPLMDisableAIForPlaneFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+#if defined(XPLM_DEPRECATED)
 PyObject *XPLMDrawAircraftFun(PyObject *self, PyObject *args)
 {
   (void)self;
   int inPlaneIndex, inFullDraw;
   float inX, inY, inZ, inPitch, inRoll, inYaw;
-  PyObject *drawStateInfoSeq;
+  PyObject *drawStateInfoSeq, *tmp;
   XPLMPlaneDrawState_t inDrawStateInfo;
   if(!PyArg_ParseTuple(args, "iffffffiO", &inPlaneIndex, &inX, &inY, &inZ, &inPitch,
                                           &inRoll, &inYaw, &inFullDraw, &drawStateInfoSeq)){
@@ -199,20 +210,41 @@ PyObject *XPLMDrawAircraftFun(PyObject *self, PyObject *args)
   }
   PyObject *drawStateInfo = PySequence_Tuple(drawStateInfoSeq);
   inDrawStateInfo.structSize = sizeof(XPLMPlaneDrawState_t);
-  inDrawStateInfo.gearPosition = getFloatFromTuple(drawStateInfo, 1);
-  inDrawStateInfo.flapRatio = getFloatFromTuple(drawStateInfo, 2);
-  inDrawStateInfo.spoilerRatio = getFloatFromTuple(drawStateInfo, 3);
-  inDrawStateInfo.speedBrakeRatio = getFloatFromTuple(drawStateInfo, 4);
-  inDrawStateInfo.slatRatio = getFloatFromTuple(drawStateInfo, 5);
-  inDrawStateInfo.wingSweep = getFloatFromTuple(drawStateInfo, 6);
-  inDrawStateInfo.thrust = getFloatFromTuple(drawStateInfo, 7);
-  inDrawStateInfo.yokePitch = getFloatFromTuple(drawStateInfo, 8);
-  inDrawStateInfo.yokeHeading = getFloatFromTuple(drawStateInfo, 9);
-  inDrawStateInfo.yokeRoll = getFloatFromTuple(drawStateInfo, 10);
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 1));
+  inDrawStateInfo.gearPosition = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 2));
+  inDrawStateInfo.flapRatio = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 3));
+  inDrawStateInfo.spoilerRatio = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 4));
+  inDrawStateInfo.speedBrakeRatio = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 5));
+  inDrawStateInfo.slatRatio = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 6));
+  inDrawStateInfo.wingSweep = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 7));
+  inDrawStateInfo.thrust = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 8));
+  inDrawStateInfo.yokePitch = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 9));
+  inDrawStateInfo.yokeHeading = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
+  tmp = PyNumber_Float(PyTuple_GetItem(drawStateInfo, 10));
+  inDrawStateInfo.yokeRoll = PyFloat_AsDouble(tmp);
+  Py_DECREF(tmp);
 
   XPLMDrawAircraft(inPlaneIndex, inX, inY, inZ, inPitch, inRoll, inYaw, inFullDraw, &inDrawStateInfo);
   Py_RETURN_NONE;
 }
+#endif
 
 static PyObject *cleanup(PyObject *self, PyObject *args)
 {
@@ -225,6 +257,8 @@ static PyObject *cleanup(PyObject *self, PyObject *args)
 
 
 
+#if defined(XPLM_DEPRECATED)
+/* WARNING: DO NOT USE.  Use XPLMPlaceUserAtAirport or XPLMPlaceUserAtLocation.*/
 PyObject *XPLMReinitUsersPlaneFun(PyObject *self, PyObject *args)
 {
   (void)self;
@@ -232,6 +266,7 @@ PyObject *XPLMReinitUsersPlaneFun(PyObject *self, PyObject *args)
   XPLMReinitUsersPlane();
   Py_RETURN_NONE;
 }
+#endif
 
 static PyMethodDef XPLMPlanesMethods[] = {
   {"XPLMSetUsersAircraft", XPLMSetUsersAircraftFun, METH_VARARGS, ""},
@@ -244,8 +279,12 @@ static PyMethodDef XPLMPlanesMethods[] = {
   {"XPLMAcquirePlanes", XPLMAcquirePlanesFun, METH_VARARGS, ""},
   {"XPLMSetAircraftModel", XPLMSetAircraftModelFun, METH_VARARGS, ""},
   {"XPLMDisableAIForPlane", XPLMDisableAIForPlaneFun, METH_VARARGS, ""},
+#if defined(XPLM_DEPRECATED)
   {"XPLMDrawAircraft", XPLMDrawAircraftFun, METH_VARARGS, ""},
+#endif
+#if defined(XPLM_DEPRECATED)
   {"XPLMReinitUsersPlane", XPLMReinitUsersPlaneFun, METH_VARARGS, ""},
+#endif
   {"cleanup", cleanup, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
