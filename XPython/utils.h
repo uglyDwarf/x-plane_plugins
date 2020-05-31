@@ -21,5 +21,8 @@ PyObject *getPtrRef(void *ptr, PyObject *dict, const char *refName);
 PyObject *getPtrRefOneshot(void *ptr, const char *refName);
 void *refToPtr(PyObject *ref, const char *refName);
 void removePtrRef(void *ptr, PyObject *dict);
+char *get_module(PyThreadState *tstate);
+PyObject *get_pluginSelf(/*PyThreadState *tstate*/);
+char *objToStr(PyObject *item);
 
 #endif
