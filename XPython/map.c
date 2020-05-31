@@ -1,10 +1,8 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
-#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMMap.h>
 #include "plugin_dl.h"
@@ -77,7 +75,6 @@ static inline void mapPrepareCacheCallback(XPLMMapLayerID inLayer, const float *
   PyObject *callbackInfo = PyDict_GetItem(mapDict, ref);
   Py_DECREF(ref);
   if(callbackInfo == NULL){
-    printf("Couldn't find map callback with id = %p.", inRefcon); 
     return;
   }
 
@@ -195,14 +192,25 @@ static PyObject *XPLMCreateMapLayerFun(PyObject *self, PyObject *args)
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &params)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "O", &params)){
+      return NULL;
+    }
   }
 
   PyObject *paramsTuple = PySequence_Tuple(params);
 
   void *ref = (void *)++mapCntr;
   inParams.structSize = sizeof(inParams);
-  inParams.mapToCreateLayerIn = PyUnicode_AsUTF8(PyTuple_GetItem(paramsTuple, 0));
+
+  PyObject *tmpObjMap = PyUnicode_AsUTF8String(PyTuple_GetItem(paramsTuple, 0));
+  char *tmpMap = PyBytes_AsString(tmpObjMap);
+  if (PyErr_Occurred()) {
+    Py_DECREF(tmpObjMap);
+    Py_DECREF(paramsTuple);
+    return NULL;
+  }
+  inParams.mapToCreateLayerIn = tmpMap;
   inParams.layerType = PyLong_AsLong(PyTuple_GetItem(paramsTuple, 1));
   inParams.willBeDeletedCallback = mapWillBeDeletedCallback;
   inParams.prepCacheCallback = mapPrepareCacheCallback;
@@ -210,17 +218,32 @@ static PyObject *XPLMCreateMapLayerFun(PyObject *self, PyObject *args)
   inParams.iconCallback = mapIconDrawingCallback;
   inParams.labelCallback = mapLabelDrawingCallback;
   inParams.showUiToggle = PyLong_AsLong(PyTuple_GetItem(paramsTuple, 7));
-  inParams.layerName = PyUnicode_AsUTF8(PyTuple_GetItem(paramsTuple, 8));
+
+  PyObject *tmpObjLayerName = PyUnicode_AsUTF8String(PyTuple_GetItem(paramsTuple, 8));
+  char *tmpLayerName = PyBytes_AsString(tmpObjLayerName);
+  if (PyErr_Occurred()) {
+    Py_DECREF(tmpObjMap);
+    Py_DECREF(tmpObjLayerName);
+    Py_DECREF(paramsTuple);
+    return NULL;
+  }
+  inParams.layerName = tmpLayerName;
+
   inParams.refcon = ref;
 
   XPLMMapLayerID res = XPLMCreateMapLayer_ptr(&inParams);
   if(!res){
+    Py_DECREF(tmpObjMap);
+    Py_DECREF(tmpObjLayerName);
+    Py_DECREF(paramsTuple);
     return NULL;
   }
   PyObject *resObj = getPtrRef(res, mapLayerIDCapsules, layerIDRefName);
   PyObject *refObj = PyLong_FromVoidPtr(ref);
   PyDict_SetItem(mapDict, refObj, paramsTuple);
   PyDict_SetItem(mapRefDict, resObj, refObj);
+  Py_DECREF(tmpObjMap);
+  Py_DECREF(tmpObjLayerName);
   Py_DECREF(paramsTuple);
   Py_DECREF(refObj);
   return resObj;
@@ -236,7 +259,10 @@ static PyObject *XPLMDestroyMapLayerFun(PyObject *self, PyObject *args)
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &layer)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "O", &layer)){
+      return NULL;
+    }
   }
 
   XPLMMapLayerID inLayer = refToPtr(layer, layerIDRefName);
