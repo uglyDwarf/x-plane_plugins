@@ -1,26 +1,23 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
-#define XPLM300
-#define XPLM301
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMDisplay.h>
 #include "utils.h"
 #include "plugin_dl.h"
 
-static PyObject *drawCallbackDict, *drawCallbackIDDict;
+PyObject *drawCallbackDict, *drawCallbackIDDict;
 static intptr_t drawCallbackCntr;
-static PyObject *keySniffCallbackDict;
+PyObject *keySniffCallbackDict;
 static intptr_t keySniffCallbackCntr;
 
 //draw, key,mouse, cursor, wheel
-static PyObject *windowDict;
+PyObject *windowDict;
 static intptr_t hotkeyCntr;
-static PyObject *hotkeyDict;
-static PyObject *hotkeyIDDict;
+PyObject *hotkeyDict;
+PyObject *hotkeyIDDict;
 
 static PyObject *monitorBndsCallback;
 
@@ -59,7 +56,11 @@ static PyObject *XPLMRegisterDrawCallbackFun(PyObject *self, PyObject *args)
   int inWantsBefore;
   PyObject *refcon;
   if(!PyArg_ParseTuple(args, "OOiiO", &pluginSelf, &callback, &inPhase, &inWantsBefore, &refcon)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "OiiO", &callback, &inPhase, &inWantsBefore, &refcon)){
+      return NULL;
+    } 
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
   PyObject *idx = PyLong_FromLong(++drawCallbackCntr);
   if(!idx){
@@ -67,7 +68,9 @@ static PyObject *XPLMRegisterDrawCallbackFun(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  PyDict_SetItem(drawCallbackDict, idx, args);
+  PyObject *argObj = Py_BuildValue("(OOiiO)", pluginSelf, callback, inPhase, inWantsBefore, refcon);
+  PyDict_SetItem(drawCallbackDict, idx, argObj);
+  Py_DECREF(argObj);
   PyObject *tmp = PyLong_FromVoidPtr(refcon);
   PyDict_SetItem(drawCallbackIDDict, tmp, idx);
   Py_DECREF(tmp);
@@ -88,7 +91,10 @@ static PyObject *XPLMRegisterKeySnifferFun(PyObject *self, PyObject *args)
   PyObject *pluginSelf, *callback, *refcon;
   int inBeforeWindows;
   if(!PyArg_ParseTuple(args, "OOiO", &pluginSelf, &callback, &inBeforeWindows, &refcon)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "OiO", &callback, &inBeforeWindows, &refcon))
+      return NULL;
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
 
   PyObject *idx = PyLong_FromLong(++keySniffCallbackCntr);
@@ -97,8 +103,10 @@ static PyObject *XPLMRegisterKeySnifferFun(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  PyDict_SetItem(keySniffCallbackDict, idx, args);
+  PyObject *argObj = Py_BuildValue("(OOiO)", pluginSelf, callback, inBeforeWindows, refcon);
+  PyDict_SetItem(keySniffCallbackDict, idx, argObj);
   Py_DECREF(idx);
+  Py_DECREF(argObj);
   int res = XPLMRegisterKeySniffer(XPLMKeySnifferCallback, inBeforeWindows, (void *)keySniffCallbackCntr);
   if(!res){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMRegisterKeySnifferCallback failed.\n");
@@ -114,7 +122,10 @@ static PyObject *XPLMUnregisterDrawCallbackFun(PyObject *self, PyObject *args)
   PyObject *pluginSelf, *callback, *refcon;
   int inPhase, inWantsBefore;
   if(!PyArg_ParseTuple(args, "OOiiO", &pluginSelf, &callback, &inPhase, &inWantsBefore, &refcon)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "OiiO", &callback, &inPhase, &inWantsBefore, &refcon)){
+      return NULL;
+    }
   }
   PyObject *pyRefcon = PyLong_FromVoidPtr(refcon);
   PyObject *pID = PyDict_GetItem(drawCallbackIDDict, pyRefcon);
@@ -143,18 +154,26 @@ static PyObject *XPLMUnregisterKeySnifferFun(PyObject *self, PyObject *args)
   PyObject *pluginSelf, *callback, *refcon;
   int inBeforeWindows;
   if(!PyArg_ParseTuple(args, "OOiO", &pluginSelf, &callback, &inBeforeWindows, &refcon)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "OiO", &callback, &inBeforeWindows, &refcon))
+      return NULL;
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
+  } else {
+    Py_INCREF(pluginSelf);
   }
   PyObject *pKey = NULL, *pVal = NULL;
   PyObject *toDelete = NULL;
   Py_ssize_t pos = 0;
   int res = -1;
+  PyObject *argObj = Py_BuildValue("OOiO", pluginSelf, callback, inBeforeWindows, refcon);
   while(PyDict_Next(keySniffCallbackDict, &pos, &pKey, &pVal)){
-    if(PyObject_RichCompareBool(pVal, args, Py_EQ)){
+    if(PyObject_RichCompareBool(pVal, argObj, Py_EQ)){
       toDelete = pKey;
       break;
     }
   }
+  Py_DECREF(argObj);
+  Py_DECREF(pluginSelf);
   if(toDelete){
     res = XPLMUnregisterKeySniffer(XPLMKeySnifferCallback, 
                                    inBeforeWindows, PyLong_AsVoidPtr(toDelete));
@@ -180,11 +199,10 @@ static void drawWindow(XPLMWindowID  inWindowID,
     return;
   }
   PyObject *oRes = PyObject_CallFunctionObjArgs(PyTuple_GetItem(pCbks, 0), pID, inRefcon, NULL);
-  PyObject *err = PyErr_Occurred();
-  if(err){
+  if(PyErr_Occurred()) {
     PyErr_Print();
   }
-  Py_DECREF(oRes);
+  Py_XDECREF(oRes);
   Py_DECREF(pID);
 }
 
@@ -195,10 +213,24 @@ static void handleKey(XPLMWindowID  inWindowID,
                void         *inRefcon,
                int           losingFocus)
 {
+  (void) inRefcon;
   PyObject *pID = getPtrRef(inWindowID, windowIDCapsules, windowIDRef);
+  char msg[2024];
   PyObject *pCbks = PyDict_GetItem(windowDict, pID);
   if(pCbks == NULL){
-    printf("Unknown window passed to handleKey (%p).\n", inWindowID);
+    if (inWindowID == NULL && losingFocus) {
+      /* This occurs only when I have a window with keyboard focus and then
+         I destroy the window (or otherwise lose focus.)
+         I get callback to handle key but the window ID set zero.
+         Verified this happens in simple C program, so it's not Python's fault.
+         So far, it appears safe to just ignore.
+         Filed with Laminar 18-May-2020 as XPD-10834
+      */
+      XPLMDebugString("NULL window passed to handleKey. Ignoring\n");
+      return;
+    }
+    sprintf(msg, "Unknown window passed to handleKey (%p) [%ld].\n", inWindowID, (long)inWindowID);
+    XPLMDebugString(msg);
     return;
   }
   PyObject *arg1 = PyLong_FromLong(inKey);
@@ -224,6 +256,7 @@ static int handleMouseClick(XPLMWindowID     inWindowID,
                      XPLMMouseStatus  inMouse,
                      void            *inRefcon)
 {
+  (void) inRefcon;
   PyObject *pID = getPtrRef(inWindowID, windowIDCapsules, windowIDRef);
   PyObject *pCbks = PyDict_GetItem(windowDict, pID);
   if(pCbks == NULL){
@@ -254,6 +287,7 @@ static int handleRightClick(XPLMWindowID     inWindowID,
                      XPLMMouseStatus  inMouse,
                      void            *inRefcon)
 {
+  (void) inRefcon;
   PyObject *pID = getPtrRef(inWindowID, windowIDCapsules, windowIDRef);
   PyObject *pCbks = PyDict_GetItem(windowDict, pID);
   if(pCbks == NULL){
@@ -283,6 +317,7 @@ static XPLMCursorStatus handleCursor(XPLMWindowID  inWindowID,
                               int           y,
                               void         *inRefcon)
 {
+  (void) inRefcon;
   PyObject *pID = getPtrRef(inWindowID, windowIDCapsules, windowIDRef);
   PyObject *pCbks = PyDict_GetItem(windowDict, pID);
   if(pCbks == NULL){
@@ -317,6 +352,7 @@ static int handleMouseWheel(XPLMWindowID  inWindowID,
                      int           clicks,
                      void         *inRefcon)
 {
+  (void) inRefcon;
   PyObject *pID = getPtrRef(inWindowID, windowIDCapsules, windowIDRef);
   PyObject *pCbks = PyDict_GetItem(windowDict, pID);
   if(pCbks == NULL){
@@ -354,7 +390,10 @@ static PyObject *XPLMCreateWindowExFun(PyObject *self, PyObject *args)
   (void) self;
   PyObject *pluginSelf, *paramsObj;
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &paramsObj)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "O", &paramsObj)){
+      return NULL;
+    }
   }
   
   XPLMCreateWindow_t params;
@@ -397,8 +436,9 @@ static PyObject *XPLMCreateWindowExFun(PyObject *self, PyObject *args)
   }
   Py_INCREF(handleRightClickFunc);
   
-  PyObject *cbkTuple = Py_BuildValue("(OOOOOO)", drawWindowFunc, handleMouseClickFunc, handleKeyFunc,
-                                               handleCursorFunc, handleMouseWheelFunc, handleRightClickFunc);
+  PyObject *cbkTuple = Py_BuildValue("(OOOOOO)",
+                                     drawWindowFunc, handleMouseClickFunc, handleKeyFunc,
+                                     handleCursorFunc, handleMouseWheelFunc, handleRightClickFunc);
   Py_DECREF(paramsTuple);
   if(!cbkTuple){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMCreateWindowEx couldn't create a callback tuple.\n");
@@ -418,7 +458,11 @@ static PyObject *XPLMCreateWindowFun(PyObject *self, PyObject *args)
   int left, top, right, bottom, visible;
   if(!PyArg_ParseTuple(args, "OiiiiiOOOO", &pluginSelf, &left, &top, &right, &bottom, &visible, 
                        &drawCallback, &keyCallback, &mouseCallback, &refcon)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "iiiiiOOOO", &left, &top, &right, &bottom, &visible, 
+                         &drawCallback, &keyCallback, &mouseCallback, &refcon)){
+      return NULL;
+    }
   }
   PyObject *cbkTuple = Py_BuildValue("(OOOOOO)", drawCallback, mouseCallback, keyCallback, Py_None, Py_None, Py_None);
   if(!cbkTuple){
@@ -440,7 +484,10 @@ static PyObject *XPLMDestroyWindowFun(PyObject *self, PyObject *args)
   (void) self;
   PyObject *pID, *pluginSelf;
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &pID)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "O", &pID)){
+      return NULL;
+    }
   }
   if(PyDict_Contains(windowDict, pID)){
     XPLMWindowID winID = refToPtr(pID, windowIDRef);
@@ -494,22 +541,22 @@ static PyObject *XPLMGetScreenBoundsGlobalFun(PyObject *self, PyObject *args)
   PyObject *tmp;
   if(PyList_Check(lObj)){
     tmp = PyLong_FromLong(outLeft);
-    PyList_Insert(lObj, 0, PyLong_FromLong(outLeft));
+    PyList_Insert(lObj, 0, tmp);
     Py_DECREF(tmp);
   }
   if(PyList_Check(tObj)){
     tmp = PyLong_FromLong(outTop);
-    PyList_Insert(tObj, 0, PyLong_FromLong(outTop));
+    PyList_Insert(tObj, 0, tmp);
     Py_DECREF(tmp);
   }
   if(PyList_Check(rObj)){
     tmp = PyLong_FromLong(outRight);
-    PyList_Insert(rObj, 0, PyLong_FromLong(outRight));
+    PyList_Insert(rObj, 0, tmp);
     Py_DECREF(tmp);
   }
   if(PyList_Check(bObj)){
     tmp = PyLong_FromLong(outBottom);
-    PyList_Insert(bObj, 0, PyLong_FromLong(outBottom));
+    PyList_Insert(bObj, 0, tmp);
     Py_DECREF(tmp);
   }
   Py_RETURN_NONE;
@@ -524,7 +571,10 @@ static PyObject *XPLMGetAllMonitorBoundsGlobalFun(PyObject *self, PyObject *args
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &monitorBndsCallback, &refconObj)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "OO", &monitorBndsCallback, &refconObj)){
+      return NULL;
+    }
   }
   XPLMGetAllMonitorBoundsGlobal_ptr(receiveMonitorBounds, (void *)refconObj);
   Py_RETURN_NONE;
@@ -539,7 +589,10 @@ static PyObject *XPLMGetAllMonitorBoundsOSFun(PyObject *self, PyObject *args)
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &monitorBndsCallback, &refconObj)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "OO", &monitorBndsCallback, &refconObj)){
+      return NULL;
+    }
   }
   XPLMGetAllMonitorBoundsOS_ptr(receiveMonitorBounds, (void *)refconObj);
   Py_RETURN_NONE;
@@ -857,7 +910,7 @@ static PyObject *XPLMSetWindowTitleFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
-  XPLMSetWindowTitle_ptr(inWindowID, inWindowTitle);
+  XPLMSetWindowTitle_ptr(inWindowID, strdup(inWindowTitle));
   Py_RETURN_NONE;
 }
 
@@ -901,7 +954,13 @@ static PyObject *XPLMTakeKeyboardFocusFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
+  // use inWindowID 0, if passed in value of 0
+  XPLMWindowID inWindowID;
+  if (PyLong_Check(win) && PyLong_AsLong(win) == 0) {
+    inWindowID = 0;
+  } else {
+    inWindowID = refToPtr(win, windowIDRef);
+  }
   XPLMTakeKeyboardFocus(inWindowID);
   Py_RETURN_NONE;
 }
@@ -917,7 +976,14 @@ static PyObject *XPLMHasKeyboardFocusFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &win)){
     return NULL;
   }
-  XPLMWindowID inWindowID = refToPtr(win, windowIDRef);
+  // use inWindowID 0, if passed in value of 0
+  XPLMWindowID inWindowID;
+  if (PyLong_Check(win) && PyLong_AsLong(win) == 0) {
+    inWindowID = 0;
+  } else {
+    inWindowID = refToPtr(win, windowIDRef);
+  }
+  
   return PyLong_FromLong(XPLMHasKeyboardFocus_ptr(inWindowID));
 }
 
@@ -955,7 +1021,7 @@ void hotkeyCallback(void *inRefcon)
   }
   PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(pCbk, 0), PyTuple_GetItem(pCbk, 1), NULL);
   PyObject *err = PyErr_Occurred();
-  Py_DECREF(res);
+  Py_XDECREF(res);  // in case hotkey doesn't happent to return anything
   if(err){
     PyErr_Print();
   }
@@ -966,11 +1032,17 @@ static PyObject *XPLMRegisterHotKeyFun(PyObject *self, PyObject *args)
   (void) self;
   PyObject *pluginSelf, *inCallback, *refcon;
   int inVirtualKey, inFlags;
+  PyObject *hkTuple;
   const char *inDescription;
   if(!PyArg_ParseTuple(args, "OiisOO", &pluginSelf, &inVirtualKey, &inFlags, &inDescription, &inCallback, &refcon)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "iisOO", &inVirtualKey, &inFlags, &inDescription, &inCallback, &refcon)){
+      return NULL;
+    }
+    hkTuple = PyTuple_GetSlice(args, 3, 5);
+  } else {
+    hkTuple = PyTuple_GetSlice(args, 4, 6);
   }
-  PyObject *hkTuple = PyTuple_GetSlice(args, 4, 6);
   if(!hkTuple){
     PyErr_SetString(PyExc_RuntimeError ,"XPLMRegisterHotKey couldn't create a sequence slice.\n");
     return NULL;
@@ -994,7 +1066,10 @@ static PyObject *XPLMUnregisterHotKeyFun(PyObject *self, PyObject *args)
   (void) self;
   PyObject *pluginSelf, *hotKey;
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &hotKey)){
-    return NULL;
+    PyErr_Clear();
+    if (!PyArg_ParseTuple(args, "O", &hotKey)){
+      return NULL;
+    }
   }
   PyObject *pRefcon = PyDict_GetItem(hotkeyIDDict, hotKey);
   if(pRefcon == NULL){
@@ -1197,6 +1272,7 @@ PyInit_XPLMDisplay(void)
   }
   PyObject *mod = PyModule_Create(&XPLMDisplayModule);
   if(mod){
+#if defined(XPLM_DEPRECATED)
     /* This is the earliest point at which you can draw in 3-d.                    */
     PyModule_AddIntConstant(mod, "xplm_Phase_FirstScene", xplm_Phase_FirstScene);
     /* Drawing of land and water.                                                  */
@@ -1211,6 +1287,11 @@ PyInit_XPLMDisplay(void)
     PyModule_AddIntConstant(mod, "xplm_Phase_Airplanes", xplm_Phase_Airplanes);
     /* This is the last point at which you can draw in 3-d.                        */
     PyModule_AddIntConstant(mod, "xplm_Phase_LastScene", xplm_Phase_LastScene);
+#endif /* XPLM_DEPRECATED */
+#if defined(XPLM302)
+     /* A chance to do modern 3D drawing.                                          */
+    PyModule_AddIntConstant(mod, "xplm_Phase_Modern3D", xplm_Phase_Modern3D);
+#endif
     /* This is the first phase where you can draw in 2-d.                          */
     PyModule_AddIntConstant(mod, "xplm_Phase_FirstCockpit", xplm_Phase_FirstCockpit);
     /* The non-moving parts of the aircraft panel.                                 */
@@ -1221,13 +1302,22 @@ PyInit_XPLMDisplay(void)
     PyModule_AddIntConstant(mod, "xplm_Phase_Window", xplm_Phase_Window);
     /* The last change to draw in 2d.                                              */
     PyModule_AddIntConstant(mod, "xplm_Phase_LastCockpit", xplm_Phase_LastCockpit);
+#if defined(XPLM200)
+     /* Removed as of XPLM300; Use the full-blown XPLMMap API instead.             */
     /* 3-d Drawing for the local map.  Use regular OpenGL coordinates to draw in   *
      * this phase.                                                                 */
     PyModule_AddIntConstant(mod, "xplm_Phase_LocalMap3D", xplm_Phase_LocalMap3D);
+#endif
+#if defined(XPLM200)
+     /* Removed as of XPLM300; Use the full-blown XPLMMap API instead.             */
     /* 2-d Drawing of text over the local map.                                     */
     PyModule_AddIntConstant(mod, "xplm_Phase_LocalMap2D", xplm_Phase_LocalMap2D);
+#endif
+#if defined(XPLM200)
+     /* Removed as of XPLM300; Use the full-blown XPLMMap API instead.             */
     /* Drawing of the side-profile view in the local map screen.                   */
     PyModule_AddIntConstant(mod, "xplm_Phase_LocalMapProfile", xplm_Phase_LocalMapProfile);
+#endif
 
     PyModule_AddIntConstant(mod, "xplm_MouseDown", xplm_MouseDown);
     PyModule_AddIntConstant(mod, "xplm_MouseDrag", xplm_MouseDrag);
