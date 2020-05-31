@@ -31,7 +31,7 @@ See [README_INSTALL](XPython/README_INSTALL.txt) for user installation instructi
 See [README_SDK](XPython/README_SDK.txt) for additional information on building your own plugins using Python. We'll include differences between the older Python2 plugin interface and this Python3 version.
 
 ### Python Stubs
-Because the XPLM* modules are contained within a shared library, they are not useful for support tools such as pylint. For this reason, we've included a set of stubs. Include the stub directory as part of your python path (during development) and pylint will be useful.
+Because the XPLM* modules are contained within a shared library, they are not useful for support tools such as pylint. For this reason, we've included a set of stubs. Include the stub directory as part of your python path (during development) and pylint will be useful. For example, include this in `~/.pylintrc`:
 
     [MASTER]                                                                                    
     init-hook="import sys;sys.path.extend(['.', '/path_to_stubs/PythonStubs'])"
