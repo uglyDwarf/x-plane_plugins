@@ -1,9 +1,8 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
 
 #include <XPLM/XPLMDefs.h>
 #include <Widgets/XPWidgetDefs.h>
