@@ -1,9 +1,8 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
 
 #include <XPLM/XPLMDefs.h>
 #include <Widgets/XPWidgetDefs.h>
@@ -27,6 +26,7 @@ static PyObject *XPUCreateWidgetsFun(PyObject *self, PyObject *args)
     return NULL;
   }
   int i;
+  PyObject *tmpObj;
   for(i = 0; i < inCount; ++i){
     PyObject *defListItem = PyList_GetItem(widgetDefs, i);
     defs[i].left = PyLong_AsLong(PyList_GetItem(defListItem, 0));
@@ -34,7 +34,10 @@ static PyObject *XPUCreateWidgetsFun(PyObject *self, PyObject *args)
     defs[i].right = PyLong_AsLong(PyList_GetItem(defListItem, 2));
     defs[i].bottom = PyLong_AsLong(PyList_GetItem(defListItem, 3));
     defs[i].visible = PyLong_AsLong(PyList_GetItem(defListItem, 4));
-    defs[i].descriptor = PyUnicode_AsUTF8(PyList_GetItem(defListItem, 5));
+    tmpObj = PyUnicode_AsUTF8String(PyList_GetItem(defListItem, 5));
+    char *tmp = PyBytes_AsString(tmpObj);
+    defs[i].descriptor = tmp;
+    Py_DECREF(tmpObj);
     defs[i].isRoot = PyLong_AsLong(PyList_GetItem(defListItem, 6));
     defs[i].containerIndex = PyLong_AsLong(PyList_GetItem(defListItem, 7));
     defs[i].widgetClass = PyLong_AsLong(PyList_GetItem(defListItem, 8));
