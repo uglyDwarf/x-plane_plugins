@@ -1,18 +1,16 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
-#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMMenus.h>
 #include "utils.h"
 #include "plugin_dl.h"
 
 static intptr_t menuCntr;
-static PyObject *menuDict; // maps menu ref to callback info
-static PyObject *menuRefDict; // maps menu id to menu ref
+PyObject *menuDict;
+PyObject *menuRefDict;
 static PyObject *menuIDCapsules;
 
 static const char menuIDRef[] = "XPLMMenuIDRef"; 
@@ -58,13 +56,21 @@ static PyObject *XPLMCreateMenuFun(PyObject *self, PyObject *args)
 {
   (void)self;
   PyObject *parentMenu = NULL, *pythonHandler = NULL, *menuRef = NULL;
+  PyObject *pluginSelf;
   int inParentItem;
   const char *inName;
-  if(!PyArg_ParseTuple(args, "OsOiOO", &self, &inName, &parentMenu, &inParentItem, &pythonHandler, &menuRef)){
-    return NULL;
+  if(!PyArg_ParseTuple(args, "OsOiOO", &pluginSelf, &inName, &parentMenu, &inParentItem, &pythonHandler, &menuRef)){
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "sOiOO", &inName, &parentMenu, &inParentItem, &pythonHandler, &menuRef)){
+      return NULL;
+    }
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
+  PyObject *argsObj = Py_BuildValue( "(OsOiOO)", pluginSelf, inName, parentMenu, inParentItem, pythonHandler, menuRef);
+
   void *inMenuRef = (void *)++menuCntr;
   menuRef = PyLong_FromVoidPtr(inMenuRef);
+
   XPLMMenuHandler_f handler = (pythonHandler != Py_None) ? menuHandler : NULL;
   XPLMMenuID rawMenuID = XPLMCreateMenu(inName, refToPtr(parentMenu, menuIDRef),
                                         inParentItem, handler, inMenuRef);
@@ -73,7 +79,8 @@ static PyObject *XPLMCreateMenuFun(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
   }
   PyObject *menuID = getPtrRef(rawMenuID, menuIDCapsules, menuIDRef);
-  PyDict_SetItem(menuDict, menuRef, args);
+  PyDict_SetItem(menuDict, menuRef, argsObj);
+  Py_DECREF(argsObj);
   PyDict_SetItem(menuRefDict, menuID, menuRef);
   Py_DECREF(menuRef);
   return menuID;
@@ -82,9 +89,12 @@ static PyObject *XPLMCreateMenuFun(PyObject *self, PyObject *args)
 static PyObject *XPLMDestroyMenuFun(PyObject *self, PyObject *args)
 {
   (void)self;
-  PyObject *menuID, *anotherSelf;
-  if(!PyArg_ParseTuple(args, "OO", &anotherSelf, &menuID)){
-    return NULL;
+  PyObject *menuID, *pluginSelf;
+  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &menuID)){
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "O", &menuID)){
+      return NULL;
+    }
   }
   PyObject *menuRef = PyDict_GetItem(menuRefDict, menuID);
   if(!menuRef){
