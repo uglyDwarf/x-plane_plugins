@@ -5,10 +5,13 @@
 #define XPLM200
 #define XPLM210
 #include "plugin_dl.h"
+#include "utils.h"
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMScenery.h>
 #include <XPLM/XPLMInstance.h>
 
+
+static const char instanceRefName[] = "XPLMInstanceRef";
 
 static PyObject *XPLMCreateInstanceFun(PyObject *self, PyObject *args)
 {
@@ -37,11 +40,11 @@ static PyObject *XPLMCreateInstanceFun(PyObject *self, PyObject *args)
     Py_DECREF(s);
   }
   Py_DECREF(drefListTuple);
-  XPLMObjectRef inObj = PyLong_AsVoidPtr(obj);
+  XPLMObjectRef inObj = refToPtr(obj, objRefName);
 
   XPLMInstanceRef res = XPLMCreateInstance_ptr(inObj, datarefs);
   free(datarefs);
-  return PyLong_FromVoidPtr(res);
+  return getPtrRefOneshot(res, instanceRefName);
 }
 
 static PyObject *XPLMDestroyInstanceFun(PyObject *self, PyObject *args)
@@ -56,16 +59,8 @@ static PyObject *XPLMDestroyInstanceFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &instance)){
     return NULL;
   }
-  XPLMDestroyInstance_ptr(PyLong_AsVoidPtr(instance));
+  XPLMDestroyInstance_ptr(refToPtr(instance, instanceRefName));
   Py_RETURN_NONE;
-}
-
-inline static float getFloat(PyObject *seq, Py_ssize_t i)
-{
-  PyObject *tmp = PyNumber_Float(PyTuple_GetItem(seq, i));
-  float val = PyFloat_AsDouble(tmp);
-  Py_DECREF(tmp);
-  return val;
 }
 
 static PyObject *XPLMInstanceSetPositionFun(PyObject *self, PyObject *args)
@@ -82,12 +77,12 @@ static PyObject *XPLMInstanceSetPositionFun(PyObject *self, PyObject *args)
   PyObject *newPosition = PySequence_Tuple(newPositionSeq);
   XPLMDrawInfo_t inNewPosition;
   inNewPosition.structSize = sizeof(XPLMDrawInfo_t);
-  inNewPosition.x = getFloat(newPosition, 0);
-  inNewPosition.y = getFloat(newPosition, 1);
-  inNewPosition.z = getFloat(newPosition, 2);
-  inNewPosition.pitch = getFloat(newPosition, 3);
-  inNewPosition.heading = getFloat(newPosition, 4);
-  inNewPosition.roll = getFloat(newPosition, 5);
+  inNewPosition.x = getFloatFromTuple(newPosition, 0);
+  inNewPosition.y = getFloatFromTuple(newPosition, 1);
+  inNewPosition.z = getFloatFromTuple(newPosition, 2);
+  inNewPosition.pitch = getFloatFromTuple(newPosition, 3);
+  inNewPosition.heading = getFloatFromTuple(newPosition, 4);
+  inNewPosition.roll = getFloatFromTuple(newPosition, 5);
   Py_DECREF(newPosition);
   Py_ssize_t len = PySequence_Length(data);
   float *inData = malloc(sizeof(float) * len);
@@ -95,10 +90,12 @@ static PyObject *XPLMInstanceSetPositionFun(PyObject *self, PyObject *args)
     return NULL;
   }
   Py_ssize_t i;
+  PyObject *dataTuple = PySequence_Tuple(data);
   for(i = 0; i < len; ++i){
-    inData[i] = getFloat(data, i);
+    inData[i] = getFloatFromTuple(dataTuple, i);
   }
-  XPLMInstanceSetPosition_ptr(PyLong_AsVoidPtr(instance), &inNewPosition, inData);
+  Py_DECREF(dataTuple);
+  XPLMInstanceSetPosition_ptr(refToPtr(instance, instanceRefName), &inNewPosition, inData);
   free(inData);
   Py_RETURN_NONE;
 }

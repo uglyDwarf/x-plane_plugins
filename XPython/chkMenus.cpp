@@ -93,7 +93,7 @@ int XPLMAppendMenuItem(XPLMMenuID inMenu, const char *inItemName, void *inItemRe
 #if defined(XPLM300)
 int XPLMAppendMenuItemWithCommand(XPLMMenuID inMenu, const char *inItemName, XPLMCommandRef inCommandToExecute)
 {
-  assert(inMenu == newMenuID);
+  assert(inMenu == aircraftMenuID);
   name = inItemName;
   XPLMCommandOnce(inCommandToExecute);
   return ++item;

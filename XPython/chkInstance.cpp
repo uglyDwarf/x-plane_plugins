@@ -44,8 +44,7 @@ void cleanupInstanceModule()
 static int inst;
 XPLMInstanceRef XPLMCreateInstance(XPLMObjectRef obj, const char **datarefs)
 {
-  int0 = (intptr_t)obj;
-  str0 = "";
+  str0 = *static_cast<std::string*>(obj);
   const char **ptr = datarefs;
   inst = 0;
   while(*ptr != NULL){

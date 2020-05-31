@@ -40,7 +40,7 @@ class PythonInterface(checkBase):
       self.int5Dref = XPLMFindDataRef('widgetUtils/int5')
       self.int6Dref = XPLMFindDataRef('widgetUtils/int6')
       
-      self.parentWidget = XPCreateWidget(0, 480, 640, 0, 1, "Parent", 1, 0, xpWidgetClass_MainWindow)
+      self.parentWidget = XPCreateWidget(0, 480, 640, 0, 1, "Parent", 1, None, xpWidgetClass_MainWindow)
 
       (self.child1L, self.child1T, self.child1R, self.child1B) = (10, 230, 310, 10)
       self.child1Visible = 750
@@ -101,7 +101,7 @@ class PythonInterface(checkBase):
       parent = XPGetParentWidget(self.standalone)
       self.checkVal('Sta coordinates', coords, [self.staL, self.staT, self.staR, self.staB])
       self.checkVal('Sta descriptor', descriptor[0], self.staDescriptor)
-      self.checkVal('Sta parent', parent, 0)
+      self.checkVal('Sta parent', parent, None)
       self.checkVal('Sta isRoot', XPGetWidgetProperty(self.standalone, xpProperty_UserStart, None), self.staIsRoot)
       self.checkVal('Sta class', XPGetWidgetProperty(self.standalone, xpProperty_UserStart + 1, None), self.staClass)
 

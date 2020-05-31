@@ -10,6 +10,8 @@
 #include "utils.h"
 #include "plugin_dl.h"
 
+static const char probeName[] = "XPLMProbeRef";
+
 static PyObject *XPLMCreateProbeFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -17,7 +19,7 @@ static PyObject *XPLMCreateProbeFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "i", &inProbeType)){
     return NULL;
   }
-  return PyLong_FromVoidPtr(XPLMCreateProbe(inProbeType));
+  return getPtrRefOneshot(XPLMCreateProbe(inProbeType), probeName);
 }
 
 static PyObject *XPLMDestroyProbeFun(PyObject *self, PyObject *args)
@@ -27,7 +29,7 @@ static PyObject *XPLMDestroyProbeFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "O", &inProbe)){
     return NULL;
   }
-  XPLMDestroyProbe(PyLong_AsVoidPtr(inProbe));
+  XPLMDestroyProbe(refToPtr(inProbe, probeName));
   Py_RETURN_NONE;
 }
 
@@ -41,8 +43,9 @@ static PyObject *XPLMProbeTerrainXYZFun(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "OfffO", &probe, &inX, &inY, &inZ, &info)){
     return NULL;
   }
-  XPLMProbeRef inProbe = PyLong_AsVoidPtr(probe);
+  XPLMProbeRef inProbe = refToPtr(probe, probeName);
   XPLMProbeInfo_t outInfo;
+  outInfo.structSize = sizeof(outInfo);
   XPLMProbeResult res = XPLMProbeTerrainXYZ(inProbe, inX, inY, inZ, &outInfo);
 
   if(PySequence_Size(info) > 0){
@@ -114,7 +117,7 @@ static PyObject *XPLMLoadObjectFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMObjectRef res = XPLMLoadObject(inPath);
-  return PyLong_FromVoidPtr(res);
+  return getPtrRefOneshot(res, objRefName);
 }
 
 
@@ -124,15 +127,15 @@ static intptr_t loaderCntr;
 
 static void objectLoaded(XPLMObjectRef inObject, void *inRefcon)
 {
-  PyObject *object = PyLong_FromVoidPtr(inObject);
+  PyObject *object = getPtrRefOneshot(inObject, objRefName);
   PyObject *pID = PyLong_FromVoidPtr(inRefcon);
   PyObject *loaderCallbackInfo = PyDict_GetItem(loaderDict, pID);
   if(loaderCallbackInfo == NULL){
     printf("Unknown callback requested in objectLoaded(%p).\n", inRefcon);
     return;
   }
-  PyObject *res = PyObject_CallFunctionObjArgs(PySequence_GetItem(loaderCallbackInfo, 2),
-                                           object, PySequence_GetItem(loaderCallbackInfo, 3), NULL);
+  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(loaderCallbackInfo, 2),
+                                           object, PyTuple_GetItem(loaderCallbackInfo, 3), NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     printf("Error occured during the flightLoop callback(inRefcon = %p):\n", inRefcon);
@@ -153,7 +156,7 @@ static PyObject *XPLMLoadObjectAsyncFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_RuntimeError , "XPLMLoadObjectAsync is available only in XPLM210 and up.");
     return NULL;
   }
-  char *inPath = PyUnicode_AsUTF8(PyTuple_GetItem(args, 1));
+  const char *inPath = PyUnicode_AsUTF8(PyTuple_GetItem(args, 1));
   void *refcon = (void *)++loaderCntr;
   PyObject *key = PyLong_FromVoidPtr(refcon);
   PyDict_SetItem(loaderDict, key, args);
@@ -167,37 +170,28 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
   (void)self;
   PyObject *object;
   int inCount;
-  PyObject *locations, *tmp;
+  PyObject *locations;
   int lighting;
   int earth_relative;
   if(!PyArg_ParseTuple(args, "OiOii", &object, &inCount, &locations, &lighting, &earth_relative)){
     return NULL;
   }
-  XPLMObjectRef inObject = PyLong_AsVoidPtr(object);
+  XPLMObjectRef inObject = refToPtr(object, objRefName);
   XPLMDrawInfo_t *inLocations = (XPLMDrawInfo_t *)malloc(inCount * sizeof(XPLMDrawInfo_t));
   int i;
+  PyObject *locationsTuple = PySequence_Tuple(locations);
   for(i = 0; i < inCount; ++i){
-    PyObject *loc = PySequence_GetItem(locations, i);
+    PyObject *loc = PySequence_Tuple(PyTuple_GetItem(locationsTuple, i));
     inLocations[i].structSize = sizeof(XPLMDrawInfo_t);
-    tmp = PyNumber_Float(PySequence_GetItem(loc, 0));
-    inLocations[i].x = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(loc, 1));
-    inLocations[i].y = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(loc, 2));
-    inLocations[i].z = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(loc, 3));
-    inLocations[i].pitch = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(loc, 4));
-    inLocations[i].heading = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
-    tmp = PyNumber_Float(PySequence_GetItem(loc, 5));
-    inLocations[i].roll = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
+    inLocations[i].x = getFloatFromTuple(loc, 0);
+    inLocations[i].y = getFloatFromTuple(loc, 1);
+    inLocations[i].z = getFloatFromTuple(loc, 2);
+    inLocations[i].pitch = getFloatFromTuple(loc, 3);
+    inLocations[i].heading = getFloatFromTuple(loc, 4);
+    inLocations[i].roll = getFloatFromTuple(loc, 5);
+    Py_DECREF(loc);
   }
+  Py_DECREF(locationsTuple);
 
   XPLMDrawObjects(inObject, inCount, inLocations, lighting, earth_relative);
   free(inLocations);
@@ -207,7 +201,7 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
 static PyObject *XPLMUnloadObjectFun(PyObject *self, PyObject *args)
 {
   (void)self;
-  XPLMObjectRef inObject = PyLong_AsVoidPtr(PyTuple_GetItem(args, 0));
+  XPLMObjectRef inObject = refToPtr(PyTuple_GetItem(args, 0), objRefName);
   XPLMUnloadObject(inObject);
   Py_RETURN_NONE;
 }
@@ -242,7 +236,7 @@ static PyObject *XPLMLookupObjectsFun(PyObject *self, PyObject *args)
   void *myRef = (void *)++libEnumCntr;
   PyObject *refObj = PyLong_FromVoidPtr(myRef);
   PyDict_SetItem(libEnumDict, refObj, args);
-  Py_XDECREF(refObj);
+  Py_DECREF(refObj);
   int res = XPLMLookupObjects(inPath, inLatitude, inLongitude, libraryEnumerator, myRef);
   return PyLong_FromLong(res);
 }
@@ -295,6 +289,7 @@ PyInit_XPLMScenery(void)
   if(!(libEnumDict = PyDict_New())){
     return NULL;
   }
+
   PyObject *mod = PyModule_Create(&XPLMSceneryModule);
   if(mod){
     PyModule_AddIntConstant(mod, "xplm_ProbeY", xplm_ProbeY);
@@ -302,7 +297,6 @@ PyInit_XPLMScenery(void)
     PyModule_AddIntConstant(mod, "xplm_ProbeHitTerrain", xplm_ProbeHitTerrain);
     PyModule_AddIntConstant(mod, "xplm_ProbeError", xplm_ProbeError);
     PyModule_AddIntConstant(mod, "xplm_ProbeMissed ", xplm_ProbeMissed );
-
   }
 
   return mod;

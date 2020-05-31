@@ -51,6 +51,9 @@ class PythonInterface(checkBase):
       testPos = []
       XPLMReadCameraPosition(testPos)
       self.checkVal('XPLMReadCameraPosition outCameraPosition incorrect', testPos, self.pos)
+      testPos1 = []
+      testPos1 = XPLMReadCameraPosition()
+      self.checkVal('XPLMReadCameraPosition outCameraPosition incorrect', testPos1, self.pos)
 
       return 1.0
 

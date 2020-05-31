@@ -39,6 +39,7 @@ static const char *pluginsPath = "./Resources/plugins/PythonPlugins";
 static const char *internalPluginsPath = "./Resources/plugins/XPythonRevival";
 
 static bool stopped;
+static int allErrorsEncountered;
 
 static PyObject *logWriterWrite(PyObject *self, PyObject *args)
 {
@@ -47,7 +48,7 @@ static PyObject *logWriterWrite(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "s", &msg)){
     return NULL;
   }
-  //printf("%s", msg);
+  //printf("  LOGGER: %s", msg);
   fprintf(logFile, "%s", msg);
   fflush(logFile);
   Py_RETURN_NONE;
@@ -61,9 +62,23 @@ static PyObject *logWriterFlush(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+static PyObject *logWriterAddAllErrors(PyObject *self, PyObject *args)
+{
+  (void) self;
+  int errs;
+  if(!PyArg_ParseTuple(args, "i", &errs)){
+    return NULL;
+  }
+  printf("Adding %d errors...\n", errs);
+  allErrorsEncountered += errs;
+  Py_RETURN_NONE;
+}
+
+
 static PyMethodDef logWriterMethods[] = {
   {"write", logWriterWrite, METH_VARARGS, ""},
   {"flush", logWriterFlush, METH_VARARGS, ""},
+  {"addAllErrors", logWriterAddAllErrors, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 
@@ -264,6 +279,20 @@ static int stopPython(void)
   if(!pythonStarted){
     return 0;
   }
+  PyObject *pKey, *pVal;
+  Py_ssize_t pos = 0;
+
+  while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
+    PyObject *res = PyObject_CallMethod(pVal, "XPluginStop", NULL);
+    PyObject *err = PyErr_Occurred();
+    if(err){
+      fprintf(logFile, "Error occured during the XPluginStop call:\n");
+      PyErr_Print();
+    }else{
+      Py_DECREF(res);
+    }
+  }
+
   PyDict_Clear(moduleDict);
 
   // Invoke cleanup method of all built-in modules
@@ -292,24 +321,9 @@ static int stopPython(void)
 static XPLMCommandRef stopScripts;
 static XPLMCommandRef startScripts;
 static XPLMCommandRef reloadScripts;
+static XPLMMenuID setupMenu; 
 
-static int commandHandler(XPLMCommandRef inCommand, XPLMCommandPhase inPhase, void *inRefcon)
-{
-  (void) inRefcon;
-  if(inPhase != xplm_CommandBegin){
-    return 0;
-  }
-  if(inCommand == stopScripts){
-    stopped = true;
-  }else if(inCommand == startScripts){
-    stopped = false;
-  }else if(inCommand == reloadScripts){
-    stopPython();
-    startPython();
-  }
-  return 0;
-}
-
+static int commandHandler(XPLMCommandRef inCommand, XPLMCommandPhase inPhase, void *inRefcon);
 static void menuHandler(void *inMenuRef, void *inItemRef)
 {
   (void) inMenuRef;
@@ -344,7 +358,7 @@ PLUGIN_API int XPluginStart(char *outName, char *outSig, char *outDesc)
 
   int menuIndex = XPLMAppendMenuItem(XPLMFindPluginsMenu(), "XPython3", NULL, 1);
 
-  XPLMMenuID setupMenu = XPLMCreateMenu("XPython3", XPLMFindPluginsMenu(), menuIndex, 
+  setupMenu = XPLMCreateMenu("XPython3", XPLMFindPluginsMenu(), menuIndex, 
                          menuHandler, NULL);
   if(XPLMAppendMenuItemWithCommand_ptr){
     XPLMAppendMenuItemWithCommand_ptr(setupMenu, "Stop scripts", stopScripts);
@@ -352,7 +366,7 @@ PLUGIN_API int XPluginStart(char *outName, char *outSig, char *outDesc)
     XPLMAppendMenuItemWithCommand_ptr(setupMenu, "Reload scripts", reloadScripts);
   }else{
     XPLMAppendMenuItem(setupMenu, "Stop scripts", (void *)stopScripts, 0);
-    XPLMAppendMenuItem(setupMenu, "Sart scripts", (void *)startScripts, 0);
+    XPLMAppendMenuItem(setupMenu, "Start scripts", (void *)startScripts, 0);
     XPLMAppendMenuItem(setupMenu, "Reload scripts", (void *)reloadScripts, 0);
   }
 
@@ -364,25 +378,35 @@ PLUGIN_API int XPluginStart(char *outName, char *outSig, char *outDesc)
 
 PLUGIN_API void XPluginStop(void)
 {
-  PyObject *pKey, *pVal;
-  Py_ssize_t pos = 0;
-
-  if(stopped){
-    return;
-  }
-
-  while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
-    PyObject *res = PyObject_CallMethod(pVal, "XPluginStop", NULL);
-    PyObject *err = PyErr_Occurred();
-    Py_DECREF(res);
-    if(err){
-      fprintf(logFile, "Error occured during the XPluginStop call:\n");
-      PyErr_Print();
-    }
-  }
   stopPython();
-  //printf("XPluginStop finished.\n");
+  XPLMDestroyMenu(setupMenu);
+  XPLMUnregisterCommandHandler(stopScripts, commandHandler, 1, (void *)0);
+  XPLMUnregisterCommandHandler(startScripts, commandHandler, 1, (void *)1);
+  XPLMUnregisterCommandHandler(reloadScripts, commandHandler, 1, (void *)2);
+  if(allErrorsEncountered){
+    fprintf(logFile, "Total errors encountered: %d\n", allErrorsEncountered);
+  }
+  fclose(logFile);
+  printf("XPluginStop finished.\n");
 }
+
+static int commandHandler(XPLMCommandRef inCommand, XPLMCommandPhase inPhase, void *inRefcon)
+{
+  (void) inRefcon;
+  if(inPhase != xplm_CommandBegin){
+    return 0;
+  }
+  if(inCommand == stopScripts){
+    stopped = true;
+  }else if(inCommand == startScripts){
+    stopped = false;
+  }else if(inCommand == reloadScripts){
+    stopPython();
+    startPython();
+  }
+  return 0;
+}
+
 
 PLUGIN_API int XPluginEnable(void)
 {

@@ -6,23 +6,23 @@
 ###############################################################################
 # GLOBAL DEFINITIONS
 ###############################################################################
-# These definitions are used in all parts of the SDK.                         
+# These definitions are used in all parts of the SDK.
 
 
 ###############################################################################
 # XPLMPluginID
-# 
-# Each plug-in is identified by a unique integer ID.  This ID can be used to 
-# disable or enable a plug-in, or discover what plug-in is 'running' at the 
-# time.  A plug-in ID is unique within the currently running instance of 
-# X-Plane unless plug-ins are reloaded.  Plug-ins may receive a different 
-# unique ID each time they are loaded. 
-# 
-# For persistent identification of plug-ins, use XPLMFindPluginBySignature in 
-# XPLMUtiltiies.h 
-# 
-# -1 indicates no plug-in.                                                    
- 
+#
+# Each plug-in is identified by a unique integer ID.  This ID can be used to
+# disable or enable a plug-in, or discover what plug-in is 'running' at the
+# time.  A plug-in ID is unique within the currently running instance of
+# X-Plane unless plug-ins are reloaded.  Plug-ins may receive a different
+# unique ID each time they are loaded.
+#
+# For persistent identification of plug-ins, use XPLMFindPluginBySignature in
+# XPLMUtiltiies.h
+#
+# -1 indicates no plug-in.
+
 # No plugin
 XPLM_NO_PLUGIN_ID = -1
 
@@ -34,20 +34,20 @@ kXPLM_Version = 210
 
 ###############################################################################
 # XPLMKeyFlags
-# 
-# These bitfields define modifier keys in a platform independent way. When a 
-# key is pressed, a series of messages are sent to your plugin.  The down 
-# flag is set in the first of these messages, and the up flag in the last.  
-# While the key is held down, messages are sent with neither to indicate that 
-# the key is being held down as a repeated character. 
-# 
-# The control flag is mapped to the control flag on Macintosh and PC.  
-# Generally X-Plane uses the control key and not the command key on 
-# Macintosh, providing a consistent interface across platforms that does not 
-# necessarily match the Macintosh user interface guidelines.  There is not 
-# yet a way for plugins to access the Macintosh control keys without using 
-# #ifdefed code.                                                              
- 
+#
+# These bitfields define modifier keys in a platform independent way. When a
+# key is pressed, a series of messages are sent to your plugin.  The down
+# flag is set in the first of these messages, and the up flag in the last.
+# While the key is held down, messages are sent with neither to indicate that
+# the key is being held down as a repeated character.
+#
+# The control flag is mapped to the control flag on Macintosh and PC.
+# Generally X-Plane uses the control key and not the command key on
+# Macintosh, providing a consistent interface across platforms that does not
+# necessarily match the Macintosh user interface guidelines.  There is not
+# yet a way for plugins to access the Macintosh control keys without using
+# #ifdefed code.
+
 # The shift key is down
 xplm_ShiftFlag     = 1
 
@@ -67,16 +67,16 @@ xplm_UpFlag        = 16
 ###############################################################################
 # ASCII CONTROL KEY CODES
 ###############################################################################
-# These definitions define how various control keys are mapped to ASCII key 
-# codes. Not all key presses generate an ASCII value, so plugin code should 
-# be prepared to see null characters come from the keyboard...this usually 
-# represents a key stroke that has no equivalent ASCII, like a page-down 
-# press.  Use virtual key codes to find these key strokes. ASCII key codes 
-# take into account modifier keys; shift keys will affect capitals and 
-# punctuation; control key combinations may have no vaild ASCII and produce 
-# NULL.  To detect control-key combinations, use virtual key codes, not ASCII 
-# keys.                                                                       
- 
+# These definitions define how various control keys are mapped to ASCII key
+# codes. Not all key presses generate an ASCII value, so plugin code should
+# be prepared to see null characters come from the keyboard...this usually
+# represents a key stroke that has no equivalent ASCII, like a page-down
+# press.  Use virtual key codes to find these key strokes. ASCII key codes
+# take into account modifier keys; shift keys will affect capitals and
+# punctuation; control key combinations may have no vaild ASCII and produce
+# NULL.  To detect control-key combinations, use virtual key codes, not ASCII
+# keys.
+
 XPLM_KEY_RETURN      = 13
 
 XPLM_KEY_ESCAPE      = 27
@@ -119,32 +119,32 @@ XPLM_KEY_DECIMAL     = 46
 ###############################################################################
 # VIRTUAL KEY CODES
 ###############################################################################
-# These are cross-platform defines for every distinct keyboard press on the 
-# computer. Every physical key on the keyboard has a virtual key code.  So 
-# the "two" key on the  top row of the main keyboard has a different code 
-# from the "two" key on the numeric key pad.  But the 'w' and 'W' character 
-# are indistinguishable by virtual key code  because they are the same 
-# physical key (one with and one without the shift key). 
-# 
-# Use virtual key codes to detect keystrokes that do not have ASCII 
-# equivalents, allow the user to map the numeric keypad separately from the 
-# main keyboard, and detect control key and other modifier-key combinations 
-# that generate ASCII control key sequences (many of which are not available 
-# directly via character keys in the SDK).			 
-# 
-# To assign virtual key codes we started with the Microsoft set but made some 
-# additions and changes.  A few differences: 
-# 
-# 1. Modifier keys are not available as virtual key codes.  You cannot get 
-# distinct modifier press and release messages.  Please do not try to use 
-# modifier keys as regular keys; doing so will almost certainly interfere 
-# with users' abilities to use the native x-plane key bindings. 
-# 
-# 2. Some keys that do not exist on both Mac and PC keyboards are removed. 
-# 
-# 3. Do not assume that the values of these keystrokes are interchangeable 
-# with MS v-keys.                                                             
- 
+# These are cross-platform defines for every distinct keyboard press on the
+# computer. Every physical key on the keyboard has a virtual key code.  So
+# the "two" key on the  top row of the main keyboard has a different code
+# from the "two" key on the numeric key pad.  But the 'w' and 'W' character
+# are indistinguishable by virtual key code  because they are the same
+# physical key (one with and one without the shift key).
+#
+# Use virtual key codes to detect keystrokes that do not have ASCII
+# equivalents, allow the user to map the numeric keypad separately from the
+# main keyboard, and detect control key and other modifier-key combinations
+# that generate ASCII control key sequences (many of which are not available
+# directly via character keys in the SDK).
+#
+# To assign virtual key codes we started with the Microsoft set but made some
+# additions and changes.  A few differences:
+#
+# 1. Modifier keys are not available as virtual key codes.  You cannot get
+# distinct modifier press and release messages.  Please do not try to use
+# modifier keys as regular keys; doing so will almost certainly interfere
+# with users' abilities to use the native x-plane key bindings.
+#
+# 2. Some keys that do not exist on both Mac and PC keyboards are removed.
+#
+# 3. Do not assume that the values of these keystrokes are interchangeable
+# with MS v-keys.
+
 XPLM_VK_BACK         = 0x08
 
 XPLM_VK_TAB          = 0x09

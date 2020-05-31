@@ -706,7 +706,6 @@ void XPLMTakeKeyboardFocus(XPLMWindowID inWindowID)
     return;
   }
   winInFocus = inWindowID;
-  int3 = (intptr_t)winInFocus;
 }
 
 #if defined(XPLM300)

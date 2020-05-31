@@ -7,11 +7,14 @@
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMProcessing.h>
 #include "plugin_dl.h"
+#include "utils.h"
 
 static intptr_t flCntr;
 static PyObject *flDict;
 static PyObject *flRevDict;
 static PyObject *flIDDict;
+
+static const char flIDRef[] = "FlightLoopIDRef";
 
 /*
 void dbg(const char *msg){
@@ -49,9 +52,7 @@ static float flightLoopCallback(float inElapsedSinceLastCall, float inElapsedTim
     PyErr_Print();
     tmp = -1.0f;
   }else{
-    PyObject *f = PyNumber_Float(res);
-    tmp = PyFloat_AsDouble(f);
-    Py_DECREF(f);
+    tmp = PyFloat_AsDouble(res);
   }
   Py_XDECREF(res);
   return tmp;
@@ -158,9 +159,7 @@ static PyObject *XPLMCreateFlightLoopFun(PyObject* self, PyObject *args)
   PyObject *params = PySequence_Tuple(param_seq);
   XPLMCreateFlightLoop_t fl;
   fl.structSize = sizeof(fl);
-  PyObject *tmp = PyNumber_Long(PyTuple_GetItem(params, 0));
-  fl.phase = PyLong_AsLong(tmp);
-  Py_DECREF(tmp);
+  fl.phase = PyLong_AsLong(PyTuple_GetItem(params, 0));
   fl.callbackFunc = flightLoopCallback;
   fl.refcon = (void *)++flCntr;
   
@@ -172,7 +171,7 @@ static PyObject *XPLMCreateFlightLoopFun(PyObject* self, PyObject *args)
   PyDict_SetItem(flDict, id, argObj);
   Py_XDECREF(argObj);
   //we need to uniquely identify the id of the callback based on the caller and inRefcon
-  PyObject *resObj = PyLong_FromVoidPtr(res);
+  PyObject *resObj = getPtrRefOneshot(res, flIDRef);
   PyDict_SetItem(flRevDict, resObj, id);
   Py_XDECREF(id);
   return resObj;
@@ -196,7 +195,7 @@ static PyObject *XPLMDestroyFlightLoopFun(PyObject *self, PyObject *args)
   }
   PyDict_DelItem(flRevDict, revId);
   PyDict_DelItem(flDict, id);
-  XPLMDestroyFlightLoop_ptr(PyLong_AsVoidPtr(revId));
+  XPLMDestroyFlightLoop_ptr(refToPtr(revId, flIDRef));
   Py_RETURN_NONE;
 }
 
@@ -213,7 +212,7 @@ static PyObject *XPLMScheduleFlightLoopFun(PyObject *self, PyObject*args)
   if(!PyArg_ParseTuple(args, "OOfi", &pluginSelf, &flightLoopID, &inInterval, &inRelativeToNow)){
     return NULL;
   }
-  XPLMFlightLoopID inFlightLoopID = PyLong_AsVoidPtr(flightLoopID);
+  XPLMFlightLoopID inFlightLoopID = refToPtr(flightLoopID, flIDRef);
   XPLMScheduleFlightLoop_ptr(inFlightLoopID, inInterval, inRelativeToNow);
   Py_RETURN_NONE;
 }

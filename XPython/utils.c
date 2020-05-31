@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include "utils.h"
 
+const char *objRefName = "XPLMObjectRef";
+const char *commandRefName = "XPLMCommandRef";
+const char *widgetRefName = "XPLMWidgetID";
 
 void dbg(const char *msg){
   printf("Going to check %s\n", msg);
@@ -27,5 +30,65 @@ bool objToList(PyObject *item, PyObject *list)
   }
   return true;
 }
+
+float getFloatFromTuple(PyObject *seq, Py_ssize_t i)
+{
+  return PyFloat_AsDouble(PyTuple_GetItem(seq, i));
+}
+
+long getLongFromTuple(PyObject *seq, Py_ssize_t i)
+{
+  return PyLong_AsLong(PyTuple_GetItem(seq, i));
+}
+
+// To avoid Python code messing with raw pointers (when passed
+//   in using PyLong_FromVoidPtr), these are hidden in the capsules.
+
+// Can be used where no callbacks are involved in passing the capsule
+PyObject *getPtrRefOneshot(void *ptr, const char *refName)
+{
+  if(ptr){
+    return PyCapsule_New(ptr, refName, NULL);
+  }else{
+    Py_RETURN_NONE;
+  }
+}
+
+PyObject *getPtrRef(void *ptr, PyObject *dict, const char *refName)
+{
+  if(!ptr){
+    Py_RETURN_NONE;
+  }
+  // Check if the refernece is known
+  PyObject *key = PyLong_FromVoidPtr(ptr);
+  PyObject *res = PyDict_GetItem(dict, key);
+  if(res == NULL){
+    // New ref, register it
+    res = getPtrRefOneshot(ptr, refName);
+    PyDict_SetItem(dict, key, res);
+  }
+  Py_INCREF(res);
+  return res;
+}
+
+void *refToPtr(PyObject *ref, const char *refName)
+{
+  if(ref == Py_None){
+    return NULL;
+  }else{
+    return PyCapsule_GetPointer(ref, refName);
+  }
+}
+
+void removePtrRef(void *ptr, PyObject *dict)
+{
+  if(!ptr){
+    return;
+  }
+  PyObject *key = PyLong_FromVoidPtr(ptr);
+  PyDict_DelItem(dict, key);
+  Py_DECREF(key);
+}
+
 
 
