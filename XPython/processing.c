@@ -1,18 +1,17 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMProcessing.h>
 #include "plugin_dl.h"
 #include "utils.h"
 
 static intptr_t flCntr;
-static PyObject *flDict;
-static PyObject *flRevDict;
-static PyObject *flIDDict;
+PyObject *flDict;
+PyObject *flRevDict;
+PyObject *flIDDict;
 
 static const char flIDRef[] = "FlightLoopIDRef";
 
@@ -82,20 +81,26 @@ static PyObject *XPLMRegisterFlightLoopCallbackFun(PyObject* self, PyObject *arg
   PyObject *pluginSelf, *callback, *refcon;
   float inInterval;
   if(!PyArg_ParseTuple(args, "OOfO", &pluginSelf, &callback, &inInterval, &refcon)){
-    printf("Params Problem!!!\n");
-    return NULL;
+    if(PyErr_Occurred()) {
+      PyErr_Clear();
+      if (!PyArg_ParseTuple(args, "OfO", &callback, &inInterval, &refcon)){
+        return NULL;
+      }
+      pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
+    }
   }
   void *inRefcon = (void *)++flCntr;
   PyObject *id = PyLong_FromVoidPtr(inRefcon);
   //I don't like this at all...
   PyObject *refconAddr = PyLong_FromVoidPtr(refcon);
-  PyDict_SetItem(flDict, id, args);
-  //we need to uniquely identify the id of the callback based on the caller and inRefcon
+  PyObject *argObj = Py_BuildValue("(OOfO)", pluginSelf, callback, inInterval, refcon);
   PyObject *revId = Py_BuildValue("(OOO)", pluginSelf, callback, refconAddr);
+  PyDict_SetItem(flDict, id, argObj);
   PyDict_SetItem(flRevDict, revId, id);
   Py_XDECREF(revId);
   Py_XDECREF(id);
   Py_DECREF(refconAddr);
+  Py_DECREF(argObj);
   XPLMRegisterFlightLoopCallback(flightLoopCallback, inInterval, inRefcon);
   Py_RETURN_NONE;
 }
@@ -105,14 +110,20 @@ static PyObject *XPLMUnregisterFlightLoopCallbackFun(PyObject *self, PyObject *a
   (void)self;
   PyObject *pluginSelf, *callback, *refcon;
   if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &callback, &refcon)){
-    return NULL;
+    PyErr_Clear();
+    if (!PyArg_ParseTuple(args, "OO", &callback, &refcon))
+      return NULL;
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
+  } else {
+    Py_INCREF(pluginSelf);
   }
   PyObject *refconAddr = PyLong_FromVoidPtr(refcon);
   PyObject *revId = Py_BuildValue("(OOO)", pluginSelf, callback, refconAddr);
-  Py_DECREF(refconAddr);
   PyObject *id = PyDict_GetItem(flRevDict, revId);
   if(id == NULL){
     Py_DECREF(revId);
+    Py_DECREF(refconAddr);
+    Py_DECREF(pluginSelf);
     printf("Couldn't find the id of the requested callback.\n");
     return NULL;
   }
@@ -120,6 +131,8 @@ static PyObject *XPLMUnregisterFlightLoopCallbackFun(PyObject *self, PyObject *a
   XPLMUnregisterFlightLoopCallback(flightLoopCallback, PyLong_AsVoidPtr(id));
   PyDict_DelItem(flDict, id);
   Py_DECREF(revId);
+  Py_DECREF(refconAddr);
+  Py_DECREF(pluginSelf);
   Py_RETURN_NONE;
 }
 
@@ -130,18 +143,24 @@ static PyObject *XPLMSetFlightLoopCallbackIntervalFun(PyObject *self, PyObject *
   float inInterval;
   int inRelativeToNow;
   if(!PyArg_ParseTuple(args, "OOfiO", &pluginSelf, &callback, &inInterval, &inRelativeToNow, &refcon)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "OfiO", &callback, &inInterval, &inRelativeToNow, &refcon))
+      return NULL;
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
+  } else {
+    Py_INCREF(pluginSelf);
   }
   PyObject *refconAddr = PyLong_FromVoidPtr(refcon);
   PyObject *revId = Py_BuildValue("(OOO)", pluginSelf, callback, refconAddr);
-  Py_DECREF(refconAddr);
   PyObject *id = PyDict_GetItem(flRevDict, revId);
+  Py_DECREF(pluginSelf);
+  Py_DECREF(revId);
+  Py_DECREF(refconAddr);
   if(id == NULL){
     printf("Couldn't find the id of the requested callback.\n");
     return NULL;
   }
   XPLMSetFlightLoopCallbackInterval(flightLoopCallback, inInterval, inRelativeToNow, PyLong_AsVoidPtr(id));
-  Py_DECREF(revId);
   Py_RETURN_NONE;
 }
 
@@ -154,7 +173,10 @@ static PyObject *XPLMCreateFlightLoopFun(PyObject* self, PyObject *args)
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &param_seq)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "O", &param_seq))
+      return NULL;
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
   PyObject *params = PySequence_Tuple(param_seq);
   XPLMCreateFlightLoop_t fl;
@@ -186,7 +208,10 @@ static PyObject *XPLMDestroyFlightLoopFun(PyObject *self, PyObject *args)
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &revId)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "O", &revId)){
+      return NULL;
+    }
   }
   PyObject *id = PyDict_GetItem(flRevDict, revId);
   if(id == NULL){
@@ -210,7 +235,10 @@ static PyObject *XPLMScheduleFlightLoopFun(PyObject *self, PyObject*args)
     return NULL;
   }
   if(!PyArg_ParseTuple(args, "OOfi", &pluginSelf, &flightLoopID, &inInterval, &inRelativeToNow)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "Ofi", &flightLoopID, &inInterval, &inRelativeToNow)){
+      return NULL;
+    }
   }
   XPLMFlightLoopID inFlightLoopID = refToPtr(flightLoopID, flIDRef);
   XPLMScheduleFlightLoop_ptr(inFlightLoopID, inInterval, inRelativeToNow);
@@ -232,7 +260,6 @@ static PyObject *cleanup(PyObject *self, PyObject *args)
 
 
 static PyMethodDef XPLMProcessingMethods[] = {
-  {"XPLMGetElapsedTime", XPLMGetElapsedTimeFun, METH_VARARGS, ""},
   {"XPLMGetElapsedTime", XPLMGetElapsedTimeFun, METH_VARARGS, ""},
   {"XPLMGetCycleNumber", XPLMGetCycleNumberFun, METH_VARARGS, ""},
   {"XPLMRegisterFlightLoopCallback", XPLMRegisterFlightLoopCallbackFun, METH_VARARGS, ""},
