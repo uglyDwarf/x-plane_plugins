@@ -1,11 +1,8 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
-#define XPLM300
-#define XPLM301
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMPlugin.h>
 #include "utils.h"
@@ -161,7 +158,7 @@ PyObject *XPLMEnableFeatureFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-static PyObject *feDict;
+PyObject *feDict;
 static intptr_t feCntr;
 
 static void featureEnumerator(const char *inFeature, void *inRef)
@@ -193,20 +190,36 @@ PyObject *XPLMEnumerateFeaturesFun(PyObject *self, PyObject *args)
   PyObject *ref;
   PyObject *pluginSelf;
   if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &fun, &ref)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "OO", &fun, &ref))
+      return NULL;
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
+
+  PyObject *argsObj = Py_BuildValue("(OOO)", pluginSelf, fun, ref);
   PyObject *key = PyLong_FromLong(feCntr++);
   void *inRef = PyLong_AsVoidPtr(key);
-  PyDict_SetItem(feDict, key, args);
-
+  PyDict_SetItem(feDict, key, argsObj);
+  Py_DECREF(argsObj);
   XPLMEnumerateFeatures(featureEnumerator, inRef);
   Py_RETURN_NONE;
+}
+
+void plugins_cleanup(void) {
+  if (! (feDict && PyDict_Check(feDict))) {
+    return;
+  }
+  PyDict_Clear(feDict);
+  Py_DECREF(feDict);
 }
 
 static PyObject *cleanup(PyObject *self, PyObject *args)
 {
   (void) self;
   (void) args;
+  if (! (feDict && PyDict_Check(feDict))) {
+    Py_RETURN_NONE;
+  }
   PyDict_Clear(feDict);
   Py_DECREF(feDict);
   Py_RETURN_NONE;
@@ -262,8 +275,8 @@ PyInit_XPLMPlugin(void)
     PyModule_AddIntConstant(mod, "XPLM_MSG_LIVERY_LOADED", XPLM_MSG_LIVERY_LOADED);
     PyModule_AddIntConstant(mod, "XPLM_MSG_ENTERED_VR", XPLM_MSG_ENTERED_VR);
     PyModule_AddIntConstant(mod, "XPLM_MSG_EXITING_VR", XPLM_MSG_EXITING_VR);
+    PyModule_AddIntConstant(mod, "XPLM_MSG_RELEASE_PLANES", XPLM_MSG_RELEASE_PLANES);
   }
-
   return mod;
 }
 
