@@ -1,14 +1,14 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMCamera.h>
+#include "utils.h"
 
 static intptr_t camCntr;
-static PyObject *camDict;
+PyObject *camDict;
 
 
 static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosingControl, void *inRefcon)
@@ -92,11 +92,17 @@ static PyObject *XPLMControlCameraFun(PyObject *self, PyObject *args)
   int inHowLong;
   PyObject *pluginSelf, *controlFunc, *refcon;
   if(!PyArg_ParseTuple(args, "OiOO", &pluginSelf, &inHowLong, &controlFunc, &refcon)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "iOO", &inHowLong, &controlFunc, &refcon)){
+      return NULL;
+    }
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
   void *inRefcon = (void *)++camCntr;
   PyObject *refconObj = PyLong_FromVoidPtr(inRefcon);
-  PyDict_SetItem(camDict, refconObj, args);
+  PyObject *argsObj = Py_BuildValue("(OiOO)", pluginSelf, inHowLong, controlFunc, refcon);
+  PyDict_SetItem(camDict, refconObj, argsObj);
+  Py_DECREF(argsObj);
   XPLMControlCamera(inHowLong, cameraControl, inRefcon);
   Py_DECREF(refconObj);
   Py_RETURN_NONE;
