@@ -120,7 +120,7 @@ static PyObject *XPLMLoadObjectFun(PyObject *self, PyObject *args)
 
 
 
-PyObject *loaderDict;
+static PyObject *loaderDict;
 static intptr_t loaderCntr;
 
 static void objectLoaded(XPLMObjectRef inObject, void *inRefcon)
@@ -209,7 +209,7 @@ static PyObject *XPLMUnloadObjectFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-PyObject *libEnumDict;
+static PyObject *libEnumDict;
 static intptr_t libEnumCntr;
 
 static void libraryEnumerator(const char *inFilePath, void *inRef)

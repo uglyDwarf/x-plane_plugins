@@ -12,7 +12,7 @@
 #include "plugin_dl.h"
 #include "utils.h"
 
-PyObject *widgetCallbackDict;
+static PyObject *widgetCallbackDict;
 PyObject *widgetIDCapsules;
 
 int widgetCallback(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inParam1, intptr_t inParam2)

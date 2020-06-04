@@ -158,7 +158,7 @@ PyObject *XPLMEnableFeatureFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-PyObject *feDict;
+static PyObject *feDict;
 static intptr_t feCntr;
 
 static void featureEnumerator(const char *inFeature, void *inRef)

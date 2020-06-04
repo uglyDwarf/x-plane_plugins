@@ -8,10 +8,10 @@
 #include "plugin_dl.h"
 #include "utils.h"
 
-PyObject *mapDict;
+static PyObject *mapDict;
 intptr_t mapCntr;
-PyObject *mapRefDict;
-PyObject *mapCreateDict;
+static PyObject *mapRefDict;
+static PyObject *mapCreateDict;
 intptr_t mapCreateCntr;
 PyObject *mapLayerIDCapsules;
 PyObject *mapProjectionCapsule;

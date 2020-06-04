@@ -9,9 +9,9 @@
 #include "utils.h"
 
 static intptr_t flCntr;
-PyObject *flDict;
-PyObject *flRevDict;
-PyObject *flIDDict;
+static PyObject *flDict;
+static PyObject *flRevDict;
+static PyObject *flIDDict;
 
 static const char flIDRef[] = "FlightLoopIDRef";
 

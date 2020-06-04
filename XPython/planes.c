@@ -9,7 +9,7 @@
 #include "plugin_dl.h"
 
 static intptr_t availableCntr;
-PyObject *availableDict;
+static PyObject *availableDict;
 
 PyObject *XPLMSetUsersAircraftFun(PyObject *self, PyObject *args)
 {

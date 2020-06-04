@@ -8,7 +8,7 @@
 #include "utils.h"
 
 static intptr_t camCntr;
-PyObject *camDict;
+static PyObject *camDict;
 
 
 static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosingControl, void *inRefcon)

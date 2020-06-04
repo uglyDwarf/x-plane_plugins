@@ -8,16 +8,16 @@
 #include "utils.h"
 #include "plugin_dl.h"
 
-PyObject *drawCallbackDict, *drawCallbackIDDict;
+static PyObject *drawCallbackDict, *drawCallbackIDDict;
 static intptr_t drawCallbackCntr;
-PyObject *keySniffCallbackDict;
+static PyObject *keySniffCallbackDict;
 static intptr_t keySniffCallbackCntr;
 
 //draw, key,mouse, cursor, wheel
-PyObject *windowDict;
+static PyObject *windowDict;
 static intptr_t hotkeyCntr;
-PyObject *hotkeyDict;
-PyObject *hotkeyIDDict;
+static PyObject *hotkeyDict;
+static PyObject *hotkeyIDDict;
 
 static PyObject *monitorBndsCallback;
 
@@ -237,6 +237,7 @@ static void handleKey(XPLMWindowID  inWindowID,
   PyObject *arg2 = PyLong_FromLong(inFlags);
   PyObject *arg3 = PyLong_FromLong((unsigned int)inVirtualKey);
   PyObject *arg4 = PyLong_FromLong(losingFocus);
+  // printf("Calling handleKey callback. inWindowID = %p, pPID = %s, losingFocus = %d\n", inWindowID, objToStr(pID), losingFocus);
   PyObject *oRes = PyObject_CallFunctionObjArgs(PyTuple_GetItem(pCbks, 2), pID, arg1, arg2, arg3, inRefcon, arg4, NULL);
   Py_XDECREF(arg1);
   Py_XDECREF(arg2);

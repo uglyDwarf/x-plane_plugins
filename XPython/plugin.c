@@ -130,7 +130,7 @@ PyInit_XPythonLogWriter(void)
   return mod;
 };
 
-PyObject *moduleDict;
+static PyObject *moduleDict;
 static PyObject *loggerObj;
 
 int initPython(void){

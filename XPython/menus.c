@@ -9,8 +9,8 @@
 #include "plugin_dl.h"
 
 static intptr_t menuCntr;
-PyObject *menuDict;
-PyObject *menuRefDict;
+static PyObject *menuDict;
+static PyObject *menuRefDict;
 static PyObject *menuIDCapsules;
 
 static const char menuIDRef[] = "XPLMMenuIDRef"; 
