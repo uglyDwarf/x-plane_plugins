@@ -10,10 +10,10 @@
 
 //static PyObject *rwCallbackDict;
 //static intptr_t rwCallbackCntr;
-PyObject *accessorDict;
-PyObject *drefDict;
+static PyObject *accessorDict;
+static PyObject *drefDict;
 static intptr_t accessorCntr;
-PyObject *sharedDict;
+static PyObject *sharedDict;
 static intptr_t sharedCntr;
 
 static const char dataRefName[] = "datarefRef";
@@ -56,7 +56,11 @@ static PyObject *XPLMIsDataRefGoodFun(PyObject *self, PyObject *args)
     return NULL;
   }
   XPLMDataRef inDataRef = refToPtr(dataRef, dataRefName);
-  return PyLong_FromLong(XPLMIsDataRefGood(inDataRef));
+  if (XPLMIsDataRefGood(inDataRef)){
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
 }
 
 static PyObject *XPLMGetDataRefTypesFun(PyObject *self, PyObject *args)
@@ -795,6 +799,7 @@ static PyObject *XPLMRegisterDataAccessorFun(PyObject *self, PyObject *args)
                                           getDatavf,  setDatavf,
                                           getDatab,   setDatab,
                                           refcon,     refcon);
+
   PyObject *argsObj = Py_BuildValue("(OsiiOOOOOOOOOOOOOO)", pluginSelf, inDataName, inDataType, inIsWritable,
                                     ri, wi, rf, wf, rd, wd, rai, wai, raf, waf, rab, wab, rRef, wRef);
   if(PyDict_SetItem(accessorDict, refconObj, argsObj) != 0){
