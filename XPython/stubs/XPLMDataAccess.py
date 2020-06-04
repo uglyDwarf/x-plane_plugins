@@ -49,15 +49,15 @@ page, choose Documentation).
 
 
 XPLMDataTypeID bitfield is used to identify the type of data:
-
-xplmType_Unknown    =  0 # Data of a type the current XPLM doesn't do.
-xplmType_Int        =  1 # A single 4-byte integer, native endian.
-xplmType_Float      =  2 # A single 4-byte float, native endian.
-xplmType_Double     =  4 # A single 8-byte double, native endian.
-xplmType_FloatArray =  8 # An array of 4-byte floats, native endian.
-xplmType_IntArray   = 16 # An array of 4-byte integers, native endian.
-xplmType_Data       = 32 # A variable block of data.
-
+"""
+xplmType_Unknown = 0  # Data of a type the current XPLM doesn't do.
+xplmType_Int = 1  # A single 4-byte integer, native endian.
+xplmType_Float = 2  # A single 4-byte float, native endian.
+xplmType_Double = 4  # A single 8-byte double, native endian.
+xplmType_FloatArray = 8  # An array of 4-byte floats, native endian.
+xplmType_IntArray = 16  # An array of 4-byte integers, native endian.
+xplmType_Data = 32  # A variable block of data.
+"""
 
 DATA ACCESSORS
 **************
@@ -131,7 +131,7 @@ installed, or if all plugins sharing data need to be notified when that
 data is changed, use shared data references.
 """
 
-#Routines for reading and writing data
+# Routines for reading and writing data
 
 
 def XPLMFindDataRef(inDataRefName):
@@ -147,14 +147,16 @@ def XPLMFindDataRef(inDataRefName):
     function returns for future use. Do not look up your data ref by string
     every time you need to read or write it.
     """
-    pass
+    return int
+
 
 def XPLMCanWriteDataRef(inDataRef):
     """
-    Given a data ref, this routine returns true if you can successfully set the
-    data, false otherwise. Some datarefs are read-only.
+    Given a data ref, this routine returns True if you can successfully set the
+    data, False otherwise. Some datarefs are read-only.
     """
-    pass
+    return bool
+
 
 def XPLMIsDataRefGood(inDataRef):
     """
@@ -165,36 +167,37 @@ def XPLMIsDataRefGood(inDataRef):
     unloaded, as part of general resource cleanup.)
 
     This function returns whether a data ref is still valid. If it returns
-    false, you should refind the data ref from its original string. Calling an
+    False, you should refind the data ref from its original string. Calling an
     accessor function on a bad data ref will return a default value, typically
     0 or 0-length data.
     """
-    pass
+    return bool
+
 
 def XPLMGetDataRefTypes(inDataRef):
     """
-    This routine returns the types of the data ref for accessor use. If a data
-    ref is available in multiple data types, they will all be returned.
+    This routine returns the XPLMDataTypeID of the data ref for accessor use. If a data
+    ref is available in multiple data types, they will all be returned. (bitwise OR'd together).
     """
-    pass
+    return int
 
 
 def XPLMGetDatai(inDataRef):
     """
     Read an integer data ref and return its value. The return value is the
-    dataref value or 0 if the dataref is invalid or the plugin is
+    dataref value or 0 if the dataref is NULL or the plugin is
     disabled.
     """
-    pass
+    return int
 
 
-def XPLMSetDatai(inDataRef, inDataRef):
+def XPLMSetDatai(inDataRef, inValue):
     """
     Write a new value to an integer data ref. This routine is a no-op if the
     plugin publishing the dataref is disabled, the dataref is invalid, or the
     dataref is not writable.
     """
-    pass
+
 
 def XPLMGetDataf(inDataRef):
     """
@@ -202,7 +205,8 @@ def XPLMGetDataf(inDataRef):
     return value is the dataref value or 0.0 if the dataref is invalid/NULL or
     the plugin is disabled.
     """
-    pass
+    return float
+
 
 def XPLMSetDataf(inDataRef, inValue):
     """
@@ -210,7 +214,7 @@ def XPLMSetDataf(inDataRef, inValue):
     routine is a no-op if the plugin publishing the dataref is disabled, the
     dataref is invalid, or the dataref is not writable.
     """
-    pass
+
 
 def XPLMGetDatad(inDataRef):
     """
@@ -218,7 +222,8 @@ def XPLMGetDatad(inDataRef):
     return value is the dataref value or 0.0 if the dataref is invalid/NULL or
     the plugin is disabled.
     """
-    pass
+    return float
+
 
 def XPLMSetDatad(inDataRef, inValue):
     """
@@ -226,7 +231,7 @@ def XPLMSetDatad(inDataRef, inValue):
     routine is a no-op if the plugin publishing the dataref is disabled, the
     dataref is invalid, or the dataref is not writable.
     """
-    pass
+
 
 def XPLMGetDatavi(inDataRef, outValues, inOffset, inMax):
     """
@@ -243,7 +248,8 @@ def XPLMGetDatavi(inDataRef, outValues, inOffset, inMax):
     above description is how these datarefs are intended to work, but a rogue
     plugin may have different behavior.
     """
-    pass
+    return int  # of items
+
 
 def XPLMSetDatavi(inDataRef, inValues, inoffset, inCount):
     """
@@ -257,7 +263,7 @@ def XPLMSetDatavi(inDataRef, inValues, inoffset, inCount):
     above description is how these datarefs are intended to work, but a rogue
     plugin may have different behavior.
     """
-    pass
+
 
 def XPLMGetDatavf(inDataRef, outValues, inOffset, inMax):
     """
@@ -275,7 +281,8 @@ def XPLMGetDatavf(inDataRef, outValues, inOffset, inMax):
     above description is how these datarefs are intended to work, but a rogue
     plugin may have different behavior.
     """
-    pass
+    return int  # of items
+
 
 def XPLMSetDatavf(inDataRef, inValues, inoffset, inCount):
     """
@@ -289,7 +296,7 @@ def XPLMSetDatavf(inDataRef, inValues, inoffset, inCount):
     above description is how these datarefs are intended to work, but a rogue
     plugin may have different behavior.
     """
-    pass
+
 
 def XPLMGetDatab(inDataRef, outValue, inOffset, inMaxBytes):
     """
@@ -306,7 +313,8 @@ def XPLMGetDatab(inDataRef, outValue, inOffset, inMaxBytes):
     above description is how these datarefs are intended to work, but a rogue
     plugin may have different behavior.
     """
-    pass
+    return int  # of items
+
 
 def XPLMSetDatab(inDataRef, inValue, inOffset, inLength):
     """
@@ -320,106 +328,111 @@ def XPLMSetDatab(inDataRef, inValue, inOffset, inLength):
     above description is how these datarefs are intended to work, but a rogue
     plugin may have different behavior.
     """
-    pass
 
-def XPLMGetDatai_f(self, inRefcon):
+
+def XPLMGetDatai_f(inRefcon):
+    """
+    Data accessor callback you provide to allow others to read the dataref.
+    Return dataref value.
+    """
+    return int
+
+
+def XPLMSetDatai_f(inRefcon, inValue):
+    """
+    Data accessor callback you provide to allow others to write the dataref.
+    """
+
+
+def XPLMGetDataf_f(inRefcon):
+    """
+    Data accessor callback you provide to allow others to read the dataref.
+    Return dataref value.
+    """
+    return float
+
+
+def XPLMSetDataf_f(inRefcon, inValue):
+    """
+    Data accessor callback you provide to allow others to write the dataref.
+    """
+
+
+def XPLMGetDatad_f(inRefcon):
     """
     Data accessor callback you provide to allow others to read the dataref.
     Return dataref value.
     """
     pass
 
-def XPLMSetDatai_f(self, inRefcon, inValue):
+
+def XPLMSetDatad_f(inRefcon, inValue):
     """
     Data accessor callback you provide to allow others to write the dataref.
     """
-    pass
 
-def XPLMGetDataf_f(self, inRefcon):
-    """
-    Data accessor callback you provide to allow others to read the dataref.
-    Return dataref value.
-    """
-    pass
 
-def XPLMSetDataf_f(self, inRefcon, inValue):
-    """
-    Data accessor callback you provide to allow others to write the dataref.
-    """
-    pass
-
-def XPLMGetDatad_f(self, inRefcon):
-    """
-    Data accessor callback you provide to allow others to read the dataref.
-    Return dataref value.
-    """
-    pass
-
-def XPLMSetDatad_f(self, inRefcon, inValue):
-    """
-    Data accessor callback you provide to allow others to write the dataref.
-    """
-    pass
-
-def XPLMGetDatavi_f(self, inRefcon, outValues, inOffset, inMax):
+def XPLMGetDatavi_f(inRefcon, outValues, inOffset, inMax):
     """
     Data accessor callback you provide to allow others to read the dataref.
     The callback semantics is the same as the XPLMGetDatavi (that routine just
     forwards the request to your callback).
     Don't forget to handle the outBuffer being set to None.
     """
-    pass
+    return int  # of items
 
-def XPLMSetDatavi_f(self, inRefcon, inValues, inOffset, inCount):
+def XPLMSetDatavi_f(inRefcon, inValues, inOffset, inCount):
     """
     Data accessor callback you provide to allow others to write the dataref.
     The callback semantics is the same as the XPLMSetDatavi (that routine just
     forwards the request to your callback).
     """
-    pass
 
-def XPLMGetDatavf_f(self, inRefcon, outValues, inOffset, inMax):
+
+def XPLMGetDatavf_f(inRefcon, outValues, inOffset, inMax):
     """
     Data accessor callback you provide to allow others to read the dataref.
     The callback semantics is the same as the XPLMGetDatavf (that routine just
     forwards the request to your callback).
     Don't forget to handle the outBuffer being set to None.
     """
-    pass
+    return int  # of items
 
-def XPLMSetDatavf_f(self, inRefcon, inValues, inOffset, inCount):
+
+def XPLMSetDatavf_f(inRefcon, inValues, inOffset, inCount):
     """
     Data accessor callback you provide to allow others to write the dataref.
     The callback semantics is the same as the XPLMSetDatavf (that routine just
     forwards the request to your callback).
     """
-    pass
 
-def XPLMGetDatab_f(self, inRefcon, outValues, inOffset, inMaxLength):
+
+def XPLMGetDatab_f(inRefcon, outValues, inOffset, inMaxLength):
     """
     Data accessor callback you provide to allow others to read the dataref.
     The callback semantics is the same as the XPLMGetDatab (that routine just
     forwards the request to your callback).
     Don't forget to handle the outBuffer being set to None.
     """
-    pass
+    return int  # of items
 
-def XPLMSetDatab_f(self, inRefcon, inValue, inOffset, inLength):
+
+def XPLMSetDatab_f(inRefcon, inValue, inOffset, inLength):
     """
     Data accessor callback you provide to allow others to write the dataref.
     The callback semantics is the same as the XPLMSetDatab (that routine just
     forwards the request to your callback).
     """
-    pass
 
-def XPLMRegisterDataAccessor(self, inDataName, inDataType, inIsWritable,
-                             inReadInt_f,        inWriteInt_f,
-                             inReadFloat_f,      inWriteFloat_f,
-                             inReadDouble_f,     inWriteDouble_f,
-                             inReadIntArray_f,   inWriteIntArray_f,
+
+def XPLMRegisterDataAccessor(inDataName, inDataType, inIsWritable,
+                             inReadInt_f, inWriteInt_f,
+                             inReadFloat_f, inWriteFloat_f,
+                             inReadDouble_f, inWriteDouble_f,
+                             inReadIntArray_f, inWriteIntArray_f,
                              inReadFloatArray_f, inWriteFloatArray_f,
-                             inReadData_f,       inWriteData_f,
-                             inReadRefcon,     inWriteRefcon):
+                             inReadData_f, inWriteData_f,
+                             inReadRefcon, inWriteRefcon):
     """
     This routine creates a new item of data that can be read and written. Pass
     in the data's full name for searching, the type(s) of the data for
@@ -439,9 +452,10 @@ def XPLMRegisterDataAccessor(self, inDataName, inDataType, inIsWritable,
     inReadFloatArray_f, inWriteFloatArray_f: XPLMGetDatavf_f/XPLMSetDatavf_f
     inReadData_f,       inWriteData_f:       XPLMGetDatab_f/XPLMSetDatab_f
     """
-    pass
+    return int  # XPLMDataRef
 
-def XPLMUnregisterDataAccessor(self, inDataRef):
+
+def XPLMUnregisterDataAccessor(inDataRef):
     """
     Use this routine to unregister any data accessors you may have registered.
     You unregister a data ref by the XPLMDataRef you get back from
@@ -453,18 +467,18 @@ def XPLMUnregisterDataAccessor(self, inDataRef):
     plugins to find your data reference once and use it for their entire time
     of operation.
     """
-    pass
 
-def XPLMDataChanged_f(self, inRefcon):
+
+def XPLMDataChanged_f(inRefcon):
     """
     An XPLMDataChanged_f is a callback that the XPLM calls whenever any other
     plug-in modifies shared data. A refcon you provide is passed back to help
     identify which data is being changed. In response, you may want to call one
     of the XPLMGetDataxxx routines to find the new value of the data.
     """
-    pass
 
-def XPLMShareData(self, inDataName, inDataType,
+
+def XPLMShareData(inDataName, inDataType,
                   inNotificationFunc_f, inNotificationRefcon):
     """
     This routine connects a plug-in to shared data, creating the shared data if
@@ -485,9 +499,10 @@ def XPLMShareData(self, inDataName, inDataType,
 
     inNotificationFunc_f : XPLMDataChanged_f
     """
-    pass
+    return int  # 1 on success, 0 if data already exists but is of the wrong type
 
-def XPLMUnshareData(self, inDataName, inDataType,
+
+def XPLMUnshareData(inDataName, inDataType,
                     inNotificationFunc_f, inNotificationRefcon):
     """
     This routine removes your notification function for shared data. Call it
@@ -495,5 +510,4 @@ def XPLMUnshareData(self, inDataName, inDataType,
     must match XPLMShareData. The actual memory will not necessarily be freed,
     since other plug-ins could be using it.
     """
-    pass
-
+    return int  # 0 if cannot find dataref
