@@ -25,7 +25,7 @@ See [README_BUILD](XPython/README_BUILD.md) for build instructions.
 Ultimately, we'll be providing a set of pre-built binaries for distribution. (Separate user-facing website not set yet.)
 
 ## Installation
-See [README_INSTALL](XPython/README_INSTALL.txt) for user installation instructions. This will be part of the user-facing website.
+See [README_INSTALL](XPython/README_INSTALL.md) for user installation instructions. This will be part of the user-facing website.
 
 ## Development of Plugins
 See [README_SDK](XPython/README_SDK.txt) for additional information on building your own plugins using Python. We'll include differences between the older Python2 plugin interface and this Python3 version.
