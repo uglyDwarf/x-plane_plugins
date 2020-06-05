@@ -238,10 +238,22 @@ bool loadPIClass(const char *fname)
   PyObject *pKey = PyTuple_New(4);  /* pKey is new reference */
 
   /* PyTuple_GetItem borrows reference, PyTuple_SetItem steals:pKey now owns pRes[0] */
-  PyTuple_SetItem(pKey, 0, PyTuple_GetItem(pRes, 0));
-  PyTuple_SetItem(pKey, 1, PyTuple_GetItem(pRes, 1));
-  PyTuple_SetItem(pKey, 2, PyTuple_GetItem(pRes, 2));
-  PyTuple_SetItem(pKey, 3, PyUnicode_FromString(fname));
+  PyObject *tmp = PyTuple_GetItem(pRes, 0);
+  Py_INCREF(tmp);
+  PyTuple_SetItem(pKey, 0, tmp);
+
+  tmp = PyTuple_GetItem(pRes, 1);
+  Py_INCREF(tmp);
+  PyTuple_SetItem(pKey, 1, tmp);
+
+  tmp = PyTuple_GetItem(pRes, 2);
+  Py_INCREF(tmp);
+  PyTuple_SetItem(pKey, 2, tmp);
+
+  tmp = PyUnicode_FromString(fname);
+  Py_INCREF(tmp);
+  PyTuple_SetItem(pKey, 3, tmp);
+
   PyDict_SetItem(moduleDict, pKey, pObj); // does not steal reference. We don't need pKey again, so decref
   Py_DECREF(pKey);
 
@@ -250,10 +262,9 @@ bool loadPIClass(const char *fname)
   if(err){
     PyErr_Print();
   }
-  // vvvvv this seems to be key: do no decref (pRes) as it crashes Py_Finalize()
-  // Py_XDECREF(pRes);
-  // ^^^^^
+
   // use XDECREF rather than DECREF, because we may hit this section via goto cleanup error
+  Py_XDECREF(pRes);
   Py_XDECREF(pModule);
   Py_XDECREF(pClass);
   return pObj;
