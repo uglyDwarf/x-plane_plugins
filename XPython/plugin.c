@@ -33,8 +33,9 @@ static const char *pluginsPath = "./Resources/plugins/PythonPlugins";
 static const char *internalPluginsPath = "./Resources/plugins/XPPython3";
 
 static const char *pythonPluginName = "XPPython3";
+static const char *pythonPluginVersion = "3.0.0";
 static const char *pythonPluginSig  = "avnwx.xppython3";
-static const char *pythonPluginDesc = "X-Plane interface for Python 3: Version 3.0.0";
+static const char *pythonPluginDesc = "X-Plane interface for Python 3";
 static const char *pythonStopCommand = "XPPython3/stopScripts";
 static const char *pythonStartCommand = "XPPython3/startScripts";
 static const char *pythonReloadCommand = "XPPython3/reloadScripts";
@@ -404,7 +405,7 @@ PLUGIN_API int XPluginStart(char *outName, char *outSig, char *outDesc)
     logFile = stdout;
   }
 
-  fprintf(logFile, "%s Started.\n", pythonPluginName);
+  fprintf(logFile, "%s version %s Started.\n", pythonPluginName, pythonPluginVersion);
   strcpy(outName, pythonPluginName);
   strcpy(outSig, pythonPluginSig);
   strcpy(outDesc, pythonPluginDesc);
