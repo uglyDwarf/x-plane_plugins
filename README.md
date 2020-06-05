@@ -16,7 +16,7 @@ Key features:
 support _any_ Python3 minor version (greater than 3.3). Unlike previous python plugins, you won't need one plugin version for Python37 and a different one for Python38, etc.
 
 ## Building
-See [README_BUILD](XPython/README_BUILD.txt) for build instructions. 
+See [README_BUILD](XPython/README_BUILD.md) for build instructions. 
 
 - Linux, tested on Ubuntu18 with gnu compiler,
 - Mac, developed and tested on Catalina 10.15 with Xcode compiler (command line only), 
