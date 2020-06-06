@@ -26,8 +26,7 @@ xplm_FlightLoop_Phase_BeforeFlightModel  = 0
 xplm_FlightLoop_Phase_AfterFlightModel   = 1
 
 
-def XPLMFlightLoop_f(self,
-                     inElapsedSinceLastCall,
+def XPLMFlightLoop_f(inElapsedSinceLastCall,
                      inElapsedTimeSinceLastFlightLoop,
                      inCounter,
                      inRefcon):
@@ -70,7 +69,7 @@ def XPLMGetCycleNumber():
     pass
 
 
-def XPLMRegisterFlightLoopCallback(self, inFlightLoop, inInterval, inRefcon):
+def XPLMRegisterFlightLoopCallback(inFlightLoop, inInterval, inRefcon):
     """
     This routine registers your flight loop callback. Pass in a pointer to a
     flight loop function and a refcon. inInterval defines when you will be
@@ -82,7 +81,7 @@ def XPLMRegisterFlightLoopCallback(self, inFlightLoop, inInterval, inRefcon):
     pass
 
 
-def XPLMUnregisterFlightLoopCallback(self, inFlightLoop, inRefcon):
+def XPLMUnregisterFlightLoopCallback(inFlightLoop, inRefcon):
     """
     This routine unregisters your flight loop callback. Do NOT call it from
     your flight loop callback. Once your flight loop callback is unregistered,
@@ -91,8 +90,7 @@ def XPLMUnregisterFlightLoopCallback(self, inFlightLoop, inRefcon):
     pass
 
 
-def XPLMSetFlightLoopCallbackInterval(self,
-                                      inFlightLoop,
+def XPLMSetFlightLoopCallbackInterval(inFlightLoop,
                                       inInterval,
                                       inRelativeToNow,
                                       inRefcon):

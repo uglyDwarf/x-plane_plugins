@@ -1,8 +1,8 @@
 //Python comes first!
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <dirent.h>
 #include <XPLM/XPLMDefs.h>
 
 static PyObject *cleanup(PyObject *self, PyObject *args)

@@ -58,7 +58,7 @@ class PythonInterface(checkBase):
       self.checkVal('XPLMAppendMenuItem didn\'t call the menuHandler.', self.itemRef, [16])
 
       try:
-         aircraftMenu = XPLMFindAircraftMenu()
+         self.checkVal('XPLMFindAircraftMenu', XPLMFindAircraftMenu(), 0x11223344)
       except RuntimeError as re:
          if (self.versions[1] >= 300) or (str(re) != 'XPLMFindAircraftMenu is available only in XPLM300 and up.'):
             raise
@@ -71,7 +71,7 @@ class PythonInterface(checkBase):
       XPLMRegisterCommandHandler(self, self.cmdRef, self.cmdHandler, 1, self.cmdStatus)
       commandMenuName = 'Cmd Menu'
       try:
-         res = XPLMAppendMenuItemWithCommand(aircraftMenu, commandMenuName, self.cmdRef)
+         res = XPLMAppendMenuItemWithCommand(menu, commandMenuName, self.cmdRef)
       except RuntimeError as re:
          if (self.versions[1] >= 300) or (str(re) != 'XPLMAppendMenuItemWithCommand is available only in XPLM300 and up.'):
             raise

@@ -5,7 +5,6 @@ from check_helper import *
 from XPLMDefs import *
 from XPLMDataAccess import *
 from XPLMInstance import *
-from XPLMScenery import *
 from XPLMUtilities import *
 
 class PythonInterface(checkBase):
@@ -44,11 +43,12 @@ class PythonInterface(checkBase):
       self.pitchDref = XPLMFindDataRef('instance.pitch')
       self.headingDref = XPLMFindDataRef('instance.heading')
       self.rollDref = XPLMFindDataRef('instance.roll')
-      objPath = 'just/load/something'
-      obj = XPLMLoadObject(objPath)
+
+      obj = 333
       datarefs = ('dref1', 'dref2')
       inst = XPLMCreateInstance(obj, datarefs)
-      self.checkVal('XPLMCreateInstance:datagefs', self.getString(self.str0Dref), objPath + ''.join(datarefs))
+      self.checkVal('XPLMCreateInstance:obj', XPLMGetDatai(self.int0Dref), obj)
+      self.checkVal('XPLMCreateInstance:datagefs', self.getString(self.str0Dref), ''.join(datarefs))
 
       pos = (11, 22, 33, 44, 55, 66)
       data = (123.456, 789.012)

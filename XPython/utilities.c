@@ -1,8 +1,8 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMUtilities.h>
 #include "utils.h"
@@ -13,6 +13,9 @@ PyObject *commandRefcons;
 PyObject *commandCapsules;
 intptr_t commandCallbackCntr;
 
+extern PyObject *moduleDict, *feDict, *windowDict, *hotkeyDict, *hotkeyIDDict, *drawCallbackDict, *drawCallbackIDDict, *keySniffCallbackDict,
+  *menuDict, *menuRefDict, *camDict, *accessorDict, *drefDict, *sharedDict, *availableDict, *flDict, *flRevDict, *flIDDict,
+  *loaderDict, *libEnumDict;
 
 static void error_callback(const char *inMessage)
 {
@@ -34,6 +37,7 @@ static void error_callback(const char *inMessage)
 }
 
 
+#if defined(XPLM_DEPRECATED)
 static PyObject *XPLMSimulateKeyPressFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -44,6 +48,158 @@ static PyObject *XPLMSimulateKeyPressFun(PyObject *self, PyObject *args)
   XPLMSimulateKeyPress(inKeyType, inKey);
   Py_RETURN_NONE;
 }
+#endif
+
+
+/****** HOLD until change from static dicts to somethin else -- pbuck */
+/* static PyObject *XPPythonGetDictsFun(PyObject *self, PyObject *args) */
+/* { */
+/*   (void) self; */
+/*   (void) args; */
+/*   /\** */
+/*    "cam":            one for each camera controller */
+/*      key:  idx, */
+/*      val: tuple(<module_filename>,       "PI_Display.py" */
+/*                 howLong, */
+/*                 controlFunc,  */
+/*                 refcon */
+/*                 ) */
+/*    "module":         one for each loaded Python Plugin module */
+/*      key: tuple(<name>, <sig>, <description>, <module_name>)  ("Display regression test", "XPPython3.Display", "This is ...", "PI_Display") */
+/*      val: <PythonInterface object at 0x...> */
+
+/*    "fl":   one for each registered flight loop */
+/*      key: idx, */
+/*      val: tuple(<module_filename>,       "PI_Display.py" */
+/*                 <bound method <> of <PythonInterface object at 0x...>>, */
+/*                 <interval>,              -1.0 */
+/*                 <referenceConstant>      "my flight loop" */
+/*                ) */
+/*    "flRev":  */
+/*      key: tuple(<module_filename>,       "PI_Display.py" */
+/*                 <bound method <> of <PythonInterface object at 0x...>>, */
+/*                 <slot>                   24704555319,  (the reference constant address) */
+/*      val: idx into callbackInfo          1 */
+     
+/*    "keySniffCallback": one for each registered key sniffer */
+/*      key: idx, */
+/*      value: tuple(<module_filename>,     "PI_Display.py" */
+/*                   <bound method <> of PythonInterface object at 0x...>>, */
+/*                   <beforeWindows>        1, */
+/*                   <referenceConstant>    ["booya, ] */
+
+/*     "window": one for each registered window */
+/*       key: windowID,                      14055678383, */
+/*       val: tuple(<bound method <drawWindowFunc>       of PythonInterface object at 0x...>>, */
+/*                  <bound method <handleMouseClickFunc> of PythonInterface object at 0x...>>, */
+/*                  <bound method <handleKeyFunc>        of PythonInterface object at 0x...>>, */
+/*                  <bound method <handleCursorFunc>     of PythonInterface object at 0x...>>, */
+/*                  <bound method <handleMouseWheelFunc> of PythonInterface object at 0x...>>, */
+/*                  <bound method <handleRightClickFunc> of PythonInterface object at 0x...>>, */
+/*   *\/ */
+/*   PyObject *ret = PyDict_New(); */
+/*   if(PyDict_Check(moduleDict)) { */
+/*     PyDict_SetItemString(ret, "module", PyDict_Copy(moduleDict)); //plugins */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "module", PyDict_New()); */
+/*   } */
+/*   if(feDict && PyDict_Check(feDict)){ */
+/*     PyDict_SetItemString(ret, "fe", PyDict_Copy(feDict)); // plugins */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "fe", PyDict_New()); */
+/*   } */
+/*   if(windowDict && PyDict_Check(windowDict)){ */
+/*     PyDict_SetItemString(ret, "window", PyDict_Copy(windowDict)); // display */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "window", PyDict_New()); */
+/*   } */
+/*   if(hotkeyDict && PyDict_Check(hotkeyDict)){ */
+/*     PyDict_SetItemString(ret, "hotkey", PyDict_Copy(hotkeyDict)); // display */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "hotkey", PyDict_New()); */
+/*   } */
+/*   if(hotkeyIDDict && PyDict_Check(hotkeyIDDict)){ */
+/*     PyDict_SetItemString(ret, "hotkeyID", PyDict_Copy(hotkeyIDDict)); // display */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "hotkeyID", PyDict_New()); */
+/*   } */
+/*   if(drawCallbackDict && PyDict_Check(drawCallbackDict)){ */
+/*     PyDict_SetItemString(ret, "drawCallback", PyDict_Copy(drawCallbackDict)); // display */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "drawCallback", PyDict_New()); */
+/*   } */
+/*   if(drawCallbackIDDict && PyDict_Check(drawCallbackIDDict)){ */
+/*     PyDict_SetItemString(ret, "drawCallbackID", PyDict_Copy(drawCallbackIDDict)); // display */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "drawCallbackID", PyDict_New()); */
+/*   } */
+/*   if(keySniffCallbackDict && PyDict_Check(keySniffCallbackDict)){ */
+/*     PyDict_SetItemString(ret, "keySniffCallback", PyDict_Copy(keySniffCallbackDict)); // display */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "keySniffCallback", PyDict_New()); */
+/*   } */
+/*   if(menuDict && PyDict_Check(menuDict)){ */
+/*     PyDict_SetItemString(ret, "menuDict", PyDict_Copy(menuDict));  // menut */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "menu", PyDict_New()); */
+/*   } */
+/*   if(menuRefDict && PyDict_Check(menuRefDict)){ */
+/*     PyDict_SetItemString(ret, "menuRefDict", PyDict_Copy(menuRefDict)); //menu */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "menuRef", PyDict_New()); */
+/*   } */
+/*   if(camDict && PyDict_Check(camDict)){ */
+/*     PyDict_SetItemString(ret, "cam", PyDict_Copy(camDict)); //camera */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "cam", PyDict_New()); */
+/*   } */
+/*   if(accessorDict && PyDict_Check(accessorDict)){ */
+/*     PyDict_SetItemString(ret, "accessor", PyDict_Copy(accessorDict));  //data_access */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "accessor", PyDict_New()); */
+/*   } */
+/*   if(drefDict && PyDict_Check(drefDict)){ */
+/*     PyDict_SetItemString(ret, "dref", PyDict_Copy(drefDict)); // data_access */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "dref", PyDict_New()); */
+/*   } */
+/*   if(sharedDict && PyDict_Check(sharedDict)){ */
+/*     PyDict_SetItemString(ret, "shared", PyDict_Copy(sharedDict)); //data_access */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "shared", PyDict_New()); */
+/*   } */
+/*   if(availableDict && PyDict_Check(availableDict)){ */
+/*     PyDict_SetItemString(ret, "available", PyDict_Copy(availableDict)); //planes */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "available", PyDict_New()); */
+/*   } */
+/*   if(flDict && PyDict_Check(flDict)){ */
+/*     PyDict_SetItemString(ret, "fl", PyDict_Copy(flDict));  //processing */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "fl", PyDict_New()); */
+/*   } */
+/*   if(flRevDict && PyDict_Check(flRevDict)){ */
+/*     PyDict_SetItemString(ret, "flRev", PyDict_Copy(flRevDict));//processing */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "flRev", PyDict_New()); */
+/*   } */
+/*   if(flIDDict && PyDict_Check(flIDDict)){ */
+/*     PyDict_SetItemString(ret, "flID", PyDict_Copy(flIDDict));//procesing */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "flID", PyDict_New()); */
+/*   } */
+/*   if(loaderDict && PyDict_Check(loaderDict)){ */
+/*     PyDict_SetItemString(ret, "loader", PyDict_Copy(loaderDict)); // scenery */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "loader", PyDict_New()); */
+/*   } */
+/*   if(libEnumDict && PyDict_Check(libEnumDict)){ */
+/*     PyDict_SetItemString(ret, "libEnum", PyDict_Copy(libEnumDict)); // scenery */
+/*   } else { */
+/*     PyDict_SetItemString(ret, "libEnum", PyDict_New()); */
+/*   } */
+/*   return ret; */
+/* } */
 
 static PyObject *XPLMSpeakStringFun(PyObject *self, PyObject *args)
 {
@@ -56,6 +212,7 @@ static PyObject *XPLMSpeakStringFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+#if defined(XPLM_DEPRECATED)
 static PyObject *XPLMCommandKeyStrokeFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -66,7 +223,9 @@ static PyObject *XPLMCommandKeyStrokeFun(PyObject *self, PyObject *args)
   XPLMCommandKeyStroke(inKey);
   Py_RETURN_NONE;
 }
+#endif
 
+#if defined(XPLM_DEPRECATED)
 static PyObject *XPLMCommandButtonPressFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -77,7 +236,9 @@ static PyObject *XPLMCommandButtonPressFun(PyObject *self, PyObject *args)
   XPLMCommandButtonPress(inButton);
   Py_RETURN_NONE;
 }
+#endif
 
+#if defined(XPLM_DEPRECATED)
 static PyObject *XPLMCommandButtonReleaseFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -88,6 +249,7 @@ static PyObject *XPLMCommandButtonReleaseFun(PyObject *self, PyObject *args)
   XPLMCommandButtonRelease(inButton);
   Py_RETURN_NONE;
 }
+#endif
 
 static PyObject *XPLMGetVirtualKeyDescriptionFun(PyObject *self, PyObject *args)
 {
@@ -191,6 +353,7 @@ static PyObject *XPLMGetDirectoryContentsFun(PyObject *self, PyObject *args)
   return retObj;
 }
 
+#if defined(XPLM_DEPRECATED)
 static PyObject *XPLMInitializedFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -200,6 +363,7 @@ static PyObject *XPLMInitializedFun(PyObject *self, PyObject *args)
 
   return PyLong_FromLong(res);
 }
+#endif
 
 static PyObject *XPLMGetVersionsFun(PyObject *self, PyObject *args)
 {
@@ -245,12 +409,18 @@ static PyObject *XPLMSetErrorCallbackFun(PyObject *self, PyObject *args)
     XPLMSetErrorCallback(error_callback);
   }
 
-  PyObject *selfObj;
+  PyObject *pluginSelf;
   PyObject *callback;
-  if(!PyArg_ParseTuple(args, "OO", &selfObj, &callback)){
-    return NULL;
+  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &callback)){
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "O", &callback))
+      return NULL;
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
+  } else {
+    Py_INCREF(pluginSelf);
   }
-  PyDict_SetItem(errCallbacks, selfObj, callback);
+  PyDict_SetItem(errCallbacks, pluginSelf, callback);
+  Py_DECREF(pluginSelf);
   
   Py_RETURN_NONE;
 }
@@ -282,16 +452,11 @@ static PyObject *XPLMSaveDataFileFun(PyObject *self, PyObject *args)
 {
   (void) self;
   int inFileType;
-  const char *filePath = NULL;
-  PyObject *inFilePath;
-  if(!PyArg_ParseTuple(args, "iO", &inFileType, &inFilePath)){
+  const char *inFilePath;
+  if(!PyArg_ParseTuple(args, "is", &inFileType, &inFilePath)){
     return NULL;
   }
-  if(PyUnicode_Check(inFilePath)){
-    filePath = PyUnicode_AsUTF8(inFilePath);
-  }
-
-  int res = XPLMSaveDataFile(inFileType, filePath);
+  int res = XPLMSaveDataFile(inFileType, inFilePath);
   return PyLong_FromLong(res);
 }
 
@@ -386,15 +551,22 @@ static PyObject *XPLMRegisterCommandHandlerFun(PyObject *self, PyObject *args)
   PyObject *inHandler;
   int inBefore;
   PyObject *inRefcon;
-  if(!PyArg_ParseTuple(args, "OOOiO", &self, &inCommand, &inHandler, &inBefore, &inRefcon)){
-    return NULL;
+  PyObject *pluginSelf;
+  if(!PyArg_ParseTuple(args, "OOOiO", &pluginSelf, &inCommand, &inHandler, &inBefore, &inRefcon)){
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "OOiO", &inCommand, &inHandler, &inBefore, &inRefcon))
+      return NULL;
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
   intptr_t refcon = commandCallbackCntr++;
   XPLMRegisterCommandHandler(refToPtr(inCommand, commandRefName), commandCallback, inBefore, (void *)refcon);
   PyObject *rc = PyLong_FromVoidPtr((void *)refcon);
   PyObject *irc = PyLong_FromVoidPtr((void *)inRefcon);
   PyDict_SetItem(commandRefcons, irc, rc);
-  PyDict_SetItem(commandCallbacks, rc, args);
+
+  PyObject *argsObj = Py_BuildValue( "(OOOiO)", pluginSelf, inCommand, inHandler, inBefore, inRefcon);
+  PyDict_SetItem(commandCallbacks, rc, argsObj);
+  Py_DECREF(argsObj);
   Py_DECREF(rc);
   Py_DECREF(irc);
   Py_RETURN_NONE;
@@ -407,8 +579,11 @@ static PyObject *XPLMUnregisterCommandHandlerFun(PyObject *self, PyObject *args)
   PyObject *inHandler;
   int inBefore;
   PyObject *inRefcon;
-  if(!PyArg_ParseTuple(args, "OOOiO", &self, &inCommand, &inHandler, &inBefore, &inRefcon)){
-    return NULL;
+  PyObject *pluginSelf;
+  if(!PyArg_ParseTuple(args, "OOOiO", &pluginSelf, &inCommand, &inHandler, &inBefore, &inRefcon)){
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "OOiO", &inCommand, &inHandler, &inBefore, &inRefcon))
+      return NULL;
   }
   PyObject *key = PyLong_FromVoidPtr((void *)inRefcon);
   PyObject *refcon = PyDict_GetItem(commandRefcons, key);
@@ -440,11 +615,16 @@ static PyObject *cleanup(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef XPLMUtilitiesMethods[] = {
+//  {"XPPythonGetDicts", XPPythonGetDictsFun, METH_VARARGS, ""},
+#if defined(XPLM_DEPRECATED)
   {"XPLMSimulateKeyPress", XPLMSimulateKeyPressFun, METH_VARARGS, ""},
+#endif
   {"XPLMSpeakString", XPLMSpeakStringFun, METH_VARARGS, ""},
+#if defined(XPLM_DEPRECATED)
   {"XPLMCommandKeyStroke", XPLMCommandKeyStrokeFun, METH_VARARGS, ""},
   {"XPLMCommandButtonPress", XPLMCommandButtonPressFun, METH_VARARGS, ""},
   {"XPLMCommandButtonRelease", XPLMCommandButtonReleaseFun, METH_VARARGS, ""},
+#endif
   {"XPLMGetVirtualKeyDescription", XPLMGetVirtualKeyDescriptionFun, METH_VARARGS, ""},
   {"XPLMReloadScenery", XPLMReloadSceneryFun, METH_VARARGS, ""},
   {"XPLMGetSystemPath", XPLMGetSystemPathFun, METH_VARARGS, ""},
@@ -452,7 +632,9 @@ static PyMethodDef XPLMUtilitiesMethods[] = {
   {"XPLMGetDirectorySeparator", XPLMGetDirectorySeparatorFun, METH_VARARGS, ""},
   {"XPLMExtractFileAndPath", XPLMExtractFileAndPathFun, METH_VARARGS, ""},
   {"XPLMGetDirectoryContents", XPLMGetDirectoryContentsFun, METH_VARARGS, ""},
+#if defined(XPLM_DEPRECATED)
   {"XPLMInitialized", XPLMInitializedFun, METH_VARARGS, ""},
+#endif
   {"XPLMGetVersions", XPLMGetVersionsFun, METH_VARARGS, ""},
   {"XPLMGetLanguage", XPLMGetLanguageFun, METH_VARARGS, ""},
   {"XPLMDebugString", XPLMDebugStringFun, METH_VARARGS, ""},
@@ -501,6 +683,7 @@ PyInit_XPLMUtilities(void)
 
   PyObject *mod = PyModule_Create(&XPLMUtilitiesModule);
   if(mod){
+#if defined(XPLM_DEPRECATED)
     /*
      * XPLMCommandKeyID
      * 
@@ -709,7 +892,7 @@ PyInit_XPLMUtilities(void)
     PyModule_AddIntConstant(mod, "xplm_joy_idle_hilo", xplm_joy_idle_hilo);
     PyModule_AddIntConstant(mod, "xplm_joy_lanlights", xplm_joy_lanlights);
     PyModule_AddIntConstant(mod, "xplm_joy_max", xplm_joy_max);
-
+#endif
     /*
      * XPLMHostApplicationID
      * 
@@ -723,13 +906,14 @@ PyInit_XPLMUtilities(void)
      */
     PyModule_AddIntConstant(mod, "xplm_Host_Unknown", xplm_Host_Unknown);
     PyModule_AddIntConstant(mod, "xplm_Host_XPlane", xplm_Host_XPlane);
+#if defined(XPLM_DEPRECATED)    
     PyModule_AddIntConstant(mod, "xplm_Host_PlaneMaker", xplm_Host_PlaneMaker);
     PyModule_AddIntConstant(mod, "xplm_Host_WorldMaker", xplm_Host_WorldMaker);
     PyModule_AddIntConstant(mod, "xplm_Host_Briefer", xplm_Host_Briefer);
     PyModule_AddIntConstant(mod, "xplm_Host_PartMaker", xplm_Host_PartMaker);
     PyModule_AddIntConstant(mod, "xplm_Host_YoungsMod", xplm_Host_YoungsMod);
     PyModule_AddIntConstant(mod, "xplm_Host_XAuto", xplm_Host_XAuto);
-
+#endif
     /*
      * XPLMLanguageCode
      * 
@@ -749,7 +933,9 @@ PyInit_XPLMUtilities(void)
     PyModule_AddIntConstant(mod, "xplm_Language_Russian", xplm_Language_Russian);
     PyModule_AddIntConstant(mod, "xplm_Language_Greek", xplm_Language_Greek);
     PyModule_AddIntConstant(mod, "xplm_Language_Japanese", xplm_Language_Japanese);
+#if defined(XPML300)
     PyModule_AddIntConstant(mod, "xplm_Language_Chinese", xplm_Language_Chinese);
+#endif
 
     /*
      * XPLMDataFileType

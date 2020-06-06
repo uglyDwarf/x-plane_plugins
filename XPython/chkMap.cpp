@@ -109,6 +109,7 @@ void XPLMDrawMapIconFromSheet(XPLMMapLayerID inLayer, const char *inPngPath, int
                               int ds, int dt, float mapX, float mapY, XPLMMapOrientation orientation,
                               float rotationDegrees, float mapWidth)
 {
+  (void)(inLayer);
   assert(inLayer == &layer);
   str0 = inPngPath;
   int0 = s;
@@ -125,6 +126,7 @@ void XPLMDrawMapIconFromSheet(XPLMMapLayerID inLayer, const char *inPngPath, int
 void XPLMDrawMapLabel(XPLMMapLayerID inLayer, const char *inText, float mapX, float mapY,
                       XPLMMapOrientation orientation, float rotationDegrees)
 {
+  (void)(inLayer);
   assert(inLayer == &layer);
   str0 = inText;
   float0 = mapX;
@@ -135,27 +137,27 @@ void XPLMDrawMapLabel(XPLMMapLayerID inLayer, const char *inText, float mapX, fl
 
 void XPLMMapProject(XPLMMapProjectionID projection, double latitude, double longitude, float *outX, float *outY)
 {
-  assert(projection == commonProj);
+  int0 = (intptr_t)projection;
   *outX = latitude * 2.5;
   *outY = longitude * 3.6;
 }
 
 void XPLMMapUnproject(XPLMMapProjectionID projection, float mapX, float mapY, double *outLatitude, double *outLongitude)
 {
-  assert(projection == commonProj);
+  int0 = (intptr_t)projection;
   *outLatitude = mapY * 4.7;
   *outLongitude = mapX * 5.8;
 }
 
 float XPLMMapScaleMeter(XPLMMapProjectionID projection, float mapX, float mapY)
 {
-  assert(projection == commonProj);
+  int0 = (intptr_t)projection;
   return 2 * mapX - mapY;
 }
 
 float XPLMMapGetNorthHeading(XPLMMapProjectionID projection, float mapX, float mapY)
 {
-  assert(projection == commonProj);
+  int0 = (intptr_t)projection;
   return 2 * mapY - mapX;
 }
 #endif

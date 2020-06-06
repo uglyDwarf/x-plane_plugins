@@ -59,6 +59,7 @@ XPLMMenuID XPLMFindAircraftMenu(void)
 XPLMMenuID XPLMCreateMenu(const char *inName, XPLMMenuID inParentMenu, int inParentItem, XPLMMenuHandler_f inHandler,
                           void *inMenuRef)
 {
+  (void)(inParentMenu);
   name = inName;
   assert(inParentMenu == mainMenuID);
   item = inParentItem;
@@ -69,18 +70,21 @@ XPLMMenuID XPLMCreateMenu(const char *inName, XPLMMenuID inParentMenu, int inPar
 
 void XPLMDestroyMenu(XPLMMenuID inMenuID)
 {
+  (void)(inMenuID);
   assert(inMenuID == newMenuID);
   name = "destroyed";
 }
 
 void XPLMClearAllMenuItems(XPLMMenuID inMenuID)
 {
+  (void)(inMenuID);
   assert(inMenuID == newMenuID);
   item = 0;
 }
 
 int XPLMAppendMenuItem(XPLMMenuID inMenu, const char *inItemName, void *inItemRef, int inForceEnglish)
 {
+  (void)(inMenu);
   assert((inMenu == mainMenuID) || (inMenu == newMenuID));
   name = inItemName;
   lang = inForceEnglish;
@@ -102,12 +106,14 @@ int XPLMAppendMenuItemWithCommand(XPLMMenuID inMenu, const char *inItemName, XPL
 
 void XPLMAppendMenuSeparator(XPLMMenuID inMenu)
 {
+  (void)(inMenu);
   assert(inMenu == newMenuID);
   name = "separator";
 }
 
 void XPLMSetMenuItemName(XPLMMenuID inMenu, int inIndex, const char *inItemName, int inForceEnglish)
 {
+  (void)(inMenu);
   assert(inMenu == newMenuID);
   item = inIndex;
   name = inItemName;
@@ -116,6 +122,7 @@ void XPLMSetMenuItemName(XPLMMenuID inMenu, int inIndex, const char *inItemName,
 
 void XPLMCheckMenuItem(XPLMMenuID inMenu, int inIndex, XPLMMenuCheck inCheck)
 {
+  (void)(inMenu);
   assert(inMenu == newMenuID);
   item = inIndex;
   check = inCheck;
@@ -123,6 +130,7 @@ void XPLMCheckMenuItem(XPLMMenuID inMenu, int inIndex, XPLMMenuCheck inCheck)
 
 void XPLMCheckMenuItemState(XPLMMenuID inMenu, int inIndex, XPLMMenuCheck *outCheck)
 {
+  (void)(inMenu);
   assert(inMenu == newMenuID);
   item = inIndex;
   *outCheck = check;
@@ -130,6 +138,7 @@ void XPLMCheckMenuItemState(XPLMMenuID inMenu, int inIndex, XPLMMenuCheck *outCh
 
 void XPLMEnableMenuItem(XPLMMenuID inMenu, int inIndex, int enabled)
 {
+  (void)(inMenu);
   assert(inMenu == newMenuID);
   item = inIndex;
   lang = enabled;
@@ -138,6 +147,7 @@ void XPLMEnableMenuItem(XPLMMenuID inMenu, int inIndex, int enabled)
 #if defined(XPLM210)
 void XPLMRemoveMenuItem(XPLMMenuID inMenu, int inIndex)
 {
+  (void)(inMenu);
   assert(inMenu == newMenuID);
   item = inIndex;
   name = "removed";

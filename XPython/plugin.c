@@ -1,15 +1,45 @@
 //Python comes first!
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <dirent.h>
 #include <XPLM/XPLMDefs.h>
 
+#include <XPLM/XPLMPlugin.h>
 #include <sys/types.h>
 #include <regex.h>
 
 #include "utils.h"
 #include "plugin_dl.h"
+
+/*************************************
+ * Python plugin upgrade for Python 3
+ *   Michal        f.josef@email.cz (uglyDwarf on x-plane.org)
+ *   Peter Buckner pbuck@avnwx.com (pbuckner on x-plane.org) 
+ *
+ * Upgraded from original Python2 version by
+ *   Sandy Barbour (on x-plane.org)
+ */
+
+/**********************
+ * Plugin configuration
+ */
+static char *logFileName = "XPPython3.log";
+static char *ENV_logFileVar = "XPPYTHON3_LOG";  // set this environment to override logFileName
+static char *ENV_logPreserve = "XPPYTHON3_PRESERVE";  // DO NOT truncate XPPython log on startup. If set, we preserve, if unset, we truncate
+
+static const char *pluginsPath = "./Resources/plugins/PythonPlugins";
+static const char *internalPluginsPath = "./Resources/plugins/XPPython3";
+
+static const char *pythonPluginName = "XPPython3";
+static const char *pythonPluginVersion = "3.0.0";
+static const char *pythonPluginSig  = "avnwx.xppython3";
+static const char *pythonPluginDesc = "X-Plane interface for Python 3";
+static const char *pythonStopCommand = "XPPython3/stopScripts";
+static const char *pythonStartCommand = "XPPython3/startScripts";
+static const char *pythonReloadCommand = "XPPython3/reloadScripts";
+/**********************/
 
 PyMODINIT_FUNC PyInit_XPLMDefs(void);
 PyMODINIT_FUNC PyInit_XPLMDisplay(void);
@@ -33,11 +63,6 @@ PyMODINIT_FUNC PyInit_XPLMMap(void);
 PyMODINIT_FUNC PyInit_SBU(void);
 
 static FILE *logFile;
-static char *logFileName;
-
-static const char *pluginsPath = "./Resources/plugins/PythonPlugins";
-static const char *internalPluginsPath = "./Resources/plugins/XPythonRevival";
-
 static bool stopped;
 static int allErrorsEncountered;
 
@@ -48,7 +73,7 @@ static PyObject *logWriterWrite(PyObject *self, PyObject *args)
   if(!PyArg_ParseTuple(args, "s", &msg)){
     return NULL;
   }
-  //printf("  LOGGER: %s", msg);
+  //printf("%s", msg);
   fprintf(logFile, "%s", msg);
   fflush(logFile);
   Py_RETURN_NONE;
@@ -106,20 +131,11 @@ PyInit_XPythonLogWriter(void)
   return mod;
 };
 
-//should be static, don't change after Py_SetProgramName is called 
-// should be freed by PyMem_RawFree()
-static wchar_t *program = NULL;
-
 static PyObject *moduleDict;
 static PyObject *loggerObj;
 
-int initPython(const char *programName){
-  program = Py_DecodeLocale(programName, NULL);
-  if(program == NULL){
-    fprintf(logFile, "Can't decode programName.\n");
-    return -1;
-  }
-  Py_SetProgramName(program);
+int initPython(void){
+  // setbuf(stdout, NULL);  // for debugging, it removes stdout buffering
 
   PyImport_AppendInittab("XPLMDefs", PyInit_XPLMDefs);
   PyImport_AppendInittab("XPLMDisplay", PyInit_XPLMDisplay);
@@ -156,7 +172,6 @@ int initPython(const char *programName){
   PyObject *pathStrObj = PyUnicode_DecodeUTF8(pathStr, sizeof(pathStr) - 1, NULL);
   PyList_Append(path, pathStrObj);
   Py_DECREF(pathStrObj);
-  //PySys_SetPath(L"");
   moduleDict = PyDict_New();
   return 0;
 }
@@ -166,7 +181,6 @@ bool loadPIClass(const char *fname)
 {
   PyObject *pName = NULL, *pModule = NULL, *pClass = NULL,
            *pObj = NULL, *pRes = NULL, *err = NULL;
-  //printf("Decoding the filename '%s'.\n", fname);
 
   pName = PyUnicode_DecodeFSDefault(fname);
   if(pName == NULL){
@@ -174,6 +188,7 @@ bool loadPIClass(const char *fname)
     goto cleanup;
   }
   pModule = PyImport_Import(pName);
+  
   Py_DECREF(pName);
   if(pModule == NULL){
     goto cleanup;
@@ -194,12 +209,14 @@ bool loadPIClass(const char *fname)
   }
   pRes = PyObject_CallMethod(pObj, "XPluginStart", NULL);
   if(pRes == NULL){
+    fprintf(logFile, "XPluginStart returned NULL\n"); // NULL is error, Py_None is void, we're looking for a tuple[3]
     goto cleanup;
   }
   if(!(PyTuple_Check(pRes) && (PyTuple_Size(pRes) == 3) &&
       PyUnicode_Check(PyTuple_GetItem(pRes, 0)) &&
       PyUnicode_Check(PyTuple_GetItem(pRes, 1)) &&
       PyUnicode_Check(PyTuple_GetItem(pRes, 2)))){
+    fprintf(logFile, "Unable to start plugin in file %s: XPluginStart did not return Name, Sig, and Desc.", fname);
     goto cleanup;
   }
   
@@ -213,17 +230,41 @@ bool loadPIClass(const char *fname)
     fprintf(logFile, "  Name: %s\n", PyBytes_AsString(u1));
     fprintf(logFile, "  Sig:  %s\n", PyBytes_AsString(u2));
     fprintf(logFile, "  Desc: %s\n", PyBytes_AsString(u3));
+    fflush(logFile);
   }
-  Py_XDECREF(u1);
-  Py_XDECREF(u2);
-  Py_XDECREF(u3);
+  Py_DECREF(u1);
+  Py_DECREF(u2);
+  Py_DECREF(u3);
 
-  PyDict_SetItem(moduleDict, pRes, pObj);
+  PyObject *pKey = PyTuple_New(4);  /* pKey is new reference */
+
+  /* PyTuple_GetItem borrows reference, PyTuple_SetItem steals:pKey now owns pRes[0] */
+  PyObject *tmp = PyTuple_GetItem(pRes, 0);
+  Py_INCREF(tmp);
+  PyTuple_SetItem(pKey, 0, tmp);
+
+  tmp = PyTuple_GetItem(pRes, 1);
+  Py_INCREF(tmp);
+  PyTuple_SetItem(pKey, 1, tmp);
+
+  tmp = PyTuple_GetItem(pRes, 2);
+  Py_INCREF(tmp);
+  PyTuple_SetItem(pKey, 2, tmp);
+
+  tmp = PyUnicode_FromString(fname);
+  Py_INCREF(tmp);
+  PyTuple_SetItem(pKey, 3, tmp);
+
+  PyDict_SetItem(moduleDict, pKey, pObj); // does not steal reference. We don't need pKey again, so decref
+  Py_DECREF(pKey);
+
  cleanup:
   err = PyErr_Occurred();
   if(err){
     PyErr_Print();
   }
+
+  // use XDECREF rather than DECREF, because we may hit this section via goto cleanup error
   Py_XDECREF(pRes);
   Py_XDECREF(pModule);
   Py_XDECREF(pClass);
@@ -264,7 +305,7 @@ static int startPython(void)
     return 0;
   }
   loadAllFunctions();
-  initPython("X-Plane");
+  initPython();
 
   // Load internal stuff
   loadModules(internalPluginsPath, "^I_PI_.*\\.py$");
@@ -283,18 +324,23 @@ static int stopPython(void)
   Py_ssize_t pos = 0;
 
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
-    PyObject *res = PyObject_CallMethod(pVal, "XPluginStop", NULL);
+    char *moduleName = objToStr(PyTuple_GetItem(pKey, 3));
+    PyObject *pRes = PyObject_CallMethod(pVal, "XPluginStop", NULL); // should return void, so we should see Py_None
+    if(pRes != Py_None) {
+      fprintf(logFile, "%s XPluginStop returned '%s' rather than None.\n", moduleName, objToStr(pRes));
+    }
     PyObject *err = PyErr_Occurred();
     if(err){
-      fprintf(logFile, "Error occured during the XPluginStop call:\n");
+      fprintf(logFile, "Error occured during the %s XPluginStop call:\n", moduleName);
       PyErr_Print();
     }else{
-      Py_DECREF(res);
+      Py_DECREF(pRes);
     }
   }
 
   PyDict_Clear(moduleDict);
-
+  Py_DECREF(moduleDict);
+  
   // Invoke cleanup method of all built-in modules
   char *mods[] = {"XPLMDefs", "XPLMDisplay", "XPLMGraphics", "XPLMUtilities", "XPLMScenery", "XPLMMenus",
                   "XPLMNavigation", "XPLMPlugin", "XPLMPlanes", "XPLMProcessing", "XPLMCamera", "XPWidgetDefs",
@@ -304,16 +350,28 @@ static int stopPython(void)
 
   while(*mod_ptr != NULL){
     PyObject *mod = PyImport_ImportModule(*mod_ptr);
+    fflush(stdout);
+    if (PyErr_Occurred()) {
+      fprintf(logFile, "XPlugin Failed during stop of internal module %s\n", *mod_ptr);
+      PyErr_Print();
+      return 1;
+    }
+      
     if(mod){
-      PyObject *res = PyObject_CallMethod(mod, "cleanup", "");
-      Py_DECREF(res);
+      PyObject *pRes = PyObject_CallMethod(mod, "cleanup", NULL);
+      if (PyErr_Occurred() ) {
+        fprintf(logFile, "XPlugin Failed during cleanup of internal module %s\n", *mod_ptr);
+        PyErr_Print();
+        return 1;
+      }
+        
+      Py_DECREF(pRes);
       Py_DECREF(mod);
     }
     ++mod_ptr;
   }
   Py_DECREF(loggerObj);
   Py_Finalize();
-  PyMem_RawFree(program);
   pythonStarted = false;
   return 0;
 }
@@ -332,33 +390,42 @@ static void menuHandler(void *inMenuRef, void *inItemRef)
 
 PLUGIN_API int XPluginStart(char *outName, char *outSig, char *outDesc)
 {
-  logFileName = "XPython.log";
   char *log;
-  log = getenv("XPYTHON_LOG");
+  log = getenv(ENV_logFileVar);
   if(log != NULL){
     logFileName = log;
   }
-  logFile = fopen(logFileName, "w");
+  if (getenv(ENV_logPreserve) != NULL) {
+    printf("Preserving log file\n"); fflush(stdout);
+    logFile = fopen(logFileName, "a");
+  } else {
+    logFile = fopen(logFileName, "w");
+  }
   if(logFile == NULL){
     logFile = stdout;
   }
 
-  fprintf(logFile, "X-PluginStart called.\n");
-  strcpy(outName, "XPython3");
-  strcpy(outSig, "XPython3.0.0");
-  strcpy(outDesc, "X-Plane interface for Python 3.");
+  fprintf(logFile, "%s version %s Started.\n", pythonPluginName, pythonPluginVersion);
+  strcpy(outName, pythonPluginName);
+  strcpy(outSig, pythonPluginSig);
+  strcpy(outDesc, pythonPluginDesc);
 
-  stopScripts = XPLMCreateCommand("XPython3/stopScripts", "Stop all running scripts");
-  startScripts = XPLMCreateCommand("XPython3/startScripts", "Start all scripts");
-  reloadScripts = XPLMCreateCommand("XPython3/reloadScripts", "Reload all scripts");
+  if (XPLMHasFeature("XPLM_USE_NATIVE_PATHS")) {
+    XPLMEnableFeature("XPLM_USE_NATIVE_PATHS", 1);
+  } else {
+    fprintf(logFile, "Warning: XPLM_USE_NATIVE_PATHS not enabled. Using Legacy paths.\n");
+  }
+  stopScripts = XPLMCreateCommand(pythonStopCommand, "Stop all running scripts");
+  startScripts = XPLMCreateCommand(pythonStartCommand, "Start all scripts");
+  reloadScripts = XPLMCreateCommand(pythonReloadCommand, "Reload all scripts");
 
   XPLMRegisterCommandHandler(stopScripts, commandHandler, 1, (void *)0);
   XPLMRegisterCommandHandler(startScripts, commandHandler, 1, (void *)1);
   XPLMRegisterCommandHandler(reloadScripts, commandHandler, 1, (void *)2);
 
-  int menuIndex = XPLMAppendMenuItem(XPLMFindPluginsMenu(), "XPython3", NULL, 1);
+  int menuIndex = XPLMAppendMenuItem(XPLMFindPluginsMenu(), pythonPluginName, NULL, 1);
 
-  setupMenu = XPLMCreateMenu("XPython3", XPLMFindPluginsMenu(), menuIndex, 
+  XPLMMenuID setupMenu = XPLMCreateMenu(pythonPluginName, XPLMFindPluginsMenu(), menuIndex, 
                          menuHandler, NULL);
   if(XPLMAppendMenuItemWithCommand_ptr){
     XPLMAppendMenuItemWithCommand_ptr(setupMenu, "Stop scripts", stopScripts);
@@ -386,8 +453,8 @@ PLUGIN_API void XPluginStop(void)
   if(allErrorsEncountered){
     fprintf(logFile, "Total errors encountered: %d\n", allErrorsEncountered);
   }
+  fprintf(logFile, "%s Stopped.\n", pythonPluginName);
   fclose(logFile);
-  printf("XPluginStop finished.\n");
 }
 
 static int commandHandler(XPLMCommandRef inCommand, XPLMCommandPhase inPhase, void *inRefcon)
@@ -417,15 +484,16 @@ PLUGIN_API int XPluginEnable(void)
   }
 
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
+    char *moduleName = objToStr(PyTuple_GetItem(pKey, 3));
     pRes = PyObject_CallMethod(pVal, "XPluginEnable", NULL);
     if(!(pRes && PyLong_Check(pRes))){
-      fprintf(logFile, "XPluginEnable didn't return integer.\n");
+      fprintf(logFile, "%s XPluginEnable returned '%s' rather than an integer.\n", moduleName, objToStr(pRes));
     }else{
       //printf("XPluginEnable returned %ld\n", PyLong_AsLong(pRes));
     }
     PyObject *err = PyErr_Occurred();
     if(err){
-      fprintf(logFile, "Error occured during the XPluginEnable call:\n");
+      fprintf(logFile, "Error occured during the %s XPluginEnable call:\n", moduleName);
       PyErr_Print();
     }else{
       Py_DECREF(pRes);
@@ -444,10 +512,14 @@ PLUGIN_API void XPluginDisable(void)
   }
 
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
+    char *moduleName = objToStr(PyTuple_GetItem(pKey, 3));
     pRes = PyObject_CallMethod(pVal, "XPluginDisable", NULL);
+    if(pRes != Py_None) {
+      fprintf(logFile, "%s XPluginDisable returned '%s' rather than None.\n", moduleName, objToStr(pRes));
+    }
     PyObject *err = PyErr_Occurred();
     if(err){
-      fprintf(logFile, "Error occured during the XPluginDisable call:\n");
+      fprintf(logFile, "Error occured during the %s XPluginDisable call:\n", moduleName);
       PyErr_Print();
     }else{
       Py_DECREF(pRes);
@@ -470,11 +542,17 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, vo
     param = Py_None;
     Py_INCREF(param);
   }
+  /* printf("XPPython3 received message, which we'll try to send to all plugins: From: %d, Msg: %ld, inParam: %ld\n", */
+  /*        inFromWho, inMessage, (long)inParam); */
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
+    char *moduleName = objToStr(PyTuple_GetItem(pKey, 3));
     pRes = PyObject_CallMethod(pVal, "XPluginReceiveMessage", "ilO", inFromWho, inMessage, param);
+    if (pRes != Py_None) {
+      fprintf(logFile, "%s XPluginReceiveMessage didn't return None.\n", moduleName);
+    }
     PyObject *err = PyErr_Occurred();
     if(err){
-      fprintf(logFile, "Error occured during the XPluginReceiveMessage call:\n");
+      fprintf(logFile, "Error occured during the %s XPluginReceiveMessage call:\n", moduleName);
       PyErr_Print();
     }else{
       Py_DECREF(pRes);
@@ -482,6 +560,3 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, vo
   }
   Py_DECREF(param);
 }
-
-
-

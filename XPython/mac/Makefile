@@ -1,11 +1,9 @@
 VPATH=..
-TARGET=Darwin
+TARGET=$(shell uname)
 
-.PHONY : do_all
-
-do_all : all
-	mkdir -p ../$(PLUGIN_PATH)/64
-	cp mac.xpl ../$(PLUGIN_PATH)
+all : xppython3.xpl
+	mkdir -p ../$(PLUGIN_PATH)/$(PLUGIN_DIR)
+	cp xppython3.xpl ../$(PLUGIN_PATH)/$(PLUGIN_DIR)
 
 include ../Makefile
 

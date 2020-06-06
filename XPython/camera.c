@@ -1,11 +1,11 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMCamera.h>
+#include "utils.h"
 
 static intptr_t camCntr;
 static PyObject *camDict;
@@ -92,11 +92,17 @@ static PyObject *XPLMControlCameraFun(PyObject *self, PyObject *args)
   int inHowLong;
   PyObject *pluginSelf, *controlFunc, *refcon;
   if(!PyArg_ParseTuple(args, "OiOO", &pluginSelf, &inHowLong, &controlFunc, &refcon)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "iOO", &inHowLong, &controlFunc, &refcon)){
+      return NULL;
+    }
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
   void *inRefcon = (void *)++camCntr;
   PyObject *refconObj = PyLong_FromVoidPtr(inRefcon);
-  PyDict_SetItem(camDict, refconObj, args);
+  PyObject *argsObj = Py_BuildValue("(OiOO)", pluginSelf, inHowLong, controlFunc, refcon);
+  PyDict_SetItem(camDict, refconObj, argsObj);
+  Py_DECREF(argsObj);
   XPLMControlCamera(inHowLong, cameraControl, inRefcon);
   Py_DECREF(refconObj);
   Py_RETURN_NONE;
@@ -122,23 +128,12 @@ static PyObject *XPLMIsCameraBeingControlledFun(PyObject *self, PyObject *args)
 static PyObject *XPLMReadCameraPositionFun(PyObject *self, PyObject *args)
 {
   (void) self;
-  PyObject *resArray = NULL;
-  bool returnRes = false;
-  if(PyTuple_Size(args) == 1){
-    if(!PyArg_ParseTuple(args, "O", &resArray)){
-      return NULL;
-    }
-  }
-  if(!resArray){
-    resArray = PyList_New(0);
-    returnRes = true;
-  }
-  if(!PyList_Check(resArray)){
-    PyErr_SetString(PyExc_RuntimeError ,"Argument must be list.\n");
-    return NULL;
-  }
+  (void) args;
+  PyObject *resArray = PyList_New(0);
+
   XPLMCameraPosition_t pos;
   XPLMReadCameraPosition(&pos);
+
   PyObject *tmp;
   tmp = PyFloat_FromDouble(pos.x);
   PyList_Append(resArray, tmp);
@@ -168,11 +163,7 @@ static PyObject *XPLMReadCameraPositionFun(PyObject *self, PyObject *args)
   PyList_Append(resArray, tmp);
   Py_DECREF(tmp);
 
-  if(returnRes){
-    return resArray;
-  }else{
-    Py_RETURN_NONE;
-  }
+  return resArray;
 }
 
 static PyObject *cleanup(PyObject *self, PyObject *args)
