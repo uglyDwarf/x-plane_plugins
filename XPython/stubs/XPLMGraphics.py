@@ -263,7 +263,7 @@ def XPLMLocalToWorld(inX, inY, inZ):
    NOTE: world coordinates are less precise than local coordinates; you should
    try to avoid round tripping from local to world and back.
    """
-   pass
+   return (float, float, float)
 
 ###############################################################################
 def XPLMDrawTranslucentDarkBox(inLeft, inTop, inRight, inBottom):

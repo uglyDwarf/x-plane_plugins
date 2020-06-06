@@ -43,12 +43,14 @@ XPluginReceiveMessage_proto XPluginReceiveMessage = NULL;
 
 #if LIN
 #if __x86_64__
-  const char plugin_path[] =  "./Resources/plugins/XPythonRevival/64/lin.xpl";
+  const char plugin_path[] =  "./Resources/plugins/XPPython3/64/lin.xpl";
 #else
-  const char plugin_path[] =  "./Resources/plugins/XPythonRevival/lin.xpl";
+  const char plugin_path[] =  "./Resources/plugins/XPPython3/lin.xpl";
 #endif
 #elif APL
-  const char plugin_path[] =  "./Resources/plugins/XPythonRevival/mac.xpl";
+  const char plugin_path[] =  "./Resources/plugins/XPPython3/mac.xpl";
+#elif IBM
+  const char plugin_path[] =  "./Resources/plugins/XPPython3/win.xpl";
 #endif
 
 void *loadFunction(void *libHandle, const char *funcName)
@@ -106,7 +108,7 @@ int main(int argc, char *argv[])
   initMapModule();
 
   int res = XPluginStart(outName, outSig, outDesc);
-  XPLMCommandRef reloadCmd = XPLMFindCommand("XPython3/reloadScripts");
+  XPLMCommandRef reloadCmd = XPLMFindCommand("XPPython3/reloadScripts");
   std::cout << "Y-Plane loaded plugin " << outName << "(" << res << ")" << std::endl;
   std::cout << "  Signature: " << outSig << std::endl;
   std::cout << "  Description:" << outDesc << std::endl;

@@ -1,8 +1,6 @@
-#define XPLM200
-#define XPLM210
-#define XPLM300
-#define XPLM301
-
+#include <stdint.h>
+#include <dlfcn.h>
+#include <sys/time.h>
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMProcessing.h>
 #include <XPLM/XPLMScenery.h>
@@ -13,7 +11,6 @@
 #include <XPLM/XPLMDisplay.h>
 #include <XPLM/XPLMPlanes.h>
 #include <Widgets/XPWidgets.h>
-#include <dlfcn.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>

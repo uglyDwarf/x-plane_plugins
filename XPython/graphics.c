@@ -1,8 +1,8 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMGraphics.h>
 #include "utils.h"
@@ -81,6 +81,7 @@ static PyObject *XPLMGenerateTextureNumbersFun(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 } 
 
+#if defined(XPLM_DEPRECATED)
 static PyObject *XPLMGetTextureFun(PyObject *self, PyObject *args)
 {
   (void) self;
@@ -92,6 +93,7 @@ static PyObject *XPLMGetTextureFun(PyObject *self, PyObject *args)
   int tex = XPLMGetTexture(inTexture);
   return PyLong_FromLong(tex);
 }
+#endif
 
 static PyObject *XPLMWorldToLocalFun(PyObject *self, PyObject *args)
 {
@@ -261,7 +263,9 @@ static PyMethodDef XPLMGraphicsMethods[] = {
   {"XPLMSetGraphicsState", XPLMSetGraphicsStateFun, METH_VARARGS, "Sets state of the graphics pipeline."},
   {"XPLMBindTexture2d", XPLMBindTexture2dFun, METH_VARARGS, "Bind a 2D texture."},
   {"XPLMGenerateTextureNumbers", XPLMGenerateTextureNumbersFun, METH_VARARGS, "Generates number of texture IDs."},
+#if defined(XPML_DEPRECATED)
   {"XPLMGetTexture", XPLMGetTextureFun, METH_VARARGS, "Get texture."},
+#endif
   {"XPLMWorldToLocal", XPLMWorldToLocalFun, METH_VARARGS, "Transform world coordinates to local."},
   {"XPLMLocalToWorld", XPLMLocalToWorldFun, METH_VARARGS, "Transform local coordinates to world."},
   {"XPLMDrawTranslucentDarkBox", XPLMDrawTranslucentDarkBoxFun, METH_VARARGS, "Draw translucent window."},
@@ -292,14 +296,19 @@ PyInit_XPLMGraphics(void)
   if(mod){
      /* The bitmap that contains window outlines, button outlines, fonts, etc.      */
     PyModule_AddIntConstant(mod, "xplm_Tex_GeneralInterface", xplm_Tex_GeneralInterface);
+#if defined(XPLM_DEPRECATED)
      /* The exterior paint for the user's aircraft (daytime).                       */
     PyModule_AddIntConstant(mod, "xplm_Tex_AircraftPaint", xplm_Tex_AircraftPaint);
+#endif
+#if defined(XPLM_DEPRECATED)
      /* The exterior light map for the user's aircraft.                             */
     PyModule_AddIntConstant(mod, "xplm_Tex_AircraftLiteMap", xplm_Tex_AircraftLiteMap);
 
+#endif
      /* Mono-spaced font for user interface.  Available in all versions of the SDK. */
     PyModule_AddIntConstant(mod, "xplmFont_Basic", xplmFont_Basic);
      /* Deprecated, do not use.                                                     */
+#if defined(XPLM_DEPRECATED)
     PyModule_AddIntConstant(mod, "xplmFont_Menus", xplmFont_Menus);
      /* Deprecated, do not use.                                                     */
     PyModule_AddIntConstant(mod, "xplmFont_Metal", xplmFont_Metal);
@@ -333,8 +342,11 @@ PyInit_XPLMGraphics(void)
     PyModule_AddIntConstant(mod, "xplmFont_SmallRound", xplmFont_SmallRound);
      /* Deprecated, do not use.                                                     */
     PyModule_AddIntConstant(mod, "xplmFont_Menus_Localized", xplmFont_Menus_Localized);
+#endif
+#if defined(XPLM200)
      /* Proportional UI font.                                                       */
     PyModule_AddIntConstant(mod, "xplmFont_Proportional", xplmFont_Proportional);
+#endif
   }
 
   return mod;

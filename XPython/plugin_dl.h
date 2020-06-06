@@ -1,11 +1,8 @@
 #ifndef PLUGIN_DL__H
 #define PLUGIN_DL__H
 
+#include <sys/time.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
-#define XPLM300
-#define XPLM301
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMProcessing.h>
 #include <XPLM/XPLMScenery.h>

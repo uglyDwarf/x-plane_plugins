@@ -72,22 +72,29 @@ void XPLMSpeakString(const char *inString)
   string = inString;
 }
 
+#if defined(XPLM_DEPRECATED)
+/* deprecated use XPLMCommandOnce */
 void XPLMCommandKeyStroke(XPLMCommandKeyID inKey)
 {
   key = inKey;
 }
+#endif
 
+#if defined(XPLM_DEPRECATED)
+/* Deprecated use XPLMCommandBegin */
 void XPLMCommandButtonPress(XPLMCommandButtonID inButton)
 {
   button = inButton;
   pressed = 1;
 }
 
+/* Deprecated use XPLMCommandEnd */
 void XPLMCommandButtonRelease(XPLMCommandButtonID inButton)
 {
   button = inButton;
   pressed = 0;
 }
+#endif
 
 const char *XPLMGetVirtualKeyDescription(char inVirtualKey)
 {

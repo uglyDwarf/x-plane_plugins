@@ -1,10 +1,8 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
-#define XPLM300
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMScenery.h>
 #include "utils.h"
@@ -134,8 +132,8 @@ static void objectLoaded(XPLMObjectRef inObject, void *inRefcon)
     printf("Unknown callback requested in objectLoaded(%p).\n", inRefcon);
     return;
   }
-  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(loaderCallbackInfo, 2),
-                                           object, PyTuple_GetItem(loaderCallbackInfo, 3), NULL);
+  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(loaderCallbackInfo, 1),
+                                           object, PyTuple_GetItem(loaderCallbackInfo, 2), NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     printf("Error occured during the flightLoop callback(inRefcon = %p):\n", inRefcon);
@@ -156,15 +154,19 @@ static PyObject *XPLMLoadObjectAsyncFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_RuntimeError , "XPLMLoadObjectAsync is available only in XPLM210 and up.");
     return NULL;
   }
-  const char *inPath = PyUnicode_AsUTF8(PyTuple_GetItem(args, 1));
+  PyObject *tmpObj = PyUnicode_AsUTF8String(PyTuple_GetItem(args, 0)); // because we shifted args
+  const char *inPath = PyBytes_AsString(tmpObj);
+
   void *refcon = (void *)++loaderCntr;
   PyObject *key = PyLong_FromVoidPtr(refcon);
   PyDict_SetItem(loaderDict, key, args);
   Py_DECREF(key);
   XPLMLoadObjectAsync_ptr(inPath, objectLoaded, refcon);
+  Py_DECREF(tmpObj);
   Py_RETURN_NONE;
 }
 
+#if defined(XPLM_DEPRECATED)
 static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
 {
   (void)self;
@@ -197,6 +199,7 @@ static PyObject *XPLMDrawObjectsFun(PyObject *self, PyObject *args)
   free(inLocations);
   Py_RETURN_NONE;
 }
+#endif
 
 static PyObject *XPLMUnloadObjectFun(PyObject *self, PyObject *args)
 {
@@ -230,13 +233,20 @@ static PyObject *XPLMLookupObjectsFun(PyObject *self, PyObject *args)
   float inLatitude, inLongitude;
   PyObject *enumerator;
   PyObject *ref;
-  if(!PyArg_ParseTuple(args, "OsffOO", &self, &inPath, &inLatitude, &inLongitude, &enumerator, &ref)){
-    return NULL;
+  PyObject *pluginSelf;
+  if(!PyArg_ParseTuple(args, "OsffOO", &pluginSelf, &inPath, &inLatitude, &inLongitude, &enumerator, &ref)){
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "sffOO", &inPath, &inLatitude, &inLongitude, &enumerator, &ref))
+      return NULL;
+    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
   void *myRef = (void *)++libEnumCntr;
   PyObject *refObj = PyLong_FromVoidPtr(myRef);
-  PyDict_SetItem(libEnumDict, refObj, args);
-  Py_DECREF(refObj);
+  
+  PyObject *argsObj = Py_BuildValue("(OsffOO)", pluginSelf, inPath, inLatitude, inLongitude, enumerator, ref);
+  PyDict_SetItem(libEnumDict, refObj, argsObj);
+  Py_DECREF(argsObj);
+  Py_XDECREF(refObj);
   int res = XPLMLookupObjects(inPath, inLatitude, inLongitude, libraryEnumerator, myRef);
   return PyLong_FromLong(res);
 }
@@ -261,7 +271,9 @@ static PyMethodDef XPLMSceneryMethods[] = {
   {"XPLMDegTrueToDegMagnetic", XPLMDegTrueToDegMagneticFun, METH_VARARGS, ""},
   {"XPLMLoadObject", XPLMLoadObjectFun, METH_VARARGS, ""},
   {"XPLMLoadObjectAsync", XPLMLoadObjectAsyncFun, METH_VARARGS, ""},
+#if defined(XPLM_DEPRECATED)
   {"XPLMDrawObjects", XPLMDrawObjectsFun, METH_VARARGS, ""},
+#endif
   {"XPLMUnloadObject", XPLMUnloadObjectFun, METH_VARARGS, ""},
   {"XPLMLookupObjects", XPLMLookupObjectsFun, METH_VARARGS, ""},
   {"cleanup", cleanup, METH_VARARGS, ""},
@@ -296,7 +308,7 @@ PyInit_XPLMScenery(void)
 
     PyModule_AddIntConstant(mod, "xplm_ProbeHitTerrain", xplm_ProbeHitTerrain);
     PyModule_AddIntConstant(mod, "xplm_ProbeError", xplm_ProbeError);
-    PyModule_AddIntConstant(mod, "xplm_ProbeMissed ", xplm_ProbeMissed );
+    PyModule_AddIntConstant(mod, "xplm_ProbeMissed", xplm_ProbeMissed );
   }
 
   return mod;

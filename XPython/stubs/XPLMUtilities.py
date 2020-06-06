@@ -422,6 +422,7 @@ def XPLMGetDirectoryContents(inDirectoryPath, inFirstReturn, inFileNameBufSize, 
     """
     pass
 
+
 def XPLMInitialized():
     """
     This function returns 1 if X-Plane has properly initialized the plug-in
@@ -435,6 +436,7 @@ def XPLMInitialized():
     """
     pass
 
+
 def XPLMGetVersions():
     """
     This routine returns the revision of both X-Plane and the XPLM DLL. All
@@ -445,12 +447,9 @@ def XPLMGetVersions():
     The most common use of this routine is to special-case around X-Plane
     version-specific behavior.
 
-    Returns tuple:
-      outXPlaneVersion
-      outXPLMVersion
-      outHostID
     """
-    pass
+    return tuple  # (outXPlaneVersion, outXPLMVersion, outHostID)
+
 
 def XPLMGetLanguage():
     """
@@ -578,6 +577,7 @@ def XPLMRegisterCommandHandler(inComand, inHandler, inBefore, inRefcon):
     """
     pass
 
+
 def XPLMUnregisterCommandHandler(inComand, inHandler, inBefore, inRefcon):
     """
     XPLMUnregisterCommandHandler removes a command callback registered with
@@ -586,3 +586,5 @@ def XPLMUnregisterCommandHandler(inComand, inHandler, inBefore, inRefcon):
     pass
 
 
+def XPPythonGetDicts():
+    return {}

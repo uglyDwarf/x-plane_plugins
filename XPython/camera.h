@@ -2,12 +2,10 @@
 #include <Python.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMCamera.h>
 
-static intptr camCntr;
+static intptr_t camCntr;
 static PyObject *camDict;
 
 static int cameraControl(XPLMCameraPosition_t *outCameraPosition, int inIsLosingControl, void *inRefcon)
@@ -26,7 +24,10 @@ static PyObject *XPLMDontControlCameraFun(PyObject *self, PyObject *args)
   int inHowLong;
   PyObject *pluginSelf, *controlFunc, *refcon;
   if(!PyArg_ParseTuple(args, "OiOO", &pluginSelf, &inHowLong, &controlFunc, &refcon)){
-    return NULL;
+    PyErr_Clear();
+    if(!PyArg_ParseTuple(args, "iOO", &inHowLong, &controlFunc, &refcon)){
+      return NULL;
+    }
   }
   void *inRefcon = (void *)++camCntr;
   PyObject *refconObj = PyLong_FromVoidPtr(inRefcon);

@@ -1,9 +1,8 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
 #include "plugin_dl.h"
 #include "utils.h"
 #include <XPLM/XPLMDefs.h>
@@ -34,10 +33,19 @@ static PyObject *XPLMCreateInstanceFun(PyObject *self, PyObject *args)
 
   Py_ssize_t i;
   PyObject *drefListTuple = PySequence_Tuple(drefList);
+  char *tmp;
+  PyObject *tmpObj;
   for(i = 0; i < len; ++i){
     PyObject *s = PyObject_Str(PyTuple_GetItem(drefListTuple, i));
-    datarefs[i] = PyUnicode_AsUTF8(s);
+    tmpObj = PyUnicode_AsUTF8String(s);
+    tmp = PyBytes_AsString(tmpObj);
     Py_DECREF(s);
+    if (PyErr_Occurred()) {
+      Py_DECREF(tmpObj);
+      return NULL;
+    }
+    datarefs[i] = tmp;
+    Py_DECREF(tmpObj);
   }
   Py_DECREF(drefListTuple);
   XPLMObjectRef inObj = refToPtr(obj, objRefName);

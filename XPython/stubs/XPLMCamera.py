@@ -28,7 +28,13 @@
  Use the XPLMDataAccess APIs to get information like the position of the
  aircraft, etc. for complex camera positioning.
 
- Camera position
+Note: if your goal is to move the virtual pilot in the cockpit, this API is
+not needed; simply update the datarefs for the pilot's head position.
+
+For custom exterior cameras, set the camera's mode to an external view first
+to get correct sound and 2-d panel bahavior.
+
+ Camera position XPLMCameraPosition_t
  It is a list containing a full specification of the camera. X, Y, and Z are
  the camera's position in OpenGL coordiantes; pitch, roll, and yaw are
  rotations from a camera facing flat north in degrees. Positive pitch means
@@ -48,22 +54,23 @@
 xplm_ControlCameraUntilViewChanges = 1
 # Control the camera until your plugin is disabled or another plugin forcably
 #   takes control.
-xplm_ControlCameraForever          = 2
+xplm_ControlCameraForever = 2
 
 
-def XPLMCameraControl_f(self, outCameraPosition, inIsLosingControl, inRefcon):
+def XPLMCameraControl_f(outCameraPosition, inIsLosingControl, inRefcon):
     """
     You use an XPLMCameraControl function to provide continuous control over
-    the camera. You are passed in a structure in which to put the new camera
+    the camera. You are passed outCameraPosition tuple in which to put the new camera
     position; modify it and return 1 to reposition the camera. Return 0 to
     surrender control of the camera; camera control will be handled by X-Plane
-    on this draw loop. The contents of the structure as you are called are
+    on this draw loop. The contents of the outCameraPosition structure as you are called are
     undefined.
 
     If X-Plane is taking camera control away from you, this function will be
     called with inIsLosingControl set to 1 and outCameraPosition None.
     """
-    pass
+    return int
+
 
 def XPLMControlCamera(inHowLong, inControlFunc, inRefcon):
     """
@@ -71,7 +78,7 @@ def XPLMControlCamera(inHowLong, inControlFunc, inRefcon):
     pass a non-null control function. Specify in inHowLong how long you'd like
     control (indefinitely or until a key is pressed).
     """
-    pass
+
 
 def XPLMDontControlCamera():
     """
@@ -82,25 +89,22 @@ def XPLMDontControlCamera():
     For maximum compatibility you should not use this routine unless you are in
     posession of the camera.
     """
-    pass
 
-def XPLMIsCameraBeingControlled(outCameraControlDuration)
+
+def XPLMIsCameraBeingControlled():
     """
     Return a tuple
     The first tuple element is 1 if the camera is being controlled, 0 otherwise.
-    If the first element is nonzero, the second one contains duration of the
-    current camera control.
+    If the first element is nonzero, the second one contains XPLMCameraControlDuration
+    of the current camera control.
     """
-    pass
+    return (int, int)
 
-def XPLMReadCameraPosition(outCameraPosition)
+
+def XPLMReadCameraPosition():
     """
     Read current camera position.
 
-    If passed a list outCameraPosition, fields x, y, z, pitch, headning,
-      roll and zoom are returned in the list.
-    Otherwise a list with the same fields is returned.
+    Returns XPLMCameraPosition_t list [x, y, z, pitch, heading, roll, zoom].
     """
-    pass
-
-
+    return [float, float, float, float, float, float, float]

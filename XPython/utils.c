@@ -1,5 +1,8 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <frameobject.h>
+#include <sys/time.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include "utils.h"
@@ -17,11 +20,25 @@ void dbg(const char *msg){
   }
 }
 
+char * objToStr(PyObject *item) {
+  // returns char * pointer to something in heap
+  PyObject *pyAsStr = PyObject_Str(item); // new object
+  PyObject *pyBytes = PyUnicode_AsEncodedString(pyAsStr, "utf-8", "replace"); // new object
+  char *res = PyBytes_AS_STRING(pyBytes);  //borrowed (from pyBytes)
+  res = strdup(res); // allocated on heap
+  Py_DECREF(pyAsStr);
+  Py_DECREF(pyBytes);
+  return res;
+}
+  
 bool objToList(PyObject *item, PyObject *list)
 {
   if(!PyList_Check(list)){
     return false;
   }
+  // because this is used to set return values, we're handed a python list [], we return
+  // the result as the FIRST list item. Now, if the user was careless & reused this
+  // result list and we merely Appended, then user would get ever-growing results list.
   if(PyList_Size(list) > 0){
     PyList_SetItem(list, 0, item);
   }else{
@@ -39,6 +56,41 @@ float getFloatFromTuple(PyObject *seq, Py_ssize_t i)
 long getLongFromTuple(PyObject *seq, Py_ssize_t i)
 {
   return PyLong_AsLong(PyTuple_GetItem(seq, i));
+}
+
+// To avoid Python code messing with raw pointers (when passed
+//   in using PyLong_FromVoidPtr), these are hidden in the capsules.
+
+PyObject *get_pluginSelf() {
+  // returns heap-allocated PyObject (or Py_RETURN_NONE)
+  PyGILState_STATE gilState = PyGILState_Ensure();
+  PyThreadState *tstate = PyThreadState_GET();
+  PyObject *last_filenameObj = Py_None;
+  if (NULL != tstate && NULL != tstate->frame) {
+    PyFrameObject *frame = tstate->frame;
+    while (NULL != frame) {
+      // creates new PyObject
+      last_filenameObj = frame->f_code->co_filename;
+      frame = frame->f_back;
+    }
+  }
+
+  char *last_filename = objToStr(last_filenameObj); // allocates new string on heap
+  char *token = strrchr(last_filename, '/');
+  if (token == NULL) {
+    token = strrchr(last_filename, '\\');
+    if (token == NULL) {
+      token = strrchr(last_filename, ':');
+    }
+  }
+  PyGILState_Release(gilState);
+  if (token) {
+    PyObject *ret = PyUnicode_FromString(++token); // return new item, we then free the char*
+    free(last_filename);
+    return ret;
+  }
+  free(last_filename);
+  Py_RETURN_NONE;
 }
 
 // To avoid Python code messing with raw pointers (when passed
@@ -95,5 +147,44 @@ void removePtrRef(void *ptr, PyObject *dict)
   Py_DECREF(key);
 }
 
+char *get_module(PyThreadState *tstate) {
+  /* returns filename of top most frame -- this will be the Plugin's file */
+  char *last_filename = "[unknown]";
+  if (NULL != tstate && NULL != tstate->frame) {
+    PyFrameObject *frame = tstate->frame;
+    
+    while (NULL != frame) {
+      // int line = frame->f_lineno;
+      /*
+        frame->f_lineno will not always return the correct line number
+        you need to call PyCode_Addr2Line().
+      */
+      // int line = PyCode_Addr2Line(frame->f_code, frame->f_lasti);
+      PyObject *temp_bytes = PyUnicode_AsEncodedString(frame->f_code->co_filename, "utf-8", "replace");
+      const char *filename = PyBytes_AsString(temp_bytes);
+      filename = strdup(filename);
+      last_filename = strdup(filename);
+      Py_DECREF(temp_bytes);
+
+      temp_bytes = PyUnicode_AsEncodedString(frame->f_code->co_name, "utf-8", "replace");
+      const char *funcname = PyBytes_AsString(temp_bytes);
+      funcname = strdup(funcname);
+      Py_DECREF(temp_bytes);
+      frame = frame->f_back;
+    }
+  }
+
+  char *token = strrchr(last_filename, '/');
+  if (token == NULL) {
+    token = strrchr(last_filename, '\\');
+    if (token == NULL) {
+      token = strrchr(last_filename, ':');
+    }
+  }
+  if (token) {
+    return (++token);
+  }
+  return "Unknown";
+}
 
 

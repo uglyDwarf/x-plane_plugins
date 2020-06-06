@@ -1,9 +1,8 @@
 #define _GNU_SOURCE 1
 #include <Python.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdbool.h>
-#define XPLM200
-#define XPLM210
 #include <XPLM/XPLMDefs.h>
 #include <XPLM/XPLMNavigation.h>
 #include "utils.h"
@@ -106,7 +105,9 @@ static PyObject *XPLMGetNavAidInfoFun(PyObject *self, PyObject *args)
   objToList(PyFloat_FromDouble(outHeading), heading);
   objToList(PyUnicode_DecodeUTF8(outID, strlen(outID), NULL), id);
   objToList(PyUnicode_DecodeUTF8(outName, strlen(outName), NULL), name);
-  objToList(PyUnicode_DecodeUTF8(outReg, strlen(outReg), NULL), reg);
+  // outReg is not a string, it's 1 for true an 0 for false
+  // objToList(PyUnicode_DecodeUTF8(outReg, strlen(outReg), NULL), reg);
+  objToList(PyLong_FromLong((int) outReg[0]), reg);
   Py_RETURN_NONE;
 }
 
