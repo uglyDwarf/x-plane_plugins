@@ -132,8 +132,12 @@ static void objectLoaded(XPLMObjectRef inObject, void *inRefcon)
     printf("Unknown callback requested in objectLoaded(%p).\n", inRefcon);
     return;
   }
-  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(loaderCallbackInfo, 1),
-                                           object, PyTuple_GetItem(loaderCallbackInfo, 2), NULL);
+  int base = 2;
+  if(PySequence_Size(loaderCallbackInfo) == 3){
+    base = 1;
+  }
+  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(loaderCallbackInfo, base),
+                                           object, PyTuple_GetItem(loaderCallbackInfo, base + 1), NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     printf("Error occured during the flightLoop callback(inRefcon = %p):\n", inRefcon);
@@ -154,15 +158,19 @@ static PyObject *XPLMLoadObjectAsyncFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_RuntimeError , "XPLMLoadObjectAsync is available only in XPLM210 and up.");
     return NULL;
   }
-  PyObject *tmpObj = PyUnicode_AsUTF8String(PyTuple_GetItem(args, 0)); // because we shifted args
-  const char *inPath = PyBytes_AsString(tmpObj);
+  PyObject *arg0;
+  if(PySequence_Size(args) == 4){
+    arg0 = PyTuple_GetItem(args, 1);
+  }else{
+    arg0 = PyTuple_GetItem(args, 0);
+  }
+  const char *inPath = asString(arg0);
 
   void *refcon = (void *)++loaderCntr;
   PyObject *key = PyLong_FromVoidPtr(refcon);
   PyDict_SetItem(loaderDict, key, args);
   Py_DECREF(key);
   XPLMLoadObjectAsync_ptr(inPath, objectLoaded, refcon);
-  Py_DECREF(tmpObj);
   Py_RETURN_NONE;
 }
 

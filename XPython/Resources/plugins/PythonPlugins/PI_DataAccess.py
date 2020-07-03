@@ -139,8 +139,8 @@ class PythonInterface(checkBase):
       fv = XPLMFindDataRef('test/floatVec')
       bv = XPLMFindDataRef('test/byteVec')
 
-      self.checkVal('Int dataref has should be good.', XPLMIsDataRefGood(i), 25348)
-      self.checkVal('Int dataref has should be writable.', XPLMCanWriteDataRef(i), 1)
+      self.checkVal('Int dataref should be good.', XPLMIsDataRefGood(i), True)
+      self.checkVal('Int dataref should be writable.', XPLMCanWriteDataRef(i), 1)
       self.checkVal('Int dataref has unexpected type.', XPLMGetDataRefTypes(i), xplmType_Int)
       newVal = XPLMGetDatai(i)
       self.checkVal('Int dataref value doesn\'t match.', newVal, self.intVal)

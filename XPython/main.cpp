@@ -43,14 +43,14 @@ XPluginReceiveMessage_proto XPluginReceiveMessage = NULL;
 
 #if LIN
 #if __x86_64__
-  const char plugin_path[] =  "./Resources/plugins/XPPython3/64/lin.xpl";
+  const char plugin_path[] =  "./Resources/plugins/XPPython3/lin_x64/xppython3.xpl";
 #else
-  const char plugin_path[] =  "./Resources/plugins/XPPython3/lin.xpl";
+  const char plugin_path[] =  "./Resources/plugins/XPPython3/lin_i686/xppython3.xpl";
 #endif
 #elif APL
-  const char plugin_path[] =  "./Resources/plugins/XPPython3/mac.xpl";
+  const char plugin_path[] =  "./Resources/plugins/XPPython3/mac_x64/xppython3.xpl";
 #elif IBM
-  const char plugin_path[] =  "./Resources/plugins/XPPython3/win.xpl";
+  const char plugin_path[] =  "./Resources/plugins/XPPython3/win_x64/xppython3.xpl";
 #endif
 
 void *loadFunction(void *libHandle, const char *funcName)

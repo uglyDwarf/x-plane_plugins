@@ -942,19 +942,18 @@ static PyObject *XPLMUnshareDataFun(PyObject *self, PyObject *args)
 
     // Look for inDataName match
     inDataNameObj = PyTuple_GetItem(pVal, 1);
-    inDataNameUTF8Obj = PyUnicode_AsUTF8String(inDataNameObj);
-    dict_inDataName = PyBytes_AsString(inDataNameUTF8Obj);
+    dict_inDataName = asString(inDataNameObj);
     if (PyErr_Occurred()) {
-      Py_DECREF(inDataNameUTF8Obj);
+      stringCleanup();
       Py_DECREF(pluginSelf);
       return NULL;
     }
     if(strcmp(inDataName, dict_inDataName) != 0){
       /* printf("inDataNames do not match '%s' - '%s'\n", inDataName, dict_inDataName);*/
-      Py_DECREF(inDataNameUTF8Obj);
+      stringCleanup();
       continue;
     }
-    Py_DECREF(inDataNameUTF8Obj);
+    stringCleanup();
     if(PyLong_AsLong(PyTuple_GetItem(pVal, 2)) != inDataType){
       /* printf("in data types do not match %d - %d\n", (int)PyLong_AsLong(PyTuple_GetItem(pVal, 2)), inDataType);*/
       continue;

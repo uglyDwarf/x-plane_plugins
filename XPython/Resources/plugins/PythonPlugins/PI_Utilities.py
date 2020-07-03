@@ -30,7 +30,7 @@ class PythonInterface(checkBase):
 
    def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
       if inMessage == 104:
-         return
+         return None
       self.checkVal('XPluginReceiveMessage: Unexpected inFromWho', inFromWho, 5)
       self.checkVal('XPluginReceiveMessage: Unexpected inMessage', inMessage, 103)
       self.checkVal('XPluginReceiveMessage: Unexpected inParam', inParam, 333)
@@ -172,6 +172,7 @@ class PythonInterface(checkBase):
       XPLMCommandEnd(self.cmdRef)
       self.checkVal('XPLMUnregisterCommandHandler behaviour incorrect (count).', self.cmdStatus[0], 0)
       self.checkVal('XPLMUnregisterCommandHandler behaviour incorrect (stages).', self.cmdStatus[1], 0)
+      return None
 
    def errorCallback(self, inMessage):
       self.dbgString = inMessage

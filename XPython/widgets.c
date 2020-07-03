@@ -73,7 +73,7 @@ int widgetCallback(XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t inPa
   }
 
   Py_ssize_t i;
-  int res;
+  int res = 0;
   PyObject *callback;
   for(i = 0; i < PyList_Size(callbackList); ++i){
     callback = PyList_GetItem(callbackList, i);

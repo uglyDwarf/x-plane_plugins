@@ -191,8 +191,11 @@ static PyObject *XPLMCreateMapLayerFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_RuntimeError , "XPLMCreateMapLayer is available only in XPLM300 and up.");
     return NULL;
   }
-  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &params)){
-    PyErr_Clear();
+  if(PySequence_Size(args) == 2){
+    if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &params)){
+      return NULL;
+    }
+  }else{
     if(!PyArg_ParseTuple(args, "O", &params)){
       return NULL;
     }
@@ -203,10 +206,9 @@ static PyObject *XPLMCreateMapLayerFun(PyObject *self, PyObject *args)
   void *ref = (void *)++mapCntr;
   inParams.structSize = sizeof(inParams);
 
-  PyObject *tmpObjMap = PyUnicode_AsUTF8String(PyTuple_GetItem(paramsTuple, 0));
-  char *tmpMap = PyBytes_AsString(tmpObjMap);
+  const char *tmpMap = asString(PyTuple_GetItem(paramsTuple, 0));
   if (PyErr_Occurred()) {
-    Py_DECREF(tmpObjMap);
+    stringCleanup();
     Py_DECREF(paramsTuple);
     return NULL;
   }
@@ -219,11 +221,9 @@ static PyObject *XPLMCreateMapLayerFun(PyObject *self, PyObject *args)
   inParams.labelCallback = mapLabelDrawingCallback;
   inParams.showUiToggle = PyLong_AsLong(PyTuple_GetItem(paramsTuple, 7));
 
-  PyObject *tmpObjLayerName = PyUnicode_AsUTF8String(PyTuple_GetItem(paramsTuple, 8));
-  char *tmpLayerName = PyBytes_AsString(tmpObjLayerName);
+  const char *tmpLayerName = asString(PyTuple_GetItem(paramsTuple, 8));
   if (PyErr_Occurred()) {
-    Py_DECREF(tmpObjMap);
-    Py_DECREF(tmpObjLayerName);
+    stringCleanup();
     Py_DECREF(paramsTuple);
     return NULL;
   }
@@ -233,8 +233,7 @@ static PyObject *XPLMCreateMapLayerFun(PyObject *self, PyObject *args)
 
   XPLMMapLayerID res = XPLMCreateMapLayer_ptr(&inParams);
   if(!res){
-    Py_DECREF(tmpObjMap);
-    Py_DECREF(tmpObjLayerName);
+    stringCleanup();
     Py_DECREF(paramsTuple);
     return NULL;
   }
@@ -242,8 +241,6 @@ static PyObject *XPLMCreateMapLayerFun(PyObject *self, PyObject *args)
   PyObject *refObj = PyLong_FromVoidPtr(ref);
   PyDict_SetItem(mapDict, refObj, paramsTuple);
   PyDict_SetItem(mapRefDict, resObj, refObj);
-  Py_DECREF(tmpObjMap);
-  Py_DECREF(tmpObjLayerName);
   Py_DECREF(paramsTuple);
   Py_DECREF(refObj);
   return resObj;

@@ -220,21 +220,19 @@ bool loadPIClass(const char *fname)
     goto cleanup;
   }
   
-  PyObject *u1 = NULL, *u2 = NULL, *u3 = NULL;
+  const char *u1, *u2, *u3;
 
-  u1 = PyUnicode_AsUTF8String(PyTuple_GetItem(pRes, 0));
-  u2 = PyUnicode_AsUTF8String(PyTuple_GetItem(pRes, 1));
-  u3 = PyUnicode_AsUTF8String(PyTuple_GetItem(pRes, 2));
+  u1 = asString(PyTuple_GetItem(pRes, 0));
+  u2 = asString(PyTuple_GetItem(pRes, 1));
+  u3 = asString(PyTuple_GetItem(pRes, 2));
   if(u1 && u2 && u3){
     fprintf(logFile, "%s initialized.\n", fname);
-    fprintf(logFile, "  Name: %s\n", PyBytes_AsString(u1));
-    fprintf(logFile, "  Sig:  %s\n", PyBytes_AsString(u2));
-    fprintf(logFile, "  Desc: %s\n", PyBytes_AsString(u3));
+    fprintf(logFile, "  Name: %s\n", u1);
+    fprintf(logFile, "  Sig:  %s\n", u2);
+    fprintf(logFile, "  Desc: %s\n", u3);
     fflush(logFile);
   }
-  Py_DECREF(u1);
-  Py_DECREF(u2);
-  Py_DECREF(u3);
+  stringCleanup();
 
   PyObject *pKey = PyTuple_New(4);  /* pKey is new reference */
 

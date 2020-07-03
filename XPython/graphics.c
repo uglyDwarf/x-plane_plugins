@@ -263,7 +263,7 @@ static PyMethodDef XPLMGraphicsMethods[] = {
   {"XPLMSetGraphicsState", XPLMSetGraphicsStateFun, METH_VARARGS, "Sets state of the graphics pipeline."},
   {"XPLMBindTexture2d", XPLMBindTexture2dFun, METH_VARARGS, "Bind a 2D texture."},
   {"XPLMGenerateTextureNumbers", XPLMGenerateTextureNumbersFun, METH_VARARGS, "Generates number of texture IDs."},
-#if defined(XPML_DEPRECATED)
+#if defined(XPLM_DEPRECATED)
   {"XPLMGetTexture", XPLMGetTextureFun, METH_VARARGS, "Get texture."},
 #endif
   {"XPLMWorldToLocal", XPLMWorldToLocalFun, METH_VARARGS, "Transform world coordinates to local."},

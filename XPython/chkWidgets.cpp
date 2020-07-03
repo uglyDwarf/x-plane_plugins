@@ -18,8 +18,8 @@
 static std::map<class widget *, int> widgets;
 
 
-static int int0, int1, int2, int3;
-static XPLMDataRef d0, d1, d2, d3;
+static int int0, int1, int2, int3, int4;
+static XPLMDataRef d0, d1, d2, d3, d4;
 
 class widget;
 static widget *frontWidget = NULL;
@@ -35,6 +35,7 @@ void initWidgetsModule()
   d1 = registerROAccessor("widgets/int1", int1);
   d2 = registerROAccessor("widgets/int2", int2);
   d3 = registerROAccessor("widgets/int3", int3);
+  d4 = registerROAccessor("widgets/int4", int4);
 }
 
 void cleanupWidgetsModule()
@@ -43,6 +44,7 @@ void cleanupWidgetsModule()
   XPLMUnregisterDataAccessor(d1);
   XPLMUnregisterDataAccessor(d2);
   XPLMUnregisterDataAccessor(d3);
+  XPLMUnregisterDataAccessor(d4);
 }
 
 class widget{
@@ -232,7 +234,7 @@ XPWidgetID XPCreateWidget(int inLeft, int inTop, int inRight, int inBottom, int 
 {
   widget *tmp = new widget(inLeft, inTop, inRight, inBottom, inVisible, inDescriptor, inIsRoot, inContainer, inClass);
   tmp->addCallback(widgetCbk);
-  int0 = inIsRoot;
+  int4 = inIsRoot;
   int1 = inClass;
   if(inContainer != NULL){
     static_cast<widget*>(inContainer)->addChild(tmp);
@@ -244,7 +246,7 @@ XPWidgetID XPCreateCustomWidget(int inLeft, int inTop, int inRight, int inBottom
                           int inIsRoot, XPWidgetID inContainer, XPWidgetFunc_t inCallback)
 {
   widget *tmp = new widget(inLeft, inTop, inRight, inBottom, inVisible, inDescriptor, inIsRoot, inContainer, 11, inCallback);
-  int0 = inIsRoot;
+  int4 = inIsRoot;
   if(inContainer != NULL){
     static_cast<widget*>(inContainer)->addChild(tmp);
   }

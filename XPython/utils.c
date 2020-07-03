@@ -187,4 +187,64 @@ char *get_module(PyThreadState *tstate) {
   return "Unknown";
 }
 
+// Motivation:
+// On Windows we are limited to the restricted API, that doesn't have
+//   the PyUnicode_AsUTF8 available; instead we are forced to use the
+//   PyUnicode_AsUTF8String/PyBytes_AsString combo, which creates
+//   a Unicode object, that must be released when no longer needed
+//   (e.g. after the XPLM... call).
+// The implementation puts the object to the stringStash and the cleanup
+//   must be called to release it; when more than a signle string is
+//   needed, the previous content of the stringStash is appended to the
+//   stringList, that will be destroyed once the cleanup is called,
+//   taking all the allocated object with itself.
+// This way, single string creation doesn't involve any list operations,
+//   which should be more optimal, than putting everything to the list.
+//
+// TODO: Should this all be guarded by a gil or a mutex of some kind?
+// For now, since XPLM functions should be called only from the main
+//   thread, I'll leave it as it is...
+
+// Last UTF8 string created
+static PyObject *stringStash = NULL;
+// List of previous 
+static PyObject *stringList = NULL;
+
+const char *asString(PyObject *obj)
+{
+  PyObject *str = PyObject_Str(obj);
+  if(!str){
+    return NULL;
+  }
+  PyObject *utfStr = PyUnicode_AsUTF8String(obj);
+  Py_DECREF(str);
+  if(!utfStr){
+    return NULL;
+  }
+  if(stringStash){
+    // Something is already in a stash
+    if(stringList == NULL){
+      stringList = PyList_New(1);
+      if(!stringList){
+        return NULL;
+      }
+      PyList_SET_ITEM(stringList, 0, stringStash);
+    }else{
+      PyList_Append(stringList, stringStash);
+      // If this fails, we leak the object!
+      // TODO: is there anything we can do about it?
+    }
+  }
+  stringStash = utfStr;
+
+  return PyBytes_AsString(stringStash);
+}
+
+void stringCleanup(void)
+{
+  Py_XDECREF(stringStash);
+  stringStash = NULL;
+  Py_XDECREF(stringList);
+  stringList = NULL;
+}
 

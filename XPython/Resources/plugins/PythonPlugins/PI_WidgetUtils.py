@@ -101,7 +101,7 @@ class PythonInterface(checkBase):
       parent = XPGetParentWidget(self.standalone)
       self.checkVal('Sta coordinates', coords, [self.staL, self.staT, self.staR, self.staB])
       self.checkVal('Sta descriptor', descriptor[0], self.staDescriptor)
-      self.checkVal('Sta parent', parent, 0)
+      self.checkVal('Sta parent', parent, None)
       self.checkVal('Sta isRoot', XPGetWidgetProperty(self.standalone, xpProperty_UserStart, None), self.staIsRoot)
       self.checkVal('Sta class', XPGetWidgetProperty(self.standalone, xpProperty_UserStart + 1, None), self.staClass)
 
@@ -149,5 +149,5 @@ class PythonInterface(checkBase):
       XPDestroyWidget(self, self.standalone, 1)
       XPDestroyWidget(self, self.parentWidget, 1)
 
-      return 1.0
+      return None
 

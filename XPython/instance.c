@@ -33,24 +33,21 @@ static PyObject *XPLMCreateInstanceFun(PyObject *self, PyObject *args)
 
   Py_ssize_t i;
   PyObject *drefListTuple = PySequence_Tuple(drefList);
-  char *tmp;
-  PyObject *tmpObj;
+  const char *tmp;
   for(i = 0; i < len; ++i){
-    PyObject *s = PyObject_Str(PyTuple_GetItem(drefListTuple, i));
-    tmpObj = PyUnicode_AsUTF8String(s);
-    tmp = PyBytes_AsString(tmpObj);
-    Py_DECREF(s);
+    PyObject *s = PyTuple_GetItem(drefListTuple, i);
+    tmp = asString(s);
     if (PyErr_Occurred()) {
-      Py_DECREF(tmpObj);
+      stringCleanup();
       return NULL;
     }
     datarefs[i] = tmp;
-    Py_DECREF(tmpObj);
   }
   Py_DECREF(drefListTuple);
   XPLMObjectRef inObj = refToPtr(obj, objRefName);
 
   XPLMInstanceRef res = XPLMCreateInstance_ptr(inObj, datarefs);
+  stringCleanup();
   free(datarefs);
   return getPtrRefOneshot(res, instanceRefName);
 }

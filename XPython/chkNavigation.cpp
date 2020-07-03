@@ -79,7 +79,7 @@ void XPLMGetNavAidInfo(XPLMNavRef inRef, XPLMNavType *outType, float *outLatitud
   *outHeading = lat * lon;
   strcpy(outID, id.c_str());
   strcpy(outName, name.c_str());
-  strcpy(outReg, "LKTB");
+  outReg[0] = 1;
 }
 
 int XPLMCountFMSEntries(void)

@@ -49,10 +49,10 @@ class PythonInterface(checkBase):
                     duration, self.howLong)
 
       testPos = []
-      XPLMReadCameraPosition(testPos)
+      testPos = XPLMReadCameraPosition(testPos)
       self.checkVal('XPLMReadCameraPosition outCameraPosition incorrect', testPos, self.pos)
 
-      return 1.0
+      return None
 
    def cameraCallback(self, outCameraPosition, inIsLosingControl, inRefcon):
       self.cbkCalled |= 1;

@@ -32,7 +32,7 @@ class PythonInterface(checkBase):
 
    def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
       if self.versions[1] < 300:
-         return 1.0
+         return None
 
       self.str0Dref = XPLMFindDataRef('map.str0')
       self.int0Dref = XPLMFindDataRef('map.int0')
@@ -53,9 +53,10 @@ class PythonInterface(checkBase):
                      self.prepCacheCallback, self.drawCallback, self.iconCallback,
                      self.labelCallback, 5545, "Superlayer", self.layerList)
       self.layer = XPLMCreateMapLayer(self, self.params)
-      self.checkVal('XPLMCreateMapLayer:structSize', XPLMGetDatai(self.int0Dref), 88)
+      # Can't use that one, since the size depends on the architecture (32/64 bits)
+      #self.checkVal('XPLMCreateMapLayer:structSize', XPLMGetDatai(self.int0Dref), 88)
       self.checkVal('XPLMCreateMapLayer:layerType', XPLMGetDatai(self.int1Dref), self.params[1])
-      self.checkVal('XPLMCreateMapLayer:structSize', self.getString(self.str0Dref), self.params[8])
+      self.checkVal('XPLMCreateMapLayer:layerName', self.getString(self.str0Dref), self.params[8])
 
       mapId = 'Hi-Alt Map'
       res = XPLMMapExists(mapId)
@@ -67,7 +68,7 @@ class PythonInterface(checkBase):
       self.checkVal('Callbacks', self.layerList, ['Preparing cache', 'Drawing', 'Icon', 'Label', 'Layer will be deleted'])
       self.checkVal('Callbacks', self.mapCreationList, ["Map En-route map created"])
 
-      return 1.0
+      return None
 
    def mapCreationCallback(self, mapIdentifier, inRefcon):
       inRefcon.append("Map {} created".format(mapIdentifier))
@@ -85,7 +86,6 @@ class PythonInterface(checkBase):
       self.checkVal('prepCacheCallback.inLayer', inLayer, self.layer)
       self.checkVal('prepCacheCallback:inTotalMapBoundsLeftTopRightBottom',
                     inTotalMapBoundsLeftTopRightBottom, [b + 1, b + 2, b + 3, b + 4])
-      self.checkVal('prepCacheCallback:projection', projection, b1 + 5)
 
    def drawCallback(self, inLayer, inMapBoundsLeftTopRightBottom, zoomRatio,
                     mapUnitsPerUserInterfaceUnit, mapStyle, projection, inRefcon):
@@ -98,33 +98,24 @@ class PythonInterface(checkBase):
       self.checkVal('drawCallback:zoomRatio', zoomRatio, b1 + 6)
       self.checkVal('drawCallback:mapUnitsPerUserInterfaceUnit', mapUnitsPerUserInterfaceUnit, b1 + 10)
       self.checkVal('drawCallback:mapStyle', mapStyle, b1 + 13)
-      self.checkVal('drawCallback:projection', projection, b1 + 5)
 
-      projection = 76543
       latitude = 33.6
       longitude = 51.3
       (outX, outY) = ([], [])
       XPLMMapProject(projection, latitude, longitude, outX, outY)
-      self.checkVal('XPLMMapProject:projection', XPLMGetDatai(self.int0Dref), projection)
       self.checkVal('XPLMMapProject:rest', (outX[0], outY[0]), (latitude * 2.5,  longitude * 3.6))
    
-      projection = 76543
       (mapX, mapY) = (54.8, 32.1)
       (outLatitude, outLongitude) = ([], [])
       XPLMMapUnproject(projection, mapX, mapY, outLatitude, outLongitude)
-      self.checkVal('XPLMMapUnproject:projection', XPLMGetDatai(self.int0Dref), projection)
       self.checkVal('XPLMMapUnproject:rest', (outLatitude[0], outLongitude[0]), (mapY * 4.7,  mapX * 5.8))
 
-      projection = 6543
       (mapX, mapY) = (4.8, 2.1)
       res = XPLMMapScaleMeter(projection, mapX, mapY)
-      self.checkVal('XPLMMapScaleMeter:projection', XPLMGetDatai(self.int0Dref), projection)
       self.checkVal('XPLMMapScaleMeter:rest', res, 2 * mapX - mapY)
 
-      projection = 4321
       (mapX, mapY) = (64.8, 12.1)
       res = XPLMMapGetNorthHeading(projection, mapX, mapY)
-      self.checkVal('XPLMMapGetNorthHeading:projection', XPLMGetDatai(self.int0Dref), projection)
       self.checkVal('XPLMMapGetNorthHeading:rest', res, 2 * mapY - mapX)
 
    def iconCallback(self, inLayer, inMapBoundsLeftTopRightBottom, zoomRatio,
@@ -138,7 +129,6 @@ class PythonInterface(checkBase):
       self.checkVal('iconCallback:zoomRatio', zoomRatio, b1 + 6)
       self.checkVal('iconCallback:mapUnitsPerUserInterfaceUnit', mapUnitsPerUserInterfaceUnit, b1 + 10)
       self.checkVal('iconCallback:mapStyle', mapStyle, b1 + 13)
-      self.checkVal('iconCallback:projection', projection, b1 + 5)
 
       inPngPath = 'Resources/icons.png'
       (s, t, ds, dt) = (335, 224, 16, 32)
@@ -169,7 +159,6 @@ class PythonInterface(checkBase):
       self.checkVal('labelCallback:zoomRatio', zoomRatio, b1 + 6)
       self.checkVal('labelCallback:mapUnitsPerUserInterfaceUnit', mapUnitsPerUserInterfaceUnit, b1 + 10)
       self.checkVal('labelCallback:mapStyle', mapStyle, b1 + 13)
-      self.checkVal('labelCallback:projection', projection, b1 + 5)
 
       inText = 'Resources/icons.png'
       (mapX, mapY) = (123.2, 657.7)

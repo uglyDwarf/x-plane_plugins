@@ -137,27 +137,27 @@ void XPLMDrawMapLabel(XPLMMapLayerID inLayer, const char *inText, float mapX, fl
 
 void XPLMMapProject(XPLMMapProjectionID projection, double latitude, double longitude, float *outX, float *outY)
 {
-  int0 = (intptr_t)projection;
+  assert(projection == commonProj);
   *outX = latitude * 2.5;
   *outY = longitude * 3.6;
 }
 
 void XPLMMapUnproject(XPLMMapProjectionID projection, float mapX, float mapY, double *outLatitude, double *outLongitude)
 {
-  int0 = (intptr_t)projection;
+  assert(projection == commonProj);
   *outLatitude = mapY * 4.7;
   *outLongitude = mapX * 5.8;
 }
 
 float XPLMMapScaleMeter(XPLMMapProjectionID projection, float mapX, float mapY)
 {
-  int0 = (intptr_t)projection;
+  assert(projection == commonProj);
   return 2 * mapX - mapY;
 }
 
 float XPLMMapGetNorthHeading(XPLMMapProjectionID projection, float mapX, float mapY)
 {
-  int0 = (intptr_t)projection;
+  assert(projection == commonProj);
   return 2 * mapY - mapX;
 }
 #endif

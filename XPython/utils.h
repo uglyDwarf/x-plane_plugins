@@ -25,4 +25,8 @@ char *get_module(PyThreadState *tstate);
 PyObject *get_pluginSelf(/*PyThreadState *tstate*/);
 char *objToStr(PyObject *item);
 
+// Encapsulating the PyUnicode_AsUTF8/PyUnicode_AsUTF8String mess
+const char *asString(PyObject *obj);
+void stringCleanup(void);
+
 #endif

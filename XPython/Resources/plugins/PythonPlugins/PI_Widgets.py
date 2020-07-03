@@ -36,7 +36,8 @@ class PythonInterface(checkBase):
       self.int1Dref = XPLMFindDataRef('widgets/int1')
       self.int2Dref = XPLMFindDataRef('widgets/int2')
       self.int3Dref = XPLMFindDataRef('widgets/int3')
-      
+      self.int4Dref = XPLMFindDataRef('widgets/int4')
+
       self.widgetLeft = 300
       self.widgetTop = 450
       self.widgetRight = 400
@@ -44,7 +45,7 @@ class PythonInterface(checkBase):
       self.widgetVisible = 107
       self.widgetDesc = 'Awesome widget'
       self.widgetIsRoot = 108
-      self.widgetContainer = 0
+      self.widgetContainer = None
       self.widgetClass = 109
       self.widget = XPCreateWidget(self.widgetLeft, self.widgetTop, self.widgetRight, self.widgetBottom,
                                    self.widgetVisible, self.widgetDesc, self.widgetIsRoot,
@@ -60,7 +61,7 @@ class PythonInterface(checkBase):
       res = XPGetWidgetDescriptor(self.widget, desc, 1024)
       self.checkVal('widget descriptor length', res, len(self.widgetDesc))
       self.checkVal('widget descriptor', desc[0], self.widgetDesc)
-      self.checkVal('widget isRoot', XPLMGetDatai(self.int0Dref), self.widgetIsRoot)
+      self.checkVal('widget isRoot', XPLMGetDatai(self.int4Dref), self.widgetIsRoot)
       self.checkVal('widget container', XPGetParentWidget(self.widget), self.widgetContainer)
       self.checkVal('widget class', XPLMGetDatai(self.int1Dref), self.widgetClass)
 
@@ -78,8 +79,6 @@ class PythonInterface(checkBase):
                                               self.c_widgetVisible, self.c_widgetDesc,
                                               self.c_widgetIsRoot, self.c_widgetContainer,
                                               self.c_widgetCallback)
-      
-     
       left = []; top = []; right = []; bottom = []
       XPGetWidgetGeometry(self.cust_widget, left, top, right, bottom)
       self.checkVal('widget left', left[0], self.c_widgetLeft)
@@ -91,7 +90,7 @@ class PythonInterface(checkBase):
       res = XPGetWidgetDescriptor(self.cust_widget, desc, 1024)
       self.checkVal('widget descriptor length', res, len(self.c_widgetDesc))
       self.checkVal('widget descriptor', desc[0], self.c_widgetDesc)
-      self.checkVal('widget isRoot', XPLMGetDatai(self.int0Dref), self.c_widgetIsRoot)
+      self.checkVal('widget isRoot', XPLMGetDatai(self.int4Dref), self.c_widgetIsRoot)
       self.checkVal('widget container', XPGetParentWidget(self.cust_widget), self.c_widgetContainer)
       self.message = 3456
       self.mode = 4567
@@ -181,7 +180,7 @@ class PythonInterface(checkBase):
       self.checkVal('XPLoseKeyboardFocus', XPGetWidgetWithFocus(), self.widget)
 
       try:
-        self.checkVal('XPGetWidgetUnderlyingWindow', XPGetWidgetUnderlyingWindow(self.widget), self.widget + 333)
+        self.checkVal('XPGetWidgetUnderlyingWindow', XPGetWidgetUnderlyingWindow(self.widget), None)
       except RuntimeError as re:
          if (self.versions[1] >= 301) or (str(re) != 'XPGetWidgetUnderlyingWindow is available only in XPLM301 and up.'):
             raise
@@ -231,10 +230,10 @@ class PythonInterface(checkBase):
       self.checkVal('XPDestroyWidget destroyChildren', XPLMGetDatai(self.int0Dref), self.destroyChildren)
       self.checkVal('XPDestroyWidget remaining', XPLMGetDatai(self.int1Dref), 0)
 
-      return 1.0
+      return None
 
    def customCallback(self, inMessage, inWidget, inParam1, inParam2):
-      if inMessage == xpMsg_Destroy:
+      if (inMessage == xpMsg_Destroy) or (inMessage == xpMsg_Create):
          return 0
       self.checkVal('callback\'s message', inMessage, self.message)
       self.checkVal('callback\'s params', (inParam1, inParam2), self.params)

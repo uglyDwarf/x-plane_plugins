@@ -63,7 +63,7 @@ class PythonInterface(checkBase):
       self.checkVal('XPLMGetNavAidInfo outHeading doesn\'t match', outHeading[0], lat * lon)
       self.checkVal('XPLMGetNavAidInfo outID doesn\'t match', outID[0], idStr)
       self.checkVal('XPLMGetNavAidInfo outName doesn\'t match', outName[0], name)
-      self.checkVal('XPLMGetNavAidInfo outReg doesn\'t match', outReg[0], "LKTB")
+      self.checkVal('XPLMGetNavAidInfo outReg doesn\'t match', outReg[0], 1)
 
       fmsEntry = 4321
       destFmsEntry = 5432

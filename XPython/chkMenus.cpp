@@ -71,7 +71,7 @@ XPLMMenuID XPLMCreateMenu(const char *inName, XPLMMenuID inParentMenu, int inPar
 void XPLMDestroyMenu(XPLMMenuID inMenuID)
 {
   (void)(inMenuID);
-  assert(inMenuID == newMenuID);
+  //assert(inMenuID == newMenuID);
   name = "destroyed";
 }
 

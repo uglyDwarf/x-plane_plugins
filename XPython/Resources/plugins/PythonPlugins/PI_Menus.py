@@ -57,8 +57,9 @@ class PythonInterface(checkBase):
       self.checkVal('XPLMAppendMenuItem didn\'t call the menuHandler.', self.menuRef, [1])
       self.checkVal('XPLMAppendMenuItem didn\'t call the menuHandler.', self.itemRef, [16])
 
+      acfMenu = None
       try:
-         self.checkVal('XPLMFindAircraftMenu', XPLMFindAircraftMenu(), 0x11223344)
+         acfMenu = XPLMFindAircraftMenu()
       except RuntimeError as re:
          if (self.versions[1] >= 300) or (str(re) != 'XPLMFindAircraftMenu is available only in XPLM300 and up.'):
             raise
@@ -70,15 +71,16 @@ class PythonInterface(checkBase):
       self.cmdStatus = [0, 0]
       XPLMRegisterCommandHandler(self, self.cmdRef, self.cmdHandler, 1, self.cmdStatus)
       commandMenuName = 'Cmd Menu'
-      try:
-         res = XPLMAppendMenuItemWithCommand(menu, commandMenuName, self.cmdRef)
-      except RuntimeError as re:
-         if (self.versions[1] >= 300) or (str(re) != 'XPLMAppendMenuItemWithCommand is available only in XPLM300 and up.'):
-            raise
-      else:
-         self.checkVal('XPLMAppendMenuItemWithCommand:res', res, 2)
-         self.checkVal('XPLMAppendMenuItemWithCommand:name', self.getString(name), commandMenuName)
-         self.checkVal('XPLMAppendMenuItemWithCommand:command', self.cmdStatus, [2, 5])
+      if acfMenu is not None:
+          try:
+             res = XPLMAppendMenuItemWithCommand(acfMenu, commandMenuName, self.cmdRef)
+          except RuntimeError as re:
+             if (self.versions[1] >= 300) or (str(re) != 'XPLMAppendMenuItemWithCommand is available only in XPLM300 and up.'):
+                raise
+          else:
+             self.checkVal('XPLMAppendMenuItemWithCommand:res', res, 2)
+             self.checkVal('XPLMAppendMenuItemWithCommand:name', self.getString(name), commandMenuName)
+             self.checkVal('XPLMAppendMenuItemWithCommand:command', self.cmdStatus, [2, 5])
       XPLMUnregisterCommandHandler(self, self.cmdRef, self.cmdHandler, 1, self.cmdStatus)
 
       XPLMAppendMenuSeparator(menu)
@@ -121,7 +123,7 @@ class PythonInterface(checkBase):
       self.checkVal('XPLMDestroyMenu wasn\'t called.', self.getString(name), "destroyed")
 
 
-      return
+      return None
 
    def menuHandler(self, inMenuRef, inItemRef):
       inMenuRef[0] += 1

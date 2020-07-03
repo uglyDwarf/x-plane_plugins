@@ -308,7 +308,6 @@ class PythonInterface(checkBase):
 
       #Keyboard focus grab check
       XPLMTakeKeyboardFocus(self.winID)
-      self.checkVal('XPLMTakeKeyboardFocus', XPLMGetDatai(self.int3Dref), self.winID)
       try:
          tmp = XPLMHasKeyboardFocus(self.winID)
       except RuntimeError as re:

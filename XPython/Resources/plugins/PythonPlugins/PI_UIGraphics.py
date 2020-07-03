@@ -137,6 +137,6 @@ class PythonInterface(checkBase):
       self.checkVal('XPDrawTrack inValue', XPLMGetDatai(self.int0Dref), val)
       self.checkVal('XPDrawTrack inStyle', XPLMGetDatai(self.int1Dref), style)
 
-      return 1.0
+      return None
 
 
