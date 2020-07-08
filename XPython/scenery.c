@@ -242,10 +242,14 @@ static PyObject *XPLMLookupObjectsFun(PyObject *self, PyObject *args)
   PyObject *enumerator;
   PyObject *ref;
   PyObject *pluginSelf;
-  if(!PyArg_ParseTuple(args, "OsffOO", &pluginSelf, &inPath, &inLatitude, &inLongitude, &enumerator, &ref)){
-    PyErr_Clear();
-    if(!PyArg_ParseTuple(args, "sffOO", &inPath, &inLatitude, &inLongitude, &enumerator, &ref))
+  if(PyTuple_Size(args) == 6){
+    if(!PyArg_ParseTuple(args, "OsffOO", &pluginSelf, &inPath, &inLatitude, &inLongitude, &enumerator, &ref)){
       return NULL;
+    }
+  }else{
+    if(!PyArg_ParseTuple(args, "sffOO", &inPath, &inLatitude, &inLongitude, &enumerator, &ref)){
+      return NULL;
+    }
     pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
   void *myRef = (void *)++libEnumCntr;

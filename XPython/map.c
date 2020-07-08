@@ -255,8 +255,11 @@ static PyObject *XPLMDestroyMapLayerFun(PyObject *self, PyObject *args)
     PyErr_SetString(PyExc_RuntimeError , "XPLMDestroyMapLayer is available only in XPLM300 and up.");
     return NULL;
   }
-  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &layer)){
-    PyErr_Clear();
+  if(PyTuple_Size(args) == 2){
+    if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &layer)){
+      return NULL;
+    }
+  }else{
     if(!PyArg_ParseTuple(args, "O", &layer)){
       return NULL;
     }

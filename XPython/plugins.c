@@ -189,10 +189,14 @@ PyObject *XPLMEnumerateFeaturesFun(PyObject *self, PyObject *args)
   PyObject *fun;
   PyObject *ref;
   PyObject *pluginSelf;
-  if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &fun, &ref)){
-    PyErr_Clear();
-    if(!PyArg_ParseTuple(args, "OO", &fun, &ref))
+  if(PyTuple_Size(args) == 3){
+    if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &fun, &ref)){
       return NULL;
+    }
+  }else{
+    if(!PyArg_ParseTuple(args, "OO", &fun, &ref)){
+      return NULL;
+    }
     pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
 

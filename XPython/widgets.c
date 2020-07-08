@@ -144,9 +144,12 @@ static PyObject *XPCreateCustomWidgetFun(PyObject *self, PyObject *args)
   const char *inDescriptor;
   PyObject *container;
   PyObject *inCallback;
-  if(!PyArg_ParseTuple(args, "OiiiiisiOO", &pluginSelf, &inLeft, &inTop, &inRight, &inBottom, &inVisible, &inDescriptor,
-                       &inIsRoot, &container, &inCallback)){
-    PyErr_Clear();
+  if(PyTuple_Size(args) == 10){
+    if(!PyArg_ParseTuple(args, "OiiiiisiOO", &pluginSelf, &inLeft, &inTop, &inRight, &inBottom, &inVisible, &inDescriptor,
+                         &inIsRoot, &container, &inCallback)){
+      return NULL;
+    }
+  }else{
     if(!PyArg_ParseTuple(args, "iiiiisiOO", &inLeft, &inTop, &inRight, &inBottom, &inVisible, &inDescriptor,
                          &inIsRoot, &container, &inCallback)){
       return NULL;
@@ -180,8 +183,11 @@ static PyObject *XPDestroyWidgetFun(PyObject *self, PyObject *args)
   (void) self;
   PyObject *widget, *pluginSelf;
   int inDestroyChildren;
-  if(!PyArg_ParseTuple(args, "OOi", &pluginSelf, &widget, &inDestroyChildren)){
-    PyErr_Clear();
+  if(PyTuple_Size(args) == 3){
+    if(!PyArg_ParseTuple(args, "OOi", &pluginSelf, &widget, &inDestroyChildren)){
+      return NULL;
+    }
+  }else{
     if(!PyArg_ParseTuple(args, "Oi", &widget, &inDestroyChildren)){
       return NULL;
     }
@@ -532,8 +538,11 @@ static PyObject *XPAddWidgetCallbackFun(PyObject *self, PyObject *args)
 {
   (void) self;
   PyObject *pluginSelf, *widget, *callback;
-  if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &widget, &callback)){
-    PyErr_Clear();
+  if(PyTuple_Size(args) == 3){
+    if(!PyArg_ParseTuple(args, "OOO", &pluginSelf, &widget, &callback)){
+      return NULL;
+    }
+  }else{
     if (!PyArg_ParseTuple(args, "OO", &widget, &callback)){
       return NULL;
     }

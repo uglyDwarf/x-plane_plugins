@@ -776,12 +776,16 @@ static PyObject *XPLMRegisterDataAccessorFun(PyObject *self, PyObject *args)
   const char *inDataName;
   int inDataType, inIsWritable;
   PyObject *ri, *wi, *rf, *wf, *rd, *wd, *rai, *wai, *raf, *waf, *rab, *wab, *rRef, *wRef;
-  if(!PyArg_ParseTuple(args, "OsiiOOOOOOOOOOOOOO", &pluginSelf, &inDataName, &inDataType, &inIsWritable,
-                       &ri, &wi, &rf, &wf, &rd, &wd, &rai, &wai, &raf, &waf, &rab, &wab, &rRef, &wRef)){
-    PyErr_Clear();
-    if(!PyArg_ParseTuple(args, "siiOOOOOOOOOOOOOO", &inDataName, &inDataType, &inIsWritable,
-                         &ri, &wi, &rf, &wf, &rd, &wd, &rai, &wai, &raf, &waf, &rab, &wab, &rRef, &wRef))
+  if(PyTuple_Size(args) == 18){
+    if(!PyArg_ParseTuple(args, "OsiiOOOOOOOOOOOOOO", &pluginSelf, &inDataName, &inDataType, &inIsWritable,
+                         &ri, &wi, &rf, &wf, &rd, &wd, &rai, &wai, &raf, &waf, &rab, &wab, &rRef, &wRef)){
       return NULL;
+    }
+  }else{
+    if(!PyArg_ParseTuple(args, "siiOOOOOOOOOOOOOO", &inDataName, &inDataType, &inIsWritable,
+                         &ri, &wi, &rf, &wf, &rd, &wd, &rai, &wai, &raf, &waf, &rab, &wab, &rRef, &wRef)){
+      return NULL;
+    }
     pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
 
@@ -817,34 +821,32 @@ static PyObject *XPLMUnregisterDataAccessorFun(PyObject *self, PyObject *args)
   (void)self;
   PyObject *pluginSelf;
   PyObject *drefObj;
-  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &drefObj)){
-    PyErr_Clear();
-    if(!PyArg_ParseTuple(args, "O", &drefObj))
+  if(PyTuple_Size(args) == 2){
+    if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &drefObj)){
       return NULL;
+    }
+  }else{
+    if(!PyArg_ParseTuple(args, "O", &drefObj)){
+      return NULL;
+    }
     pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
-  } else {
-    Py_INCREF(pluginSelf);
   }
   PyObject *refconObj = PyDict_GetItem(drefDict, drefObj);
   if(refconObj == NULL){
-    Py_DECREF(pluginSelf);
     printf("XPLMUnregisterDataref: No such dataref registered!\n");
     Py_RETURN_NONE;
   }
   PyObject *accessor = PyDict_GetItem(accessorDict, refconObj);
   if(accessor == NULL){
-    Py_DECREF(pluginSelf);
     printf("XPLMUnregisterDataref: No such refcon registered!\n");
     Py_RETURN_NONE;
   }
   PyObject *registerer = PySequence_GetItem(accessor, 0);
   if(PyObject_RichCompareBool(pluginSelf, registerer, Py_NE)) {
     Py_DECREF(registerer);
-    Py_DECREF(pluginSelf);
     printf("XPLMUnregisterDataref: Don't unregister dataref you didn't register!!\n");
     Py_RETURN_NONE;
   }
-  Py_DECREF(pluginSelf);
   Py_DECREF(registerer);
   if(PyDict_DelItem(accessorDict, refconObj)){
     printf("XPLMUnregisterDataref: Couldn't remove the refcon.\n");
@@ -884,10 +886,14 @@ static PyObject *XPLMShareDataFun(PyObject *self, PyObject *args)
   const char *inDataName;
   XPLMDataTypeID inDataType;
   PyObject *inNotificationFunc, *inNotificationRefcon;
-  if(!PyArg_ParseTuple(args, "OsiOO", &pluginSelf, &inDataName, &inDataType, &inNotificationFunc, &inNotificationRefcon)){
-    PyErr_Clear();
-    if(!PyArg_ParseTuple(args, "siOO", &inDataName, &inDataType, &inNotificationFunc, &inNotificationRefcon))
+  if(PyTuple_Size(args) == 5){
+    if(!PyArg_ParseTuple(args, "OsiOO", &pluginSelf, &inDataName, &inDataType, &inNotificationFunc, &inNotificationRefcon)){
       return NULL;
+    }
+  }else{
+    if(!PyArg_ParseTuple(args, "siOO", &inDataName, &inDataType, &inNotificationFunc, &inNotificationRefcon)){
+      return NULL;
+    }
     pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
   void *refcon = (void *)sharedCntr++;
@@ -922,17 +928,19 @@ static PyObject *XPLMUnshareDataFun(PyObject *self, PyObject *args)
   PyObject *callbackObj = NULL;
   PyObject *refconObj = NULL;
   PyObject *pluginSelf = NULL;
-  if(!PyArg_ParseTuple(args, "OsiOO", &pluginSelf, &inDataName, &tmpInDataType, &callbackObj, &refconObj)){
-    PyErr_Clear();
-    if(!PyArg_ParseTuple(args, "siOO", &inDataName, &tmpInDataType, &callbackObj, &refconObj))
+  if(PyTuple_Size(args) == 5){
+    if(!PyArg_ParseTuple(args, "OsiOO", &pluginSelf, &inDataName, &tmpInDataType, &callbackObj, &refconObj)){
       return NULL;
+    }
+  }else{
+    if(!PyArg_ParseTuple(args, "siOO", &inDataName, &tmpInDataType, &callbackObj, &refconObj)){
+      return NULL;
+    }
     pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
-  } else {
-    Py_INCREF(pluginSelf);
   }
   inDataType = (XPLMDataTypeID)tmpInDataType;
-  PyObject *inDataNameObj, *target, *inDataNameUTF8Obj;
-  char *dict_inDataName;
+  PyObject *inDataNameObj, *target;
+  const char *dict_inDataName;
   target = NULL;
   while(PyDict_Next(sharedDict, &cnt, &pKey, &pVal)){
     // only look for things this plugin is sharing...
@@ -945,7 +953,6 @@ static PyObject *XPLMUnshareDataFun(PyObject *self, PyObject *args)
     dict_inDataName = asString(inDataNameObj);
     if (PyErr_Occurred()) {
       stringCleanup();
-      Py_DECREF(pluginSelf);
       return NULL;
     }
     if(strcmp(inDataName, dict_inDataName) != 0){
@@ -969,7 +976,6 @@ static PyObject *XPLMUnshareDataFun(PyObject *self, PyObject *args)
     target = pKey;
     break;
   }
-  Py_DECREF(pluginSelf);
   if(target){
     // Found and deleting unshared
     int res = XPLMUnshareData(inDataName, inDataType, dataChanged, PyLong_AsVoidPtr(target));

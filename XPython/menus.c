@@ -59,8 +59,11 @@ static PyObject *XPLMCreateMenuFun(PyObject *self, PyObject *args)
   PyObject *pluginSelf;
   int inParentItem;
   const char *inName;
-  if(!PyArg_ParseTuple(args, "OsOiOO", &pluginSelf, &inName, &parentMenu, &inParentItem, &pythonHandler, &menuRef)){
-    PyErr_Clear();
+  if(PyTuple_Size(args) == 6){
+    if(!PyArg_ParseTuple(args, "OsOiOO", &pluginSelf, &inName, &parentMenu, &inParentItem, &pythonHandler, &menuRef)){
+      return NULL;
+    }
+  }else{
     if(!PyArg_ParseTuple(args, "sOiOO", &inName, &parentMenu, &inParentItem, &pythonHandler, &menuRef)){
       return NULL;
     }
@@ -90,8 +93,11 @@ static PyObject *XPLMDestroyMenuFun(PyObject *self, PyObject *args)
 {
   (void)self;
   PyObject *menuID, *pluginSelf;
-  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &menuID)){
-    PyErr_Clear();
+  if(PyTuple_Size(args) == 2){
+    if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &menuID)){
+      return NULL;
+    }
+  }else{
     if(!PyArg_ParseTuple(args, "O", &menuID)){
       return NULL;
     }

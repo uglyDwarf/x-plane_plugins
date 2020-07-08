@@ -98,8 +98,11 @@ PyObject *XPLMAcquirePlanesFun(PyObject *self, PyObject *args)
 {
   (void)self;
   PyObject *pluginSelf, *aircraft, *inCallback, *inRefcon;
-  if(!PyArg_ParseTuple(args, "OOOO", &pluginSelf, &aircraft, &inCallback, &inRefcon)){
-    PyErr_Clear();
+  if(PyTuple_Size(args) == 4){
+    if(!PyArg_ParseTuple(args, "OOOO", &pluginSelf, &aircraft, &inCallback, &inRefcon)){
+      return NULL;
+    }
+  }else{
     if(!PyArg_ParseTuple(args, "OOO", &aircraft, &inCallback, &inRefcon)){
       return NULL;
     }
@@ -120,7 +123,7 @@ PyObject *XPLMAcquirePlanesFun(PyObject *self, PyObject *args)
     Py_ssize_t i;
     for(i = 0; i < len; ++i){
       PyObject *tmpItem = PySequence_GetItem(aircraft, i);
-      char *tmp = asString(tmpItem);
+      const char *tmp = asString(tmpItem);
 
       Py_DECREF(tmpItem);
 

@@ -91,8 +91,11 @@ static PyObject *XPLMControlCameraFun(PyObject *self, PyObject *args)
   (void) self;
   int inHowLong;
   PyObject *pluginSelf, *controlFunc, *refcon;
-  if(!PyArg_ParseTuple(args, "OiOO", &pluginSelf, &inHowLong, &controlFunc, &refcon)){
-    PyErr_Clear();
+  if(PyTuple_Size(args) == 4){
+    if(!PyArg_ParseTuple(args, "OiOO", &pluginSelf, &inHowLong, &controlFunc, &refcon)){
+      return NULL;
+    }
+  }else{
     if(!PyArg_ParseTuple(args, "iOO", &inHowLong, &controlFunc, &refcon)){
       return NULL;
     }

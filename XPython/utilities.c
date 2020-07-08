@@ -411,16 +411,17 @@ static PyObject *XPLMSetErrorCallbackFun(PyObject *self, PyObject *args)
 
   PyObject *pluginSelf;
   PyObject *callback;
-  if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &callback)){
-    PyErr_Clear();
-    if(!PyArg_ParseTuple(args, "O", &callback))
+  if(PyTuple_Size(args) == 2){
+    if(!PyArg_ParseTuple(args, "OO", &pluginSelf, &callback)){
       return NULL;
+    }
+  }else{
+    if(!PyArg_ParseTuple(args, "O", &callback)){
+      return NULL;
+    }
     pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
-  } else {
-    Py_INCREF(pluginSelf);
   }
   PyDict_SetItem(errCallbacks, pluginSelf, callback);
-  Py_DECREF(pluginSelf);
   
   Py_RETURN_NONE;
 }
@@ -552,10 +553,14 @@ static PyObject *XPLMRegisterCommandHandlerFun(PyObject *self, PyObject *args)
   int inBefore;
   PyObject *inRefcon;
   PyObject *pluginSelf;
-  if(!PyArg_ParseTuple(args, "OOOiO", &pluginSelf, &inCommand, &inHandler, &inBefore, &inRefcon)){
-    PyErr_Clear();
-    if(!PyArg_ParseTuple(args, "OOiO", &inCommand, &inHandler, &inBefore, &inRefcon))
+  if(PyTuple_Size(args) == 5){
+    if(!PyArg_ParseTuple(args, "OOOiO", &pluginSelf, &inCommand, &inHandler, &inBefore, &inRefcon)){
       return NULL;
+    }
+  }else{
+    if(!PyArg_ParseTuple(args, "OOiO", &inCommand, &inHandler, &inBefore, &inRefcon)){
+      return NULL;
+    }
     pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
   intptr_t refcon = commandCallbackCntr++;
@@ -580,10 +585,14 @@ static PyObject *XPLMUnregisterCommandHandlerFun(PyObject *self, PyObject *args)
   int inBefore;
   PyObject *inRefcon;
   PyObject *pluginSelf;
-  if(!PyArg_ParseTuple(args, "OOOiO", &pluginSelf, &inCommand, &inHandler, &inBefore, &inRefcon)){
-    PyErr_Clear();
-    if(!PyArg_ParseTuple(args, "OOiO", &inCommand, &inHandler, &inBefore, &inRefcon))
+  if(PyTuple_Size(args) == 5){
+    if(!PyArg_ParseTuple(args, "OOOiO", &pluginSelf, &inCommand, &inHandler, &inBefore, &inRefcon)){
       return NULL;
+    }
+  }else{
+    if(!PyArg_ParseTuple(args, "OOiO", &inCommand, &inHandler, &inBefore, &inRefcon)){
+      return NULL;
+    }
   }
   PyObject *key = PyLong_FromVoidPtr((void *)inRefcon);
   PyObject *refcon = PyDict_GetItem(commandRefcons, key);
