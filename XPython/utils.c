@@ -147,9 +147,64 @@ void removePtrRef(void *ptr, PyObject *dict)
   Py_DECREF(key);
 }
 
+
+/*
+  The following code works tries to go through the pains
+  of (possible) multiply parsing of the path only once.
+  The parsing function is called indirectly through the
+  get_fname pointer; the default function does the initial
+  check and sets the get_fname pointer to the appropriate
+  version...
+
+  Beware: Might it be fooled by a crefted path?
+  Maybe the decision should be somehow tied to the platform,
+  as the only problem is Mac - if the colon or slash is used.
+*/
+typedef const char *(*get_fname_t)(const char *fullName);
+static const char *get_fname_generic(const char *fullName);
+static get_fname_t get_fname = get_fname_generic; 
+
+static const char *get_fname_lin(const char *fullName)
+{
+  return strrchr(fullName, '/');
+}
+
+static const char *get_fname_win(const char *fullName)
+{
+  return strrchr(fullName, '\\');
+}
+
+static const char *get_fname_mac(const char *fullName)
+{
+  return strrchr(fullName, '\\');
+}
+
+static const char *get_fname_generic(const char *fullName)
+{
+  char *token = NULL;
+  token = strrchr(fullName, '/');
+  if(token){
+    get_fname = get_fname_lin;
+    return token;
+  }
+  token = strrchr(fullName, '\\');
+  if(token){
+    get_fname = get_fname_win;
+    return token;
+  }
+  token = strrchr(fullName, ':');
+  if(token){
+    get_fname = get_fname_mac;
+    return token;
+  }
+  return NULL;
+}
+
+
 char *get_module(PyThreadState *tstate) {
   /* returns filename of top most frame -- this will be the Plugin's file */
-  char *last_filename = "[unknown]";
+  /*   Result must be freed after use!                                    */
+  char *res = NULL;
   if (NULL != tstate && NULL != tstate->frame) {
     PyFrameObject *frame = tstate->frame;
     
@@ -160,31 +215,28 @@ char *get_module(PyThreadState *tstate) {
         you need to call PyCode_Addr2Line().
       */
       // int line = PyCode_Addr2Line(frame->f_code, frame->f_lasti);
-      PyObject *temp_bytes = PyUnicode_AsEncodedString(frame->f_code->co_filename, "utf-8", "replace");
-      const char *filename = PyBytes_AsString(temp_bytes);
-      filename = strdup(filename);
-      last_filename = strdup(filename);
-      Py_DECREF(temp_bytes);
-
-      temp_bytes = PyUnicode_AsEncodedString(frame->f_code->co_name, "utf-8", "replace");
-      const char *funcname = PyBytes_AsString(temp_bytes);
-      funcname = strdup(funcname);
-      Py_DECREF(temp_bytes);
       frame = frame->f_back;
     }
-  }
-
-  char *token = strrchr(last_filename, '/');
-  if (token == NULL) {
-    token = strrchr(last_filename, '\\');
-    if (token == NULL) {
-      token = strrchr(last_filename, ':');
+    PyObject *fnameObj = PyUnicode_AsEncodedString(frame->f_code->co_filename, "utf-8", "replace");
+    const char *filename = PyBytes_AsString(fnameObj);
+    /* Unused...
+      PyObject *funcNameObj = PyUnicode_AsEncodedString(frame->f_code->co_name, "utf-8", "replace");
+      const char *funcname = PyBytes_AsString(funcNameObj);
+      funcname = strdup(funcname);
+      Py_DECREF(funcNameObj);
+    */
+    const char *last_path_separator = get_fname(filename);
+    Py_DECREF(fnameObj);
+    if(last_path_separator){
+      ++last_path_separator;
+      res = strdup(last_path_separator);
     }
   }
-  if (token) {
-    return (++token);
+
+  if(!res){
+    res = strdup("unknown file");
   }
-  return "Unknown";
+  return res;
 }
 
 // Motivation:
