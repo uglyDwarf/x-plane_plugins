@@ -966,11 +966,23 @@ static PyObject *XPLMUnshareDataFun(PyObject *self, PyObject *args)
       continue;
     }
     if(PyTuple_GetItem(pVal, 3) != callbackObj){
-      /* printf("callbckObject do not match %s - %s\n", objToStr(PyTuple_GetItem(pVal, 3)), objToStr(callbackObj)); */
+      /*
+        char *str1 = objToStr(PyTuple_GetItem(pVal, 3));
+        char *str2 = objToStr(callbackObj);
+        printf("callbckObject do not match %s - %s\n", str1, str2);
+        free(str1);
+        free(str2);
+      */
       continue;
     }
     if(PyTuple_GetItem(pVal, 4) != refconObj){
-      /* printf("refconObj do not match %s - %s\n", objToStr(PyTuple_GetItem(pVal, 4)), objToStr(refconObj));*/
+      /*
+        char *str1 = objToStr(PyTuple_GetItem(pVal, 4));
+        char *str2 = objToStr(refconObj);
+        printf("refconObj do not match %s - %s\n", str1, str2);
+        free(str1);
+        free(str2);
+      */
       continue;
     }
     target = pKey;

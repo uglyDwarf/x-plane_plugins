@@ -10,7 +10,6 @@ from XPLMUtilities import *
 class PythonInterface(checkBase):
    def __init__(self):
       checkBase.__init__(self, 'Planes');
-      checkBase.addRef()
    
    def XPluginStart(self):
       self.Name = "Planes regression test"
@@ -21,7 +20,6 @@ class PythonInterface(checkBase):
    
    def XPluginStop(self):
       self.check()
-      checkBase.remRef()
    
    def XPluginEnable(self):
       return 1
@@ -92,11 +90,12 @@ class PythonInterface(checkBase):
       airplanes = ['F16 Falcon', 'Su 27 Flanker', '']
       res = XPLMAcquirePlanes(self, airplanes, self.acquireCallback, self.acquiredRefcon)
       self.checkVal('XPLMAcquirePlanes returned wrong value', res, len(airplanes) - 1)
-     # self.checkVal('XPLMAcquirePlanes didn\'t receive inAircraft correctly', self.getString(str0Dref), )
+      self.checkVal('XPLMAcquirePlanes didn\'t receive inAircraft correctly', self.getString(str0Dref), ','.join(airplanes))
       self.checkVal('XPLMAcquirePlanes didn\'t call the callback', self.acquiredRefcon, ['Called!'])
 
+      tmp = XPLMGetDatai(int0Dref)
       XPLMReleasePlanes()
-      self.checkVal('Problem calling XPLMReleasePlanes', XPLMGetDatai(int0Dref), -1)
+      self.checkVal('Problem calling XPLMReleasePlanes', XPLMGetDatai(int0Dref), tmp-1)
 
       active = 567
       XPLMSetActiveAircraftCount(active)

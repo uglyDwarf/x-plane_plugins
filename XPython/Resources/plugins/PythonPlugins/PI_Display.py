@@ -14,7 +14,6 @@ class PythonInterface(checkBase):
       self.xpluginEnableCalled = 0
       self.xpluginDisableCalled = 0
       self.xpluginMessageReceived = 0
-      checkBase.addRef()
    
    def check(self):
       if not self.xpluginEnableCalled:
@@ -24,7 +23,6 @@ class PythonInterface(checkBase):
       if not self.xpluginMessageReceived:
          self.error('xpluginReceiveMessage was not called!')
       checkBase.check(self)
-      checkBase.remRef()
 
 
    def XPluginStart(self):

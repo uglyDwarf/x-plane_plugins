@@ -9,6 +9,7 @@
 #include "plugin_dl.h"
 
 static const char probeName[] = "XPLMProbeRef";
+const char *objRefName = "XPLMObjectRef";
 
 static PyObject *XPLMCreateProbeFun(PyObject *self, PyObject *args)
 {
@@ -150,7 +151,7 @@ static void objectLoaded(XPLMObjectRef inObject, void *inRefcon)
   Py_DECREF(object);
 }
 
-
+//TODO: Shouldn't this receive the full callback related treatment (get_pluginSelf, ...)?
 static PyObject *XPLMLoadObjectAsyncFun(PyObject *self, PyObject *args)
 {
   (void)self;

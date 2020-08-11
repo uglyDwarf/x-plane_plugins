@@ -4,6 +4,8 @@
 #include <Python.h>
 #include <stdbool.h>
 
+
+// Definitions of the capsule related stuff shared between plugins 
 extern const char *objRefName;
 extern const char *commandRefName;
 extern const char *widgetRefName;
@@ -11,6 +13,8 @@ extern const char *windowIDRef;
 extern PyObject *widgetIDCapsules;
 extern PyObject *windowIDCapsules;
 
+void utilsInit(void);
+void utilsCleanup(void);
 
 void dbg(const char *msg);
 bool objToList(PyObject *item, PyObject *list);

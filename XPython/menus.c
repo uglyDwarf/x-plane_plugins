@@ -24,8 +24,8 @@ static void menuHandler(void * inMenuRef, void * inItemRef)
     printf("Unknown callback requested in menuHandler(%p).\n", inMenuRef);
     return;
   }
-  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(menuCallbackInfo, 4),
-                                        PyTuple_GetItem(menuCallbackInfo, 5), (PyObject*)inItemRef, NULL);
+  PyObject *res = PyObject_CallFunctionObjArgs(PyTuple_GetItem(menuCallbackInfo, 3),
+                                        PyTuple_GetItem(menuCallbackInfo, 4), (PyObject*)inItemRef, NULL);
   PyObject *err = PyErr_Occurred();
   if(err){
     printf("Error occured during the menuHandler callback(inMenuRef = %p):\n", inMenuRef);
@@ -67,9 +67,8 @@ static PyObject *XPLMCreateMenuFun(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "sOiOO", &inName, &parentMenu, &inParentItem, &pythonHandler, &menuRef)){
       return NULL;
     }
-    pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
-  PyObject *argsObj = Py_BuildValue( "(OsOiOO)", pluginSelf, inName, parentMenu, inParentItem, pythonHandler, menuRef);
+  PyObject *argsObj = Py_BuildValue( "(sOiOO)", inName, parentMenu, inParentItem, pythonHandler, menuRef);
 
   void *inMenuRef = (void *)++menuCntr;
   menuRef = PyLong_FromVoidPtr(inMenuRef);

@@ -12,6 +12,7 @@
 #include "plugin_dl.h"
 #include "utils.h"
 
+const char *widgetRefName = "XPLMWidgetID";
 static PyObject *widgetCallbackDict;
 PyObject *widgetIDCapsules;
 

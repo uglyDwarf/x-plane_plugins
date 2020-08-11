@@ -9,7 +9,6 @@ from XPLMNavigation import *
 class PythonInterface(checkBase):
    def __init__(self):
       checkBase.__init__(self, 'Navigation');
-      checkBase.addRef()
 
    def XPluginStart(self):
       self.Name = "Navigation regression test"
@@ -20,7 +19,6 @@ class PythonInterface(checkBase):
    
    def XPluginStop(self):
       self.check()
-      checkBase.remRef()
    
    def XPluginEnable(self):
       return 1

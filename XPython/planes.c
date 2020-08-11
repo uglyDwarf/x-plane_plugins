@@ -108,7 +108,7 @@ PyObject *XPLMAcquirePlanesFun(PyObject *self, PyObject *args)
     }
     pluginSelf = get_pluginSelf(/*PyThreadState_GET()*/);
   }
-  int res;
+  PyObject *res = NULL;
   void *refcon = (void*)++availableCntr;
   PyObject *refObj = PyLong_FromVoidPtr(refcon);
   PyObject *argsObj = Py_BuildValue( "(OOOO)", pluginSelf, aircraft, inCallback, inRefcon);
@@ -116,39 +116,35 @@ PyObject *XPLMAcquirePlanesFun(PyObject *self, PyObject *args)
   Py_DECREF(argsObj);
   Py_DECREF(refObj);
   if(aircraft == Py_None){
-    res = XPLMAcquirePlanes(NULL, planesAvailable, refcon);
+    res = PyLong_FromLong(XPLMAcquirePlanes(NULL, planesAvailable, refcon));
   }else{
     Py_ssize_t len = PySequence_Length(aircraft);
-    char **inAircraft = (char **)malloc((len + 1) * sizeof(char *));
+    char **inAircraft = (char **)calloc(len + 1, sizeof(char *));
+    PyObject *seq = PySequence_Fast(aircraft, "aircraft should be a sequence");
     Py_ssize_t i;
     for(i = 0; i < len; ++i){
-      PyObject *tmpItem = PySequence_GetItem(aircraft, i);
+      // Returns borrowed reference!
+      PyObject *tmpItem = PySequence_Fast_GET_ITEM(seq, i);
       const char *tmp = asString(tmpItem);
-
-      Py_DECREF(tmpItem);
-
-      if (PyErr_Occurred()){
-        stringCleanup();
-        free(inAircraft);
-        return NULL;
-      }
-      if(tmp[0] == '\0'){
+      if(!tmp || (tmp[0] == '\0')){
         break;
-      }else{
-        inAircraft[i] = tmp;
       }
+      inAircraft[i] = strdup(tmp);
     }
-    inAircraft[i] = NULL;
-    res = XPLMAcquirePlanes(inAircraft, planesAvailable, refcon);
+
+    res = PyLong_FromLong(XPLMAcquirePlanes(inAircraft, planesAvailable, refcon));
+    Py_DECREF(seq);
+
     stringCleanup();
+    char **ptr = inAircraft;
+    while(*ptr != NULL){
+      free(*ptr);
+      ++ptr;
+    }
     free(inAircraft);
   }
-  return PyLong_FromLong(res);
+  return res;
 }
-
-
-
-
 
 PyObject *XPLMReleasePlanesFun(PyObject *self, PyObject *args)
 {

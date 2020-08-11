@@ -158,7 +158,8 @@ static PyObject *XPLMSetFlightLoopCallbackIntervalFun(PyObject *self, PyObject *
   Py_DECREF(revId);
   Py_DECREF(refconAddr);
   if(id == NULL){
-    printf("Couldn't find the id of the requested callback.\n");
+    PyErr_SetString(PyExc_RuntimeError ,
+        "XPLMSetFlightLoopCallbackInterval couldn't find the id of the requested callback.");
     return NULL;
   }
   XPLMSetFlightLoopCallbackInterval(flightLoopCallback, inInterval, inRelativeToNow, PyLong_AsVoidPtr(id));

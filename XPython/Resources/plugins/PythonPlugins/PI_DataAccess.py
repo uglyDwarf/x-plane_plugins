@@ -8,7 +8,6 @@ from XPLMDataAccess import *
 class PythonInterface(checkBase):
    def __init__(self):
       checkBase.__init__(self, 'DataAccess');
-      checkBase.addRef()
    
    def XPluginStart(self):
       self.Name = "DataAccess regression test"
@@ -20,7 +19,6 @@ class PythonInterface(checkBase):
    
    def XPluginStop(self):
       self.check()
-      checkBase.remRef()
    
    def XPluginEnable(self):
       return 1

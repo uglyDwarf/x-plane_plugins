@@ -248,7 +248,9 @@ static void handleKey(XPLMWindowID  inWindowID,
   PyObject *arg2 = PyLong_FromLong(inFlags);
   PyObject *arg3 = PyLong_FromLong((unsigned int)inVirtualKey);
   PyObject *arg4 = PyLong_FromLong(losingFocus);
-  // printf("Calling handleKey callback. inWindowID = %p, pPID = %s, losingFocus = %d\n", inWindowID, objToStr(pID), losingFocus);
+  // char *pIDStr = objToStr(pID);
+  // printf("Calling handleKey callback. inWindowID = %p, pPID = %s, losingFocus = %d\n", inWindowID, pIDStr, losingFocus);
+  // free(pIDStr);
   PyObject *oRes = PyObject_CallFunctionObjArgs(PyTuple_GetItem(pCbks, 2), pID, arg1, arg2, arg3, inRefcon, arg4, NULL);
   Py_XDECREF(arg1);
   Py_XDECREF(arg2);

@@ -304,6 +304,7 @@ static int startPython(void)
   }
   loadAllFunctions();
   initPython();
+  utilsInit();
 
   // Load internal stuff
   loadModules(internalPluginsPath, "^I_PI_.*\\.py$");
@@ -322,17 +323,26 @@ static int stopPython(void)
   Py_ssize_t pos = 0;
 
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
-    char *moduleName = objToStr(PyTuple_GetItem(pKey, 3));
+    char *moduleName = NULL;
     PyObject *pRes = PyObject_CallMethod(pVal, "XPluginStop", NULL); // should return void, so we should see Py_None
     if(pRes != Py_None) {
-      fprintf(logFile, "%s XPluginStop returned '%s' rather than None.\n", moduleName, objToStr(pRes));
+      moduleName = objToStr(PyTuple_GetItem(pKey, 3));
+      char *pResStr = objToStr(pRes);
+      fprintf(logFile, "%s XPluginStop returned '%s' rather than None.\n", moduleName, pResStr);
+      free(pResStr);
     }
     PyObject *err = PyErr_Occurred();
     if(err){
+      if(!moduleName){
+        moduleName = objToStr(PyTuple_GetItem(pKey, 3));
+      }
       fprintf(logFile, "Error occured during the %s XPluginStop call:\n", moduleName);
       PyErr_Print();
     }else{
       Py_DECREF(pRes);
+    }
+    if(moduleName){
+      free(moduleName);
     }
   }
 
@@ -368,6 +378,7 @@ static int stopPython(void)
     }
     ++mod_ptr;
   }
+  utilsCleanup();
   Py_DECREF(loggerObj);
   Py_Finalize();
   pythonStarted = false;
@@ -482,19 +493,28 @@ PLUGIN_API int XPluginEnable(void)
   }
 
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
-    char *moduleName = objToStr(PyTuple_GetItem(pKey, 3));
+    char *moduleName = NULL;
     pRes = PyObject_CallMethod(pVal, "XPluginEnable", NULL);
     if(!(pRes && PyLong_Check(pRes))){
-      fprintf(logFile, "%s XPluginEnable returned '%s' rather than an integer.\n", moduleName, objToStr(pRes));
+      moduleName = objToStr(PyTuple_GetItem(pKey, 3));
+      char *pResStr = objToStr(pRes);
+      fprintf(logFile, "%s XPluginEnable returned '%s' rather than an integer.\n", moduleName, pResStr);
+      free(pResStr);
     }else{
       //printf("XPluginEnable returned %ld\n", PyLong_AsLong(pRes));
     }
     PyObject *err = PyErr_Occurred();
     if(err){
+      if(!moduleName){
+        moduleName = objToStr(PyTuple_GetItem(pKey, 3));
+      }
       fprintf(logFile, "Error occured during the %s XPluginEnable call:\n", moduleName);
       PyErr_Print();
     }else{
       Py_DECREF(pRes);
+    }
+    if(moduleName){
+      free(moduleName);
     }
   }
 
@@ -510,17 +530,26 @@ PLUGIN_API void XPluginDisable(void)
   }
 
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
-    char *moduleName = objToStr(PyTuple_GetItem(pKey, 3));
+    char *moduleName = NULL;
     pRes = PyObject_CallMethod(pVal, "XPluginDisable", NULL);
     if(pRes != Py_None) {
-      fprintf(logFile, "%s XPluginDisable returned '%s' rather than None.\n", moduleName, objToStr(pRes));
+      moduleName = objToStr(PyTuple_GetItem(pKey, 3));
+      char *pResStr = objToStr(pRes);
+      fprintf(logFile, "%s XPluginDisable returned '%s' rather than None.\n", moduleName, pResStr);
+      free(pResStr);
     }
     PyObject *err = PyErr_Occurred();
     if(err){
+      if(!moduleName){
+        moduleName = objToStr(PyTuple_GetItem(pKey, 3));
+      }
       fprintf(logFile, "Error occured during the %s XPluginDisable call:\n", moduleName);
       PyErr_Print();
     }else{
       Py_DECREF(pRes);
+    }
+    if(moduleName){
+      free(moduleName);
     }
   }
 
@@ -543,17 +572,24 @@ PLUGIN_API void XPluginReceiveMessage(XPLMPluginID inFromWho, long inMessage, vo
   /* printf("XPPython3 received message, which we'll try to send to all plugins: From: %d, Msg: %ld, inParam: %ld\n", */
   /*        inFromWho, inMessage, (long)inParam); */
   while(PyDict_Next(moduleDict, &pos, &pKey, &pVal)){
-    char *moduleName = objToStr(PyTuple_GetItem(pKey, 3));
+    char *moduleName = NULL;
     pRes = PyObject_CallMethod(pVal, "XPluginReceiveMessage", "ilO", inFromWho, inMessage, param);
     if (pRes != Py_None) {
+      moduleName = objToStr(PyTuple_GetItem(pKey, 3));
       fprintf(logFile, "%s XPluginReceiveMessage didn't return None.\n", moduleName);
     }
     PyObject *err = PyErr_Occurred();
     if(err){
+      if(!moduleName){
+        moduleName = objToStr(PyTuple_GetItem(pKey, 3));
+      }
       fprintf(logFile, "Error occured during the %s XPluginReceiveMessage call:\n", moduleName);
       PyErr_Print();
     }else{
       Py_DECREF(pRes);
+    }
+    if(moduleName){
+      free(moduleName);
     }
   }
   Py_DECREF(param);

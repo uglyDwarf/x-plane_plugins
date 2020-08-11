@@ -129,7 +129,7 @@ int XPLMAcquirePlanes(char **inAircraft, XPLMPlanesAvailable_f inCallback, void 
 
 void XPLMReleasePlanes(void)
 {
-  int0 = -1;
+  int0 -= 1;
 }
 
 void XPLMSetActiveAircraftCount(int inCount)

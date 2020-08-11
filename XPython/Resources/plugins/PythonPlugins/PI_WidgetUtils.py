@@ -12,7 +12,6 @@ from XPWidgetUtils import *
 class PythonInterface(checkBase):
    def __init__(self):
       checkBase.__init__(self, 'WidgetUtils');
-      checkBase.addRef()
    
    def XPluginStart(self):
       self.Name = "WidgetUtils regression test"
@@ -23,7 +22,6 @@ class PythonInterface(checkBase):
    
    def XPluginStop(self):
       self.check()
-      checkBase.remRef()
    
    def XPluginEnable(self):
       return 1

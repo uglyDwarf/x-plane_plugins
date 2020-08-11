@@ -7,6 +7,8 @@
 #include <XPLM/XPLMUtilities.h>
 #include "utils.h"
 
+const char *commandRefName = "XPLMCommandRef";
+
 PyObject *errCallbacks;
 PyObject *commandCallbacks;
 PyObject *commandRefcons;

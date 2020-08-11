@@ -7,10 +7,6 @@
 #include <stdbool.h>
 #include "utils.h"
 
-const char *objRefName = "XPLMObjectRef";
-const char *commandRefName = "XPLMCommandRef";
-const char *widgetRefName = "XPLMWidgetID";
-
 void dbg(const char *msg){
   printf("Going to check %s\n", msg);
   PyObject *err = PyErr_Occurred();
@@ -56,41 +52,6 @@ float getFloatFromTuple(PyObject *seq, Py_ssize_t i)
 long getLongFromTuple(PyObject *seq, Py_ssize_t i)
 {
   return PyLong_AsLong(PyTuple_GetItem(seq, i));
-}
-
-// To avoid Python code messing with raw pointers (when passed
-//   in using PyLong_FromVoidPtr), these are hidden in the capsules.
-
-PyObject *get_pluginSelf() {
-  // returns heap-allocated PyObject (or Py_RETURN_NONE)
-  PyGILState_STATE gilState = PyGILState_Ensure();
-  PyThreadState *tstate = PyThreadState_GET();
-  PyObject *last_filenameObj = Py_None;
-  if (NULL != tstate && NULL != tstate->frame) {
-    PyFrameObject *frame = tstate->frame;
-    while (NULL != frame) {
-      // creates new PyObject
-      last_filenameObj = frame->f_code->co_filename;
-      frame = frame->f_back;
-    }
-  }
-
-  char *last_filename = objToStr(last_filenameObj); // allocates new string on heap
-  char *token = strrchr(last_filename, '/');
-  if (token == NULL) {
-    token = strrchr(last_filename, '\\');
-    if (token == NULL) {
-      token = strrchr(last_filename, ':');
-    }
-  }
-  PyGILState_Release(gilState);
-  if (token) {
-    PyObject *ret = PyUnicode_FromString(++token); // return new item, we then free the char*
-    free(last_filename);
-    return ret;
-  }
-  free(last_filename);
-  Py_RETURN_NONE;
 }
 
 // To avoid Python code messing with raw pointers (when passed
@@ -156,7 +117,7 @@ void removePtrRef(void *ptr, PyObject *dict)
   check and sets the get_fname pointer to the appropriate
   version...
 
-  Beware: Might it be fooled by a crefted path?
+  Beware: Might it be fooled by a crafted path?
   Maybe the decision should be somehow tied to the platform,
   as the only problem is Mac - if the colon or slash is used.
 */
@@ -239,64 +200,126 @@ char *get_module(PyThreadState *tstate) {
   return res;
 }
 
-// Motivation:
-// On Windows we are limited to the restricted API, that doesn't have
-//   the PyUnicode_AsUTF8 available; instead we are forced to use the
-//   PyUnicode_AsUTF8String/PyBytes_AsString combo, which creates
-//   a Unicode object, that must be released when no longer needed
-//   (e.g. after the XPLM... call).
-// The implementation puts the object to the stringStash and the cleanup
-//   must be called to release it; when more than a signle string is
-//   needed, the previous content of the stringStash is appended to the
-//   stringList, that will be destroyed once the cleanup is called,
-//   taking all the allocated object with itself.
-// This way, single string creation doesn't involve any list operations,
-//   which should be more optimal, than putting everything to the list.
-//
-// TODO: Should this all be guarded by a gil or a mutex of some kind?
-// For now, since XPLM functions should be called only from the main
-//   thread, I'll leave it as it is...
+static PyObject *pluginSelfCache = NULL;
 
-// Last UTF8 string created
-static PyObject *stringStash = NULL;
-// List of previous 
-static PyObject *stringList = NULL;
-
-const char *asString(PyObject *obj)
-{
-  PyObject *str = PyObject_Str(obj);
-  if(!str){
-    return NULL;
-  }
-  PyObject *utfStr = PyUnicode_AsUTF8String(obj);
-  Py_DECREF(str);
-  if(!utfStr){
-    return NULL;
-  }
-  if(stringStash){
-    // Something is already in a stash
-    if(stringList == NULL){
-      stringList = PyList_New(1);
-      if(!stringList){
-        return NULL;
-      }
-      PyList_SET_ITEM(stringList, 0, stringStash);
-    }else{
-      PyList_Append(stringList, stringStash);
-      // If this fails, we leak the object!
-      // TODO: is there anything we can do about it?
+PyObject *get_pluginSelf() {
+  // returns heap-allocated PyObject (or Py_RETURN_NONE)
+  PyGILState_STATE gilState = PyGILState_Ensure();
+  PyThreadState *tstate = PyThreadState_GET();
+  PyObject *last_filenameObj = Py_None;
+  if (NULL != tstate && NULL != tstate->frame) {
+    PyFrameObject *frame = tstate->frame;
+    while (NULL != frame) {
+      last_filenameObj = frame->f_code->co_filename;
+      frame = frame->f_back;
     }
   }
-  stringStash = utfStr;
 
-  return PyBytes_AsString(stringStash);
+  PyObject *found = PyDict_GetItem(pluginSelfCache, last_filenameObj);
+  if(found != NULL){
+    Py_INCREF(found);
+    return found;
+  }else{
+      char *last_filename = objToStr(last_filenameObj); // allocates new string on heap
+      const char *lastPathSeparator = get_fname(last_filename);
+     
+      PyGILState_Release(gilState);
+      if (lastPathSeparator) {
+        PyObject *ret = PyUnicode_FromString(++lastPathSeparator); // return new item, we then free the char*
+        free(last_filename);
+        PyDict_SetItem(pluginSelfCache, last_filenameObj, ret);
+        return ret;
+      }
+      free(last_filename);
+      Py_RETURN_NONE;
+  }
 }
 
-void stringCleanup(void)
+void utilsInit(void)
 {
-  Py_XDECREF(stringStash);
-  stringStash = NULL;
-  Py_XDECREF(stringList);
-  stringList = NULL;
+  if(!pluginSelfCache){
+    pluginSelfCache = PyDict_New();
+  }
 }
 
+void utilsCleanup(void)
+{
+  if(pluginSelfCache){
+    PyDict_Clear(pluginSelfCache);
+  }
+}
+
+
+#if defined(IBM)
+    // Motivation:
+    // On Windows we are limited to the restricted API, that doesn't have
+    //   the PyUnicode_AsUTF8 available; instead we are forced to use the
+    //   PyUnicode_AsUTF8String/PyBytes_AsString combo, which creates
+    //   a Unicode object, that must be released when no longer needed
+    //   (e.g. after the XPLM... call).
+    // The implementation puts the object to the stringStash and the cleanup
+    //   must be called to release it; when more than a signle string is
+    //   needed, the previous content of the stringStash is appended to the
+    //   stringList, that will be destroyed once the cleanup is called,
+    //   taking all the allocated object with itself.
+    // This way, single string creation doesn't involve any list operations,
+    //   which should be more optimal, than putting everything to the list.
+    //
+    // TODO: Should this all be guarded by a gil or a mutex of some kind?
+    // For now, since XPLM functions should be called only from the main
+    //   thread, I'll leave it as it is...
+
+    // Last UTF8 string created
+    static PyObject *stringStash = NULL;
+    // List of previous 
+    static PyObject *stringList = NULL;
+
+    // The parameter is expected to be a string!
+    const char *asString(PyObject *str)
+    {
+      PyObject *utfStr = PyUnicode_AsUTF8String(str);
+      if(!utfStr){
+        return NULL;
+      }
+      if(stringStash){
+        // Something is already in a stash
+        if(stringList == NULL){
+          stringList = PyList_New(1);
+          if(!stringList){
+            return NULL;
+          }
+          PyList_SET_ITEM(stringList, 0, stringStash);
+        }else{
+          PyList_Append(stringList, stringStash);
+          // If this fails, we leak the object!
+          // TODO: is there anything we can do about it?
+        }
+      }
+      stringStash = utfStr;
+
+      return PyBytes_AsString(stringStash);
+    }
+
+    void stringCleanup(void)
+    {
+      Py_XDECREF(stringStash);
+      stringStash = NULL;
+      Py_XDECREF(stringList);
+      stringList = NULL;
+    }
+
+#else
+    // On platforms where we're not limted to restricted API,
+    //   the things become very simple...
+
+    // The parameter is expected to be a string!
+    const char *asString(PyObject *str)
+    {
+      return PyUnicode_AsUTF8(str);
+    }
+
+    void stringCleanup(void)
+    {
+      // intentionaly empty
+    }
+#endif

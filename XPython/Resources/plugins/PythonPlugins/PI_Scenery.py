@@ -12,7 +12,6 @@ import random
 class PythonInterface(checkBase):
    def __init__(self):
       checkBase.__init__(self, 'Scenery');
-      checkBase.addRef()
    
    def XPluginStart(self):
       self.Name = "Scenery regression test"
@@ -24,7 +23,6 @@ class PythonInterface(checkBase):
    
    def XPluginStop(self):
       self.check()
-      checkBase.remRef()
    
    def XPluginEnable(self):
       return 1
