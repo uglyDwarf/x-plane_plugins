@@ -1,0 +1,21 @@
+// Configuration file for XLinSpeak
+
+// Set the synthesis voice
+// (enter "spd-say -L" command in terminal for get the list of synthesis voices)
+default_voice = "Bdl";
+
+// Set the rate of the speech
+// (between -100 and +100)
+rate = -20;
+
+enable_random_voices = 1;
+
+random_voices =
+{
+	r_voice = ( 
+		{ title = "Alan"; },
+		{ title = "Bdl"; },
+		{ title = "Clb"; },
+		{ title = "Slt"; }
+	);
+};
