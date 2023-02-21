@@ -127,6 +127,7 @@ void kuk1(void *this, char **str, int type, int i)
 }
 
 //Mimicks XP11's spch_class::SPEECH_speakstring(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, speech_type, int)
+// and XP12's spch_class::SPEECH_synth_non_radio(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, speech_type, int)
 void kuk2(void *this, char *str, int type, int i)
 {
   (void) this;

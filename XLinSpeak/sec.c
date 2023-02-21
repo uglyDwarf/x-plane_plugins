@@ -84,7 +84,7 @@ struct SECTION32_header{
   uint32_t addr; //va address for loaded sections
   uint32_t offset; // offset of the section in the file image
   uint32_t size; // size in the file image (can be 0)
-  uint32_t link; //section index? 
+  uint32_t link; // for symbol section it is index of the strings section? 
   uint32_t info; //extra info
   uint32_t addralign; //must be power of two
   uint32_t entsize;   //size of entries when fixed size otherwise 0
@@ -144,7 +144,8 @@ static bool parse_elf(FILE *f)
   struct ELF64_header eh64;
   struct SECTION32_header sh32;
   struct SECTION64_header sh64;
-  int i;
+  uint32_t i;
+  uint32_t link = 0;
 
   if(fread(&eh, sizeof(eh), 1, f) != 1){
     xcDebug("XLinSpeak: Can't read common ELF header!\n");
@@ -174,9 +175,12 @@ static bool parse_elf(FILE *f)
         case SHT_SYMTAB:
           symbols_info.symbol_table = read_section(f, sh32.offset, sh32.size);
           symbols_info.size = sh32.size;
+	  link = sh32.link;
           break;
         case SHT_STRTAB:
-          symbols_info.strings = (char *)read_section(f, sh32.offset, sh32.size);
+	  if(link == i){
+            symbols_info.strings = (char *)read_section(f, sh32.offset, sh32.size);
+	  }
         default:
           break;
       }
@@ -204,10 +208,14 @@ static bool parse_elf(FILE *f)
         case SHT_SYMTAB:
           symbols_info.symbol_table = read_section(f, sh64.offset, sh64.size);
           symbols_info.size = sh64.size;
+	  link = sh64.link;
           xcDebug("XLinSpeak: Symtab @ %lX\n", (long unsigned int)sh64.offset);
           break;
         case SHT_STRTAB:
-          symbols_info.strings = (char *)read_section(f, sh64.offset, sh64.size);
+	  if(link == i){
+            symbols_info.strings = (char *)read_section(f, sh64.offset, sh64.size);
+            xcDebug("XLinSpeak: Stringtab @ %lX\n", (long unsigned int)sh64.offset);
+	  }
         default:
           break;
       }
@@ -266,6 +274,7 @@ bool find_functions(struct function_ptrs *ptrs, int funcs)
   }
   long i;
   int j;
+  bool res = false;
   if(symbols_info.bits == 32){
     struct symbol32 *sym_ptr = (struct symbol32 *) (symbols_info.symbol_table);
     long records = symbols_info.size / sizeof(struct symbol32);
@@ -277,6 +286,8 @@ bool find_functions(struct function_ptrs *ptrs, int funcs)
           if((ptrs[j].address == 0) && (strcmp(name, ptrs[j].name) == 0)){
             ptrs[j].address = (uint64_t)sym_ptr[i].value;
             xcDebug("XLinSpeak: Symbol %s -> %08X\n", name, sym_ptr[i].value);
+	    res = true;
+	    break;
           }
         }
       }
@@ -293,12 +304,14 @@ bool find_functions(struct function_ptrs *ptrs, int funcs)
           if((ptrs[j].address == 0) && (strcmp(name, ptrs[j].name) == 0)){
             ptrs[j].address = (uint64_t)sym_ptr[i].value;
             xcDebug("XLinSpeak: Symbol %s -> %lX\n", name, (long unsigned int)sym_ptr[i].value);
+	    res = true;
+	    break;
           }
         }
       }
     }
   }
-  return true;
+  return res;
 }
 
 /*

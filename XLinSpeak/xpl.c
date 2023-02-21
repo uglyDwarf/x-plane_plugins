@@ -12,6 +12,7 @@
 #include "sec.h"
 
 struct function_ptrs ptrs[] = {
+  {.name = "_ZN10spch_class22SPEECH_synth_non_radioENSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEE11speech_typei", .address = 0, .hook = 1},
   {.name = "_ZN10spch_class18SPEECH_speakstringENSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEE11speech_typei", .address = 0, .hook = 1},
   {.name = "_ZN10soun_class18SPEECH_speakstringESs11speech_typei", .address = 0, .hook = 0},
   {.name = "_ZN10soun_class18SPEECH_speakstringESsi", .address = 0, .hook = 2}
@@ -35,9 +36,15 @@ PLUGIN_API int XPluginStart(
   xcDebug("XLinSpeak going to search for functions...\n");
   if(!find_functions(ptrs, sizeof(ptrs) / sizeof(ptrs[0]))){
     xcDebug("XLinSpeak Search for functions unsuccessful!\n");
+    return 1;
   }
 
-  xcDebug("XLinSpeak Addr: %p\n", (void *)(intptr_t)ptrs[1].address);
+  unsigned int i;
+  for(i = 0; i < sizeof(ptrs) / sizeof(ptrs[0]); ++i){
+    if(ptrs[i].address != 0){
+      xcDebug("XLinSpeak Addr: %p\n", (void *)(intptr_t)ptrs[i].address);
+    }
+  }
 
   xcDebug("XLinSpeak Going to init speech.\n");
   if(!speech_init()){
@@ -46,7 +53,6 @@ PLUGIN_API int XPluginStart(
     return 1;
   }
   xcDebug("XLinSpeak Speech OK, now hooks.\n");
-  unsigned int i;
   for(i = 0; i < sizeof(ptrs)/sizeof(ptrs[0]); ++i){
     if(ptrs[i].address == 0){
       continue;
@@ -57,8 +63,8 @@ PLUGIN_API int XPluginStart(
     }else{
       xcDebug("XLinSpeak Hook %d unsuccessful.\n", i);
     }
-  }  
-
+  }
+  //XPLMSpeakString("XLinSpeak is working! Enjoy the ride.");
 
   return 1;
 }

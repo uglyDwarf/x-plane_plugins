@@ -11,7 +11,7 @@ trampoline1:
 
 section .text
         extern kuk
-
+        extern _GLOBAL_OFFSET_TABLE_
 %macro HOOK 1
         global hook%1
 hook%1:
@@ -27,7 +27,13 @@ hook%1:
         push eax
         mov eax, [esp+0x30]
         push eax
-        call [kuk]
+        ;now we need GOT address so we can call the speech synth.
+        call .get_GOT
+.get_GOT:
+        pop ebx
+        add ebx,_GLOBAL_OFFSET_TABLE_+$$-.get_GOT wrt ..gotpc
+	mov eax, dword [ebx + kuk wrt ..got]
+        call [eax]
         ;clean up the stack
         pop eax
         pop eax
